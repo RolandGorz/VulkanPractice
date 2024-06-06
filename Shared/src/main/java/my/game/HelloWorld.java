@@ -19,10 +19,6 @@ public class HelloWorld {
     // The window handle
     private long window;
 
-    public static void main(String[] args) {
-        new HelloWorld().run();
-    }
-
     public void run() {
         System.out.println("Hello LWJGL " + Version.getVersion() + "!");
 
