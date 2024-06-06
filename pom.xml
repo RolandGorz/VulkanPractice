@@ -5,12 +5,12 @@
   <groupId>my.game</groupId>
   <artifactId>TestGame</artifactId>
   <version>1.0-SNAPSHOT</version>
-  <packaging>pom</packaging>
+  <packaging>jar</packaging>
 
   <name>TestGame</name>
   <url>http://maven.apache.org</url>
 
-    <properties>
+  <properties>
     <lwjgl.version>3.3.3</lwjgl.version>
     <lwjgl3-awt.version>0.1.8</lwjgl3-awt.version>
     <steamworks4j.version>1.9.0</steamworks4j.version>
@@ -33,10 +33,6 @@
       <properties>
         <lwjgl.natives>natives-linux</lwjgl.natives>
       </properties>
-      <modules>
-        <module>OtherOSGame</module>
-        <module>Shared</module>
-      </modules>
     </profile>
     <profile>
       <id>lwjgl-natives-linux-aarch64</id>
@@ -50,10 +46,6 @@
       <properties>
         <lwjgl.natives>natives-linux-arm64</lwjgl.natives>
       </properties>
-      <modules>
-        <module>OtherOSGame</module>
-        <module>Shared</module>
-      </modules>
     </profile>
     <profile>
       <id>lwjgl-natives-linux-arm</id>
@@ -67,10 +59,6 @@
       <properties>
         <lwjgl.natives>natives-linux-arm32</lwjgl.natives>
       </properties>
-      <modules>
-        <module>OtherOSGame</module>
-        <module>Shared</module>
-      </modules>
     </profile>
     <profile>
       <id>lwjgl-natives-linux-arm32</id>
@@ -84,10 +72,6 @@
       <properties>
         <lwjgl.natives>natives-linux-arm32</lwjgl.natives>
       </properties>
-      <modules>
-        <module>OtherOSGame</module>
-        <module>Shared</module>
-      </modules>
     </profile>
     <profile>
       <id>lwjgl-natives-macos-x86_64</id>
@@ -107,10 +91,6 @@
           <classifier>natives-macos</classifier>
         </dependency>
       </dependencies>
-      <modules>
-        <module>OtherOSGame</module>
-        <module>Shared</module>
-      </modules>
     </profile>
     <profile>
       <id>lwjgl-natives-macos-aarch64</id>
@@ -130,10 +110,6 @@
           <classifier>natives-macos-arm64</classifier>
         </dependency>
       </dependencies>
-      <modules>
-        <module>OtherOSGame</module>
-        <module>Shared</module>
-      </modules>
     </profile>
     <profile>
       <id>lwjgl-natives-windows-amd64</id>
@@ -146,10 +122,6 @@
       <properties>
         <lwjgl.natives>natives-windows</lwjgl.natives>
       </properties>
-      <modules>
-        <module>WindowsGame</module>
-        <module>Shared</module>
-      </modules>
     </profile>
     <profile>
       <id>lwjgl-natives-windows-x86</id>
@@ -162,10 +134,6 @@
       <properties>
         <lwjgl.natives>natives-windows-x86</lwjgl.natives>
       </properties>
-      <modules>
-        <module>WindowsGame</module>
-        <module>Shared</module>
-      </modules>
     </profile>
     <profile>
       <id>lwjgl-natives-windows-aarch64</id>
@@ -178,10 +146,6 @@
       <properties>
         <lwjgl.natives>natives-windows-arm64</lwjgl.natives>
       </properties>
-      <modules>
-        <module>WindowsGame</module>
-        <module>Shared</module>
-      </modules>
     </profile>
   </profiles>
 
@@ -607,6 +571,13 @@
       <artifactId>jsr305</artifactId>
       <version>3.0.2</version>
       <scope>compile</scope>
+    </dependency>
+    <!--Unit tests-->
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <version>5.9.1</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 
