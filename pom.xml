@@ -164,18 +164,6 @@
   <dependencies>
     <dependency>
       <groupId>org.lwjgl</groupId>
-      <artifactId>lwjgl</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.lwjgl</groupId>
-      <artifactId>lwjgl-assimp</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.lwjgl</groupId>
-      <artifactId>lwjgl-bgfx</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.lwjgl</groupId>
       <artifactId>lwjgl-cuda</artifactId>
     </dependency>
     <dependency>
@@ -289,10 +277,6 @@
     <dependency>
       <groupId>org.lwjgl</groupId>
       <artifactId>lwjgl-par</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.lwjgl</groupId>
-      <artifactId>lwjgl-remotery</artifactId>
     </dependency>
     <dependency>
       <groupId>org.lwjgl</groupId>
@@ -453,22 +437,7 @@
     </dependency>
     <dependency>
       <groupId>org.lwjgl</groupId>
-      <artifactId>lwjgl-openvr</artifactId>
-      <classifier>${lwjgl.natives}</classifier>
-    </dependency>
-    <dependency>
-      <groupId>org.lwjgl</groupId>
-      <artifactId>lwjgl-openxr</artifactId>
-      <classifier>${lwjgl.natives}</classifier>
-    </dependency>
-    <dependency>
-      <groupId>org.lwjgl</groupId>
       <artifactId>lwjgl-opus</artifactId>
-      <classifier>${lwjgl.natives}</classifier>
-    </dependency>
-    <dependency>
-      <groupId>org.lwjgl</groupId>
-      <artifactId>lwjgl-ovr</artifactId>
       <classifier>${lwjgl.natives}</classifier>
     </dependency>
     <dependency>
@@ -498,11 +467,6 @@
     </dependency>
     <dependency>
       <groupId>org.lwjgl</groupId>
-      <artifactId>lwjgl-sse</artifactId>
-      <classifier>${lwjgl.natives}</classifier>
-    </dependency>
-    <dependency>
-      <groupId>org.lwjgl</groupId>
       <artifactId>lwjgl-stb</artifactId>
       <classifier>${lwjgl.natives}</classifier>
     </dependency>
@@ -514,11 +478,6 @@
     <dependency>
       <groupId>org.lwjgl</groupId>
       <artifactId>lwjgl-tinyfd</artifactId>
-      <classifier>${lwjgl.natives}</classifier>
-    </dependency>
-    <dependency>
-      <groupId>org.lwjgl</groupId>
-      <artifactId>lwjgl-tootle</artifactId>
       <classifier>${lwjgl.natives}</classifier>
     </dependency>
     <dependency>
