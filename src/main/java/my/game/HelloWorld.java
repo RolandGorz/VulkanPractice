@@ -4,13 +4,13 @@ import org.lwjgl.Version;
 import org.lwjgl.glfw.Callbacks;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWErrorCallback;
-import org.lwjgl.glfw.GLFWMouseButtonCallback;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL46;
 import org.lwjgl.opengl.GL46C;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
+
 import java.nio.IntBuffer;
 
 public class HelloWorld {
@@ -61,19 +61,13 @@ public class HelloWorld {
             if (key == GLFW.GLFW_KEY_ESCAPE && action == GLFW.GLFW_RELEASE)
                 GLFW.glfwSetWindowShouldClose(window, true); // We will detect this in the rendering loop
         });
-
-        GLFWMouseButtonCallback mouseCallback;
-        GLFW.glfwSetMouseButtonCallback(window, mouseCallback = new GLFWMouseButtonCallback() {
-            @Override
-            public void invoke(long window, int button, int action, int mods) {
-                if(action == GLFW.GLFW_PRESS) {
-                    System.out.println("mouse pressed woohooo");
-                    GL46.glClearColor(0.5f, 0.5f, 0.5f, 0.0f);
-                } else {
-                    System.out.println("mouse released woohooo");
-                    GL46.glClearColor(0.9f, 0.5f, 0.5f, 0.0f);
-
-                }
+        GLFW.glfwSetMouseButtonCallback(window, (window, button, action, mods) -> {
+            if (action == GLFW.GLFW_PRESS) {
+                System.out.println("mouse pressed woohooo");
+                GL46.glClearColor(0.5f, 0.5f, 0.5f, 0.0f);
+            } else {
+                System.out.println("mouse released woohooo");
+                GL46.glClearColor(0.9f, 0.5f, 0.5f, 0.0f);
             }
         });
 

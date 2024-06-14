@@ -164,6 +164,14 @@
   <dependencies>
     <dependency>
       <groupId>org.lwjgl</groupId>
+      <artifactId>lwjgl</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.lwjgl</groupId>
+      <artifactId>lwjgl-assimp</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.lwjgl</groupId>
       <artifactId>lwjgl-cuda</artifactId>
     </dependency>
     <dependency>
@@ -200,10 +208,6 @@
     </dependency>
     <dependency>
       <groupId>org.lwjgl</groupId>
-      <artifactId>lwjgl-ktx</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.lwjgl</groupId>
       <artifactId>lwjgl-libdivide</artifactId>
     </dependency>
     <dependency>
@@ -217,10 +221,6 @@
     <dependency>
       <groupId>org.lwjgl</groupId>
       <artifactId>lwjgl-lz4</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.lwjgl</groupId>
-      <artifactId>lwjgl-meow</artifactId>
     </dependency>
     <dependency>
       <groupId>org.lwjgl</groupId>
@@ -260,19 +260,7 @@
     </dependency>
     <dependency>
       <groupId>org.lwjgl</groupId>
-      <artifactId>lwjgl-openvr</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.lwjgl</groupId>
-      <artifactId>lwjgl-openxr</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.lwjgl</groupId>
       <artifactId>lwjgl-opus</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.lwjgl</groupId>
-      <artifactId>lwjgl-ovr</artifactId>
     </dependency>
     <dependency>
       <groupId>org.lwjgl</groupId>
@@ -292,10 +280,6 @@
     </dependency>
     <dependency>
       <groupId>org.lwjgl</groupId>
-      <artifactId>lwjgl-sse</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.lwjgl</groupId>
       <artifactId>lwjgl-stb</artifactId>
     </dependency>
     <dependency>
@@ -305,10 +289,6 @@
     <dependency>
       <groupId>org.lwjgl</groupId>
       <artifactId>lwjgl-tinyfd</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.lwjgl</groupId>
-      <artifactId>lwjgl-tootle</artifactId>
     </dependency>
     <dependency>
       <groupId>org.lwjgl</groupId>
@@ -342,11 +322,6 @@
     </dependency>
     <dependency>
       <groupId>org.lwjgl</groupId>
-      <artifactId>lwjgl-bgfx</artifactId>
-      <classifier>${lwjgl.natives}</classifier>
-    </dependency>
-    <dependency>
-      <groupId>org.lwjgl</groupId>
       <artifactId>lwjgl-freetype</artifactId>
       <classifier>${lwjgl.natives}</classifier>
     </dependency>
@@ -372,11 +347,6 @@
     </dependency>
     <dependency>
       <groupId>org.lwjgl</groupId>
-      <artifactId>lwjgl-ktx</artifactId>
-      <classifier>${lwjgl.natives}</classifier>
-    </dependency>
-    <dependency>
-      <groupId>org.lwjgl</groupId>
       <artifactId>lwjgl-libdivide</artifactId>
       <classifier>${lwjgl.natives}</classifier>
     </dependency>
@@ -393,11 +363,6 @@
     <dependency>
       <groupId>org.lwjgl</groupId>
       <artifactId>lwjgl-lz4</artifactId>
-      <classifier>${lwjgl.natives}</classifier>
-    </dependency>
-    <dependency>
-      <groupId>org.lwjgl</groupId>
-      <artifactId>lwjgl-meow</artifactId>
       <classifier>${lwjgl.natives}</classifier>
     </dependency>
     <dependency>
@@ -443,11 +408,6 @@
     <dependency>
       <groupId>org.lwjgl</groupId>
       <artifactId>lwjgl-par</artifactId>
-      <classifier>${lwjgl.natives}</classifier>
-    </dependency>
-    <dependency>
-      <groupId>org.lwjgl</groupId>
-      <artifactId>lwjgl-remotery</artifactId>
       <classifier>${lwjgl.natives}</classifier>
     </dependency>
     <dependency>
