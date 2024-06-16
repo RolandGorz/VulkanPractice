@@ -8,6 +8,7 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.VK13;
 
+import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 
@@ -15,6 +16,14 @@ public class HelloWorld {
 
     public static void main(String[] args) {
         System.out.println("Hello LWJGL " + Version.getVersion() + "!");
+
+        //TODO this is kind of stupid and will only work running from intellij. Think of how you want to handle shaders
+        // properly.
+        File fragmentShader = new File("src/main/resources/shaders/simple_shader.frag.spv");
+        File vertexShader = new File("src/main/resources/shaders/simple_shader.vert.spv");
+
+        System.out.printf("Fragment shader code size %d\n", fragmentShader.length());
+        System.out.printf("Vertex shader code size %d\n", vertexShader.length());
 
         // Setup an error callback. The default implementation
         // will print the error message in System.err.
@@ -26,7 +35,8 @@ public class HelloWorld {
 
         // Configure GLFW
         GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, GLFW.GLFW_FALSE); // the window will stay hidden after creation
-        GLFW.glfwWindowHint(GLFW.GLFW_RESIZABLE, GLFW.GLFW_TRUE); // the window will be resizable
+        GLFW.glfwWindowHint(GLFW.GLFW_RESIZABLE, GLFW.GLFW_FALSE); // the window will be resizable
+        GLFW.glfwWindowHint(GLFW.GLFW_CLIENT_API, GLFW.GLFW_NO_API);
 
         // Create the window
         final long window = GLFW.glfwCreateWindow(300, 300, "Hello World!", MemoryUtil.NULL, MemoryUtil.NULL);
@@ -37,13 +47,14 @@ public class HelloWorld {
         try (MemoryStack stack = MemoryStack.stackPush()) {
             IntBuffer extensionCount = stack.mallocInt(1); // int*
             int result  = VK13.vkEnumerateInstanceExtensionProperties((ByteBuffer) null, extensionCount, null);
-            System.out.printf("vkEnumerateInstanceExtensionProperties returned %d\n", result);
+            if (result == VK13.VK_SUCCESS) {
+                System.out.println("vkEnumerateInstanceExtensionProperties returned success");
+            } else {
+                System.out.println("vkEnumerateInstanceExtensionProperties returned failure");
+            }
             System.out.printf("%d extensions supported\n", extensionCount.get(0));
         } // the stack frame is popped automatically
 
-        GLFW.glfwMakeContextCurrent(window);
-        // Enable v-sync
-        GLFW.glfwSwapInterval(1);
         GLFW.glfwShowWindow(window);
         while (!GLFW.glfwWindowShouldClose(window)) {
             GLFW.glfwPollEvents();
