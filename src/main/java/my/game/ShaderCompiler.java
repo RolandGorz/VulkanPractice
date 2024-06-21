@@ -6,8 +6,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.stream.Stream;
 
 //TODO This should probably be its own module that compiles shaders in the actual main project module. This would be fine
 // then to just reference the paths explicitly but maybe a smarter way is better. Also decide on if spv files (compiled shaders)
@@ -16,38 +14,39 @@ import java.util.stream.Stream;
 // compilation to maven.
 public class ShaderCompiler {
 
+    private static final String shadersDirectory = "src/main/resources/shaders/";
+
     public static void main(String[] args) {
         ShaderCompiler shaderCompiler = new ShaderCompiler();
-        try (Stream<Path> files = Files.list(Path.of("src/main/resources/shaders/"))) {
-            files.forEach(p -> {
-                String filename = p.getFileName().toString();
-                if (filename.endsWith(".frag")) {
-                    shaderCompiler.compileShaderIfChanged(p, Shaderc.shaderc_fragment_shader);
-                } else if (filename.endsWith(".vert")) {
-                    shaderCompiler.compileShaderIfChanged(p, Shaderc.shaderc_vertex_shader);
-                }
-            });
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        File file = new File(shadersDirectory);
+        File[] files = file.listFiles();
+        if (files == null) {
+            throw new IllegalStateException(String.format("Shaders directory is empty at %s", shadersDirectory));
+        }
+        for (File f : files) {
+            if (f.getName().endsWith(".frag")) {
+                shaderCompiler.compileShaderIfChanged(f, Shaderc.shaderc_fragment_shader);
+            } else if (f.getName().endsWith(".vert")) {
+                shaderCompiler.compileShaderIfChanged(f, Shaderc.shaderc_vertex_shader);
+            }
         }
     }
 
-    private void compileShaderIfChanged(Path glsShaderFile, int shaderType) {
+    private void compileShaderIfChanged(File glsShaderFile, int shaderType) {
         byte[] compiledShader;
         try {
-            File glslFile = glsShaderFile.toFile();
-            File spvFile = new File(glslFile.getPath() + ".spv");
-            if (!spvFile.exists() || glslFile.lastModified() > spvFile.lastModified()) {
-                System.out.printf("Compiling [%s] to [%s]\n", glslFile.getPath(), spvFile.getPath());
-                String shaderCode = new String(Files.readAllBytes(glslFile.toPath()));
+            File spvFile = new File(glsShaderFile.getPath() + ".spv");
+            if (!spvFile.exists() || glsShaderFile.lastModified() > spvFile.lastModified()) {
+                System.out.printf("Compiling [%s] to [%s]\n", glsShaderFile.getPath(), spvFile.getPath());
+                String shaderCode = new String(Files.readAllBytes(glsShaderFile.toPath()));
 
                 compiledShader = compileShader(shaderCode, shaderType);
                 Files.write(spvFile.toPath(), compiledShader);
             } else {
-                System.out.printf("Shader [%s] already compiled. Loading compiled version: [%s]\n", glslFile.getPath(), spvFile.getPath());
+                System.out.printf("Shader [%s] already compiled. Loading compiled version: [%s]\n", glsShaderFile.getPath(), spvFile.getPath());
             }
-        } catch (IOException excp) {
-            throw new RuntimeException(excp);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
