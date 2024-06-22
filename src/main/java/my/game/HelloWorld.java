@@ -9,7 +9,10 @@ import org.lwjgl.glfw.GLFWVulkan;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.VK13;
+import org.lwjgl.vulkan.VkApplicationInfo;
 import org.lwjgl.vulkan.VkExtensionProperties;
+import org.lwjgl.vulkan.VkInstance;
+import org.lwjgl.vulkan.VkInstanceCreateInfo;
 
 import java.io.File;
 import java.nio.ByteBuffer;
@@ -20,6 +23,8 @@ import java.util.Set;
 //TODO properly free memory when there are exceptions. Right now im just letting it leak like crazy especially in
 // the places where I just throw runtime exception
 public class HelloWorld {
+
+    private static VkInstance vkInstance;
 
     public static void main(String[] args) {
         System.out.println("Hello LWJGL " + Version.getVersion() + "!");
@@ -62,7 +67,7 @@ public class HelloWorld {
             System.out.printf("%d extensions supported\n", extensionCount.get(0));
             VkExtensionProperties.Buffer vkExtensionPropertiesBuffer = VkExtensionProperties.malloc(extensionCount.get(0), stack);
             int result2 = VK13.vkEnumerateInstanceExtensionProperties((ByteBuffer) null, extensionCount, vkExtensionPropertiesBuffer);
-            if (result == VK13.VK_SUCCESS) {
+            if (result2 == VK13.VK_SUCCESS) {
                 System.out.println("vkEnumerateInstanceExtensionProperties returned success");
             } else {
                 System.out.println("vkEnumerateInstanceExtensionProperties returned failure");
@@ -87,12 +92,16 @@ public class HelloWorld {
                     throw new RuntimeException(String.format("GLFW required extension: %s is not supported\n", curr));
                 }
             }
+            vkInstance = initVulkan(stack);
         } // the stack frame is popped automatically
 
         GLFW.glfwShowWindow(window);
         while (!GLFW.glfwWindowShouldClose(window)) {
             GLFW.glfwPollEvents();
         }
+
+        //Free vulkan
+        VK13.vkDestroyInstance(vkInstance, null);
 
         // Free the window callbacks and destroy the window
         Callbacks.glfwFreeCallbacks(window);
@@ -101,5 +110,25 @@ public class HelloWorld {
         // Terminate GLFW and free the error callback
         GLFW.glfwTerminate();
         GLFW.glfwSetErrorCallback(null).free();
+    }
+
+    private static VkInstance initVulkan(MemoryStack memoryStack) {
+        VkApplicationInfo appInfo = VkApplicationInfo.malloc(memoryStack);
+        appInfo.sType(VK13.VK_STRUCTURE_TYPE_APPLICATION_INFO);
+        appInfo.pApplicationName(MemoryUtil.memASCII("Hello Triangle"));
+        appInfo.applicationVersion(VK13.VK_MAKE_VERSION(1, 0, 0));
+        appInfo.pEngineName(MemoryUtil.memASCII("No Engine"));
+        appInfo.engineVersion(VK13.VK_MAKE_VERSION(1, 0, 0));
+        appInfo.apiVersion(VK13.VK_API_VERSION_1_0);
+
+        VkInstanceCreateInfo vkInstanceCreateInfo = VkInstanceCreateInfo.malloc(memoryStack);
+        vkInstanceCreateInfo.sType(VK13.VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO);
+        vkInstanceCreateInfo.pApplicationInfo(appInfo);
+        PointerBuffer pointerBuffer = memoryStack.mallocPointer(1);
+        int result = VK13.vkCreateInstance(vkInstanceCreateInfo, null, pointerBuffer);
+        if (result != VK13.VK_SUCCESS) {
+            throw new RuntimeException("creating vulkan instance failed");
+        }
+        return new VkInstance(pointerBuffer.get(0), vkInstanceCreateInfo);
     }
 }
