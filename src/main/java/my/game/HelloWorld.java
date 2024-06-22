@@ -1,9 +1,11 @@
 package my.game;
 
+import org.lwjgl.PointerBuffer;
 import org.lwjgl.Version;
 import org.lwjgl.glfw.Callbacks;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWErrorCallback;
+import org.lwjgl.glfw.GLFWVulkan;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.VK13;
@@ -12,7 +14,11 @@ import org.lwjgl.vulkan.VkExtensionProperties;
 import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
+import java.util.HashSet;
+import java.util.Set;
 
+//TODO properly free memory when there are exceptions. Right now im just letting it leak like crazy especially in
+// the places where I just throw runtime exception
 public class HelloWorld {
 
     public static void main(String[] args) {
@@ -62,8 +68,24 @@ public class HelloWorld {
                 System.out.println("vkEnumerateInstanceExtensionProperties returned failure");
             }
             System.out.printf("%d extensions supported\n", extensionCount.get(0));
+            Set<String> supportedExtensions = new HashSet<>();
             for (VkExtensionProperties x : vkExtensionPropertiesBuffer) {
                 System.out.printf("%s\n", x.extensionNameString());
+                supportedExtensions.add(x.extensionNameString());
+            }
+
+            PointerBuffer glfwRequiredExtensions = GLFWVulkan.glfwGetRequiredInstanceExtensions();
+            if (glfwRequiredExtensions == null) {
+                throw new RuntimeException("glfwGetRequiredInstanceExtensions returned null");
+            }
+            for (int i = 0; i < glfwRequiredExtensions.capacity(); ++i) {
+                String curr = MemoryUtil.memASCII(glfwRequiredExtensions.get(i));
+                if (supportedExtensions.contains(curr)) {
+                    System.out.printf("GLFW required extension %s is supported\n", curr);
+                } else {
+                    System.out.printf("GLFW required extension %s is not supported\n", curr);
+                    throw new RuntimeException(String.format("GLFW required extension: %s is not supported\n", curr));
+                }
             }
         } // the stack frame is popped automatically
 
