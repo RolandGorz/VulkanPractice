@@ -7,6 +7,7 @@ import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.VK13;
+import org.lwjgl.vulkan.VkExtensionProperties;
 
 import java.io.File;
 import java.nio.ByteBuffer;
@@ -53,6 +54,17 @@ public class HelloWorld {
                 System.out.println("vkEnumerateInstanceExtensionProperties returned failure");
             }
             System.out.printf("%d extensions supported\n", extensionCount.get(0));
+            VkExtensionProperties.Buffer vkExtensionPropertiesBuffer = VkExtensionProperties.malloc(extensionCount.get(0), stack);
+            int result2 = VK13.vkEnumerateInstanceExtensionProperties((ByteBuffer) null, extensionCount, vkExtensionPropertiesBuffer);
+            if (result == VK13.VK_SUCCESS) {
+                System.out.println("vkEnumerateInstanceExtensionProperties returned success");
+            } else {
+                System.out.println("vkEnumerateInstanceExtensionProperties returned failure");
+            }
+            System.out.printf("%d extensions supported\n", extensionCount.get(0));
+            for (VkExtensionProperties x : vkExtensionPropertiesBuffer) {
+                System.out.printf("%s\n", x.extensionNameString());
+            }
         } // the stack frame is popped automatically
 
         GLFW.glfwShowWindow(window);
