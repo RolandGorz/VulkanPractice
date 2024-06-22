@@ -4,6 +4,7 @@ import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.GLFWVulkan;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
+import org.lwjgl.vulkan.EXTDebugUtils;
 import org.lwjgl.vulkan.VK13;
 import org.lwjgl.vulkan.VkApplicationInfo;
 import org.lwjgl.vulkan.VkExtensionProperties;
@@ -16,7 +17,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class Graphics {
-    private void validateVulkanExtensions(MemoryStack stack) {
+    private PointerBuffer validateVulkanExtensions(MemoryStack stack) {
         IntBuffer extensionCount = stack.mallocInt(1); // int*
         int result  = VK13.vkEnumerateInstanceExtensionProperties((ByteBuffer) null, extensionCount, null);
         if (result == VK13.VK_SUCCESS) {
@@ -52,12 +53,22 @@ public class Graphics {
                 throw new RuntimeException(String.format("GLFW required extension: %s is not supported\n", curr));
             }
         }
+        return glfwRequiredExtensions;
+    }
+
+    private PointerBuffer addDebugExtension(MemoryStack memoryStack) {
+        PointerBuffer glfwRequiredExtensions = validateVulkanExtensions(memoryStack);
+        PointerBuffer extensions = memoryStack.mallocPointer(glfwRequiredExtensions.capacity() + 1);
+        extensions.put(glfwRequiredExtensions);
+        extensions.put(memoryStack.UTF8(EXTDebugUtils.VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
+        return extensions.rewind();
     }
 
     public VkInstance initVulkan() {
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
-            validateVulkanExtensions(memoryStack);
-            VkApplicationInfo appInfo = VkApplicationInfo.malloc(memoryStack);
+            //Must use calloc when not initializing every value of a struct. Otherwise, garbage is at those values
+            //and can result in a crash
+            VkApplicationInfo appInfo = VkApplicationInfo.calloc(memoryStack);
             appInfo.sType(VK13.VK_STRUCTURE_TYPE_APPLICATION_INFO);
             appInfo.pApplicationName(MemoryUtil.memASCII("Hello Triangle"));
             appInfo.applicationVersion(VK13.VK_MAKE_VERSION(1, 0, 0));
@@ -65,9 +76,10 @@ public class Graphics {
             appInfo.engineVersion(VK13.VK_MAKE_VERSION(1, 0, 0));
             appInfo.apiVersion(VK13.VK_API_VERSION_1_0);
 
-            VkInstanceCreateInfo vkInstanceCreateInfo = VkInstanceCreateInfo.malloc(memoryStack);
+            VkInstanceCreateInfo vkInstanceCreateInfo = VkInstanceCreateInfo.calloc(memoryStack);
             vkInstanceCreateInfo.sType(VK13.VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO);
             vkInstanceCreateInfo.pApplicationInfo(appInfo);
+            vkInstanceCreateInfo.ppEnabledExtensionNames(addDebugExtension(memoryStack));
             PointerBuffer pointerBuffer = memoryStack.mallocPointer(1);
             int result = VK13.vkCreateInstance(vkInstanceCreateInfo, null, pointerBuffer);
             if (result != VK13.VK_SUCCESS) {

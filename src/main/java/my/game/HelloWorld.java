@@ -2,9 +2,7 @@ package my.game;
 
 import my.game.init.Graphics;
 import my.game.init.Window;
-import my.game.shaders.ShaderCompiler;
 import my.game.shaders.ShaderLoader;
-import org.lwjgl.PointerBuffer;
 import org.lwjgl.Version;
 import org.lwjgl.glfw.Callbacks;
 import org.lwjgl.glfw.GLFW;
@@ -30,7 +28,7 @@ public class HelloWorld {
         while (!GLFW.glfwWindowShouldClose(windowPointer)) {
             GLFW.glfwPollEvents();
         }
-        
+
         //Free vulkan
         VK13.vkDestroyInstance(vkInstance, null);
 
