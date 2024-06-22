@@ -1,4 +1,4 @@
-package my.game;
+package my.game.shaders;
 
 import org.lwjgl.util.shaderc.Shaderc;
 
@@ -14,14 +14,14 @@ import java.nio.file.Files;
 // compilation to maven.
 public class ShaderCompiler {
 
-    private static final String shadersDirectory = "src/main/resources/shaders/";
+    private static final String SHADERS_DIRECTORY = "src/main/resources/shaders/";
 
     public static void main(String[] args) {
         ShaderCompiler shaderCompiler = new ShaderCompiler();
-        File file = new File(shadersDirectory);
+        File file = new File(SHADERS_DIRECTORY);
         File[] files = file.listFiles();
         if (files == null) {
-            throw new IllegalStateException(String.format("Shaders directory is empty at %s", shadersDirectory));
+            throw new IllegalStateException(String.format("Shaders directory is empty at %s", SHADERS_DIRECTORY));
         }
         for (File f : files) {
             if (f.getName().endsWith(".frag")) {
