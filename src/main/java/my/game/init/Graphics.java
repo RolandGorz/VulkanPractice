@@ -38,20 +38,20 @@ public class Graphics {
             if (result == VK13.VK_SUCCESS) {
                 System.out.println("vkEnumerateInstanceExtensionProperties returned success");
             } else {
-                System.out.println("vkEnumerateInstanceExtensionProperties returned failure");
+                System.out.printf("vkEnumerateInstanceExtensionProperties returned failure code %d%n", result);
             }
-            System.out.printf("%d extensions supported\n", extensionCount.get(0));
+            System.out.printf("%d extensions supported%n", extensionCount.get(0));
             VkExtensionProperties.Buffer vkExtensionPropertiesBuffer = VkExtensionProperties.malloc(extensionCount.get(0), stack);
             int result2 = VK13.vkEnumerateInstanceExtensionProperties((ByteBuffer) null, extensionCount, vkExtensionPropertiesBuffer);
             if (result2 == VK13.VK_SUCCESS) {
                 System.out.println("vkEnumerateInstanceExtensionProperties returned success");
             } else {
-                System.out.println("vkEnumerateInstanceExtensionProperties returned failure");
+                System.out.printf("vkEnumerateInstanceExtensionProperties returned failure code %d%n", result2);
             }
-            System.out.printf("%d extensions supported\n", extensionCount.get(0));
+            System.out.printf("%d extensions supported%n", extensionCount.get(0));
             Set<String> supportedExtensions = new HashSet<>();
             for (VkExtensionProperties x : vkExtensionPropertiesBuffer) {
-                System.out.printf("%s\n", x.extensionNameString());
+                System.out.printf("%s%n", x.extensionNameString());
                 supportedExtensions.add(x.extensionNameString());
             }
 
@@ -62,10 +62,10 @@ public class Graphics {
             for (int i = 0; i < glfwRequiredExtensions.capacity(); ++i) {
                 String curr = MemoryUtil.memASCII(glfwRequiredExtensions.get(i));
                 if (supportedExtensions.contains(curr)) {
-                    System.out.printf("GLFW required extension %s is supported\n", curr);
+                    System.out.printf("GLFW required extension %s is supported%n", curr);
                 } else {
-                    System.out.printf("GLFW required extension %s is not supported\n", curr);
-                    throw new RuntimeException(String.format("GLFW required extension: %s is not supported\n", curr));
+                    System.out.printf("GLFW required extension %s is not supported%n", curr);
+                    throw new RuntimeException(String.format("GLFW required extension: %s is not supported%n", curr));
                 }
             }
             return glfwRequiredExtensions;
@@ -79,9 +79,9 @@ public class Graphics {
             if (result == VK13.VK_SUCCESS) {
                 System.out.println("vkEnumerateInstanceLayerProperties returned success");
             } else {
-                System.out.println("vkEnumerateInstanceLayerProperties returned failure");
+                System.out.printf("vkEnumerateInstanceLayerProperties returned failure code %d%n", result);
             }
-            System.out.printf("%d available layers\n", layerCount.get(0));
+            System.out.printf("%d available layers%n", layerCount.get(0));
             VkLayerProperties.Buffer vkLayerPropertiesBuffer = VkLayerProperties.malloc(layerCount.get(0), stack);
             int result2 = VK13.vkEnumerateInstanceLayerProperties(layerCount, vkLayerPropertiesBuffer);
             if (result2 == VK13.VK_SUCCESS) {
@@ -89,9 +89,9 @@ public class Graphics {
             } else {
                 System.out.println("vkEnumerateInstanceLayerProperties returned failure");
             }
-            System.out.printf("%d extensions supported\n", layerCount.get(0));
+            System.out.printf("%d extensions supported%n", layerCount.get(0));
             for (VkLayerProperties x : vkLayerPropertiesBuffer) {
-                System.out.printf("%s\n", x.layerNameString());
+                System.out.printf("%s%n", x.layerNameString());
             }
             for (String x : requestedValidationLayers) {
                 boolean found = false;
@@ -147,23 +147,24 @@ public class Graphics {
                             severity = "Error";
                         }
                         try (VkDebugUtilsMessengerCallbackDataEXT data = VkDebugUtilsMessengerCallbackDataEXT.create(pCallbackData)) {
-                            System.out.printf("%s pCallBackData.pMessage: %s\n", severity, MemoryUtil.memASCII(data.pMessage()));
+                            System.out.printf("%s pCallBackData.pMessage: %s%n", severity, MemoryUtil.memASCII(data.pMessage()));
                         }
                         return VK13.VK_FALSE;
                     }
             );
             VkDebugUtilsMessengerCreateInfoEXT vkDebugUtilsMessengerCreateInfoEXT = VkDebugUtilsMessengerCreateInfoEXT.calloc();
-            vkDebugUtilsMessengerCreateInfoEXT.sType(EXTDebugUtils.VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT);
-            vkDebugUtilsMessengerCreateInfoEXT.messageSeverity(
+            vkDebugUtilsMessengerCreateInfoEXT
+                    .sType(EXTDebugUtils.VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT)
+                    .messageSeverity(
                     EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
                             EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
-                            EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT);
-            vkDebugUtilsMessengerCreateInfoEXT.messageType(
+                            EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
+                    .messageType(
                     EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
                             EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
-                            EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT);
-            vkDebugUtilsMessengerCreateInfoEXT.pfnUserCallback(callback);
-            vkDebugUtilsMessengerCreateInfoEXT.pUserData(MemoryUtil.NULL);
+                            EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT)
+                    .pfnUserCallback(callback)
+                    .pUserData(MemoryUtil.NULL);
             instance = vkDebugUtilsMessengerCreateInfoEXT;
             return vkDebugUtilsMessengerCreateInfoEXT;
         } else {
@@ -178,7 +179,7 @@ public class Graphics {
             int result = EXTDebugUtils.vkCreateDebugUtilsMessengerEXT(vkInstance,
                     getVkDebugUtilsMessengerCreateInfoEXT(), null, longBuffer);
             if (result != VK13.VK_SUCCESS) {
-                throw new RuntimeException("creating debug utils messenger failed");
+                throw new RuntimeException(String.format("creating debug utils messenger failed error code %d", result));
             }
             return longBuffer.get();
         }
@@ -207,7 +208,7 @@ public class Graphics {
             PointerBuffer pointerBuffer = stack.mallocPointer(1);
             int result = VK13.vkCreateInstance(vkInstanceCreateInfo, null, pointerBuffer);
             if (result != VK13.VK_SUCCESS) {
-                throw new RuntimeException("creating vulkan instance failed");
+                throw new RuntimeException(String.format("creating vulkan instance failed error code %d", result));
             }
             return new VkInstance(pointerBuffer.get(0), vkInstanceCreateInfo);
         }

@@ -1,5 +1,6 @@
 package my.game;
 
+import my.game.init.Devices;
 import my.game.init.Graphics;
 import my.game.init.Window;
 import my.game.shaders.ShaderLoader;
@@ -31,6 +32,8 @@ public class HelloWorld {
         if (VULKAN_DEBUG) {
             pDebugUtilsMessengerEXT = graphics.createDebugUtilsMessengerEXT(vkInstance);
         }
+        Devices devices = new Devices();
+        devices.getPhysicalDevices(vkInstance);
 
         GLFW.glfwShowWindow(windowPointer);
         while (!GLFW.glfwWindowShouldClose(windowPointer)) {
