@@ -6,6 +6,7 @@ import my.game.shaders.ShaderLoader;
 import org.lwjgl.Version;
 import org.lwjgl.glfw.Callbacks;
 import org.lwjgl.glfw.GLFW;
+import org.lwjgl.vulkan.EXTDebugUtils;
 import org.lwjgl.vulkan.VK13;
 import org.lwjgl.vulkan.VkInstance;
 
@@ -23,11 +24,14 @@ public class HelloWorld {
         long windowPointer = window.initialize();
         Graphics graphics = new Graphics();
         VkInstance vkInstance = graphics.initVulkan();
+        long pDebugUtilsMessengerEXT = graphics.createDebugUtilsMessengerEXT(vkInstance);
 
         GLFW.glfwShowWindow(windowPointer);
         while (!GLFW.glfwWindowShouldClose(windowPointer)) {
             GLFW.glfwPollEvents();
         }
+
+        EXTDebugUtils.vkDestroyDebugUtilsMessengerEXT(vkInstance, pDebugUtilsMessengerEXT, null);
 
         //Free vulkan
         VK13.vkDestroyInstance(vkInstance, null);
