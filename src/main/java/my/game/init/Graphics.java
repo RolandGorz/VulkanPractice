@@ -1,5 +1,6 @@
 package my.game.init;
 
+import my.game.HelloWorld;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.GLFWVulkan;
 import org.lwjgl.system.MemoryStack;
@@ -26,6 +27,10 @@ import java.util.Set;
 //TODO pop stack sooner. Think about how to free memory asap. ValidateVulkanExtensions is an example of stupidly not popping
 // stack until the end
 public class Graphics {
+
+    //TODO cleanly start using singletons.
+    private static VkDebugUtilsMessengerCreateInfoEXT instance;
+
     private PointerBuffer validateVulkanExtensions() {
         try (MemoryStack stack = MemoryStack.stackPush()) {
             IntBuffer extensionCount = stack.mallocInt(1); // int*
@@ -115,46 +120,55 @@ public class Graphics {
         return validationLayers.rewind();
     }
 
-    private PointerBuffer addDebugExtension(MemoryStack stack) {
+    private PointerBuffer addExtensions(MemoryStack stack) {
         PointerBuffer glfwRequiredExtensions = validateVulkanExtensions();
-        PointerBuffer extensions = stack.mallocPointer(glfwRequiredExtensions.capacity() + 1);
-        extensions.put(glfwRequiredExtensions);
-        extensions.put(stack.UTF8(EXTDebugUtils.VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
-        return extensions.rewind();
+        if (HelloWorld.VULKAN_DEBUG) {
+            PointerBuffer extensions = stack.mallocPointer(glfwRequiredExtensions.capacity() + 1);
+            extensions.put(glfwRequiredExtensions);
+            extensions.put(stack.UTF8(EXTDebugUtils.VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
+            return extensions.rewind();
+        } else {
+            return glfwRequiredExtensions;
+        }
     }
 
-    private VkDebugUtilsMessengerCreateInfoEXT createVkDebugUtilsMessengerCreateInfoEXT() {
-        VkDebugUtilsMessengerCallbackEXT callback = VkDebugUtilsMessengerCallbackEXT.create(
-                (messageSeverity, messageTypes, pCallbackData, pUserData) -> {
-                    final String severity;
-                    if (messageSeverity == EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) {
-                        severity = "Verbose";
-                    } else if (messageSeverity == EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
-                        severity = "Warning";
-                    } else if (messageSeverity == EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT) {
-                        severity = "Info";
-                    } else {
-                        severity = "Error";
+    private VkDebugUtilsMessengerCreateInfoEXT getVkDebugUtilsMessengerCreateInfoEXT() {
+        if (instance == null) {
+            VkDebugUtilsMessengerCallbackEXT callback = VkDebugUtilsMessengerCallbackEXT.create(
+                    (messageSeverity, messageTypes, pCallbackData, pUserData) -> {
+                        final String severity;
+                        if (messageSeverity == EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) {
+                            severity = "Verbose";
+                        } else if (messageSeverity == EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
+                            severity = "Warning";
+                        } else if (messageSeverity == EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT) {
+                            severity = "Info";
+                        } else {
+                            severity = "Error";
+                        }
+                        try (VkDebugUtilsMessengerCallbackDataEXT data = VkDebugUtilsMessengerCallbackDataEXT.create(pCallbackData)) {
+                            System.out.printf("%s pCallBackData.pMessage: %s\n", severity, MemoryUtil.memASCII(data.pMessage()));
+                        }
+                        return VK13.VK_FALSE;
                     }
-                    try (VkDebugUtilsMessengerCallbackDataEXT data = VkDebugUtilsMessengerCallbackDataEXT.create(pCallbackData)) {
-                        System.out.printf("%s pCallBackData.pMessage: %s\n", severity, MemoryUtil.memASCII(data.pMessage()));
-                    }
-                    return VK13.VK_FALSE;
-                }
-        );
-        VkDebugUtilsMessengerCreateInfoEXT vkDebugUtilsMessengerCreateInfoEXT = VkDebugUtilsMessengerCreateInfoEXT.calloc();
-        vkDebugUtilsMessengerCreateInfoEXT.sType(EXTDebugUtils.VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT);
-        vkDebugUtilsMessengerCreateInfoEXT.messageSeverity(
-                EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
-                        EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
-                        EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT);
-        vkDebugUtilsMessengerCreateInfoEXT.messageType(
-                EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
-                        EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
-                        EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT);
-        vkDebugUtilsMessengerCreateInfoEXT.pfnUserCallback(callback);
-        vkDebugUtilsMessengerCreateInfoEXT.pUserData(MemoryUtil.NULL);
-        return vkDebugUtilsMessengerCreateInfoEXT;
+            );
+            VkDebugUtilsMessengerCreateInfoEXT vkDebugUtilsMessengerCreateInfoEXT = VkDebugUtilsMessengerCreateInfoEXT.calloc();
+            vkDebugUtilsMessengerCreateInfoEXT.sType(EXTDebugUtils.VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT);
+            vkDebugUtilsMessengerCreateInfoEXT.messageSeverity(
+                    EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
+                            EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+                            EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT);
+            vkDebugUtilsMessengerCreateInfoEXT.messageType(
+                    EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+                            EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+                            EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT);
+            vkDebugUtilsMessengerCreateInfoEXT.pfnUserCallback(callback);
+            vkDebugUtilsMessengerCreateInfoEXT.pUserData(MemoryUtil.NULL);
+            instance = vkDebugUtilsMessengerCreateInfoEXT;
+            return vkDebugUtilsMessengerCreateInfoEXT;
+        } else {
+            return instance;
+        }
     }
 
     public long createDebugUtilsMessengerEXT(VkInstance vkInstance) {
@@ -162,7 +176,7 @@ public class Graphics {
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             LongBuffer longBuffer = memoryStack.callocLong(1);
             int result = EXTDebugUtils.vkCreateDebugUtilsMessengerEXT(vkInstance,
-                    createVkDebugUtilsMessengerCreateInfoEXT(), null, longBuffer);
+                    getVkDebugUtilsMessengerCreateInfoEXT(), null, longBuffer);
             if (result != VK13.VK_SUCCESS) {
                 throw new RuntimeException("creating debug utils messenger failed");
             }
@@ -185,9 +199,11 @@ public class Graphics {
             VkInstanceCreateInfo vkInstanceCreateInfo = VkInstanceCreateInfo.calloc(stack);
             vkInstanceCreateInfo.sType(VK13.VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO);
             vkInstanceCreateInfo.pApplicationInfo(appInfo);
-            vkInstanceCreateInfo.ppEnabledExtensionNames(addDebugExtension(stack));
-            vkInstanceCreateInfo.ppEnabledLayerNames(addKhronosValidationLayer(stack));
-            vkInstanceCreateInfo.pNext(createVkDebugUtilsMessengerCreateInfoEXT());
+            vkInstanceCreateInfo.ppEnabledExtensionNames(addExtensions(stack));
+            if (HelloWorld.VULKAN_DEBUG) {
+                vkInstanceCreateInfo.ppEnabledLayerNames(addKhronosValidationLayer(stack));
+                vkInstanceCreateInfo.pNext(getVkDebugUtilsMessengerCreateInfoEXT());
+            }
             PointerBuffer pointerBuffer = stack.mallocPointer(1);
             int result = VK13.vkCreateInstance(vkInstanceCreateInfo, null, pointerBuffer);
             if (result != VK13.VK_SUCCESS) {
