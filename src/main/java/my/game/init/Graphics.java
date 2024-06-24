@@ -102,7 +102,7 @@ public class Graphics {
                     }
                 }
                 if (!found) {
-                    throw new RuntimeException(String.format("Failed to find validation layer %s",x));
+                    throw new RuntimeException(String.format("Failed to find validation layer %s", x));
                 }
             }
             System.out.println("All requested validation layers found");
@@ -114,7 +114,7 @@ public class Graphics {
         requestedValidationLayers.add("VK_LAYER_KHRONOS_validation");
         validateVulkanLayers(requestedValidationLayers);
         PointerBuffer validationLayers = stack.mallocPointer(requestedValidationLayers.size());
-        for (String layer: requestedValidationLayers) {
+        for (String layer : requestedValidationLayers) {
             validationLayers.put(stack.UTF8(layer));
         }
         return validationLayers.rewind();
@@ -146,9 +146,8 @@ public class Graphics {
                         } else {
                             severity = "Error";
                         }
-                        try (VkDebugUtilsMessengerCallbackDataEXT data = VkDebugUtilsMessengerCallbackDataEXT.create(pCallbackData)) {
-                            System.out.printf("%s pCallBackData.pMessage: %s%n", severity, MemoryUtil.memASCII(data.pMessage()));
-                        }
+                        VkDebugUtilsMessengerCallbackDataEXT data = VkDebugUtilsMessengerCallbackDataEXT.create(pCallbackData);
+                        System.out.printf("%s pCallBackData.pMessage: %s%n", severity, MemoryUtil.memASCII(data.pMessage()));
                         return VK13.VK_FALSE;
                     }
             );
@@ -156,13 +155,13 @@ public class Graphics {
             vkDebugUtilsMessengerCreateInfoEXT
                     .sType(EXTDebugUtils.VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT)
                     .messageSeverity(
-                    EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
-                            EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
-                            EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
+                            EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
+                                    EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+                                    EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
                     .messageType(
-                    EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
-                            EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
-                            EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT)
+                            EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+                                    EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+                                    EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT)
                     .pfnUserCallback(callback)
                     .pUserData(MemoryUtil.NULL);
             instance = vkDebugUtilsMessengerCreateInfoEXT;
@@ -205,6 +204,7 @@ public class Graphics {
                 vkInstanceCreateInfo.ppEnabledLayerNames(addKhronosValidationLayer(stack));
                 vkInstanceCreateInfo.pNext(getVkDebugUtilsMessengerCreateInfoEXT());
             }
+
             PointerBuffer pointerBuffer = stack.mallocPointer(1);
             int result = VK13.vkCreateInstance(vkInstanceCreateInfo, null, pointerBuffer);
             if (result != VK13.VK_SUCCESS) {
