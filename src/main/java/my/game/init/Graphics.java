@@ -32,6 +32,7 @@ public class Graphics {
     private static VkDebugUtilsMessengerCreateInfoEXT instance;
 
     private PointerBuffer validateVulkanExtensions() {
+        Set<String> supportedExtensions = new HashSet<>();
         try (MemoryStack stack = MemoryStack.stackPush()) {
             IntBuffer extensionCount = stack.mallocInt(1); // int*
             int result = VK13.vkEnumerateInstanceExtensionProperties((ByteBuffer) null, extensionCount, null);
@@ -49,27 +50,25 @@ public class Graphics {
                 System.out.printf("vkEnumerateInstanceExtensionProperties returned failure code %d%n", result2);
             }
             System.out.printf("%d extensions supported%n", extensionCount.get(0));
-            Set<String> supportedExtensions = new HashSet<>();
             for (VkExtensionProperties x : vkExtensionPropertiesBuffer) {
                 System.out.printf("%s%n", x.extensionNameString());
                 supportedExtensions.add(x.extensionNameString());
             }
-
-            PointerBuffer glfwRequiredExtensions = GLFWVulkan.glfwGetRequiredInstanceExtensions();
-            if (glfwRequiredExtensions == null) {
-                throw new RuntimeException("glfwGetRequiredInstanceExtensions returned null");
-            }
-            for (int i = 0; i < glfwRequiredExtensions.capacity(); ++i) {
-                String curr = MemoryUtil.memASCII(glfwRequiredExtensions.get(i));
-                if (supportedExtensions.contains(curr)) {
-                    System.out.printf("GLFW required extension %s is supported%n", curr);
-                } else {
-                    System.out.printf("GLFW required extension %s is not supported%n", curr);
-                    throw new RuntimeException(String.format("GLFW required extension: %s is not supported%n", curr));
-                }
-            }
-            return glfwRequiredExtensions;
         }
+        PointerBuffer glfwRequiredExtensions = GLFWVulkan.glfwGetRequiredInstanceExtensions();
+        if (glfwRequiredExtensions == null) {
+            throw new RuntimeException("glfwGetRequiredInstanceExtensions returned null");
+        }
+        for (int i = 0; i < glfwRequiredExtensions.capacity(); ++i) {
+            String curr = MemoryUtil.memASCII(glfwRequiredExtensions.get(i));
+            if (supportedExtensions.contains(curr)) {
+                System.out.printf("GLFW required extension %s is supported%n", curr);
+            } else {
+                System.out.printf("GLFW required extension %s is not supported%n", curr);
+                throw new RuntimeException(String.format("GLFW required extension: %s is not supported%n", curr));
+            }
+        }
+        return glfwRequiredExtensions;
     }
 
     private void validateVulkanLayers(List<String> requestedValidationLayers) {
