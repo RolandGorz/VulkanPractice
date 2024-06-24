@@ -42,6 +42,8 @@ public class Devices {
             VK13.vkGetPhysicalDeviceFeatures(vkPhysicalDevice, vkPhysicalDeviceFeatures);
             System.out.printf("physical device \"%s\" geometry shader availability: %b%n",
                     vkPhysicalDeviceProperties.deviceNameString(), vkPhysicalDeviceFeatures.geometryShader());
+            vkPhysicalDeviceProperties.free();
+            vkPhysicalDeviceFeatures.free();
         }
     }
 }

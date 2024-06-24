@@ -45,6 +45,9 @@ public class HelloWorld {
         }
         //Free vulkan
         VK13.vkDestroyInstance(vkInstance, null);
+        if (VULKAN_DEBUG) {
+            graphics.freeVkDebugUtilsMessengerCreateInfoEXT();
+        }
 
         // Free the window callbacks and destroy the window
         Callbacks.glfwFreeCallbacks(windowPointer);

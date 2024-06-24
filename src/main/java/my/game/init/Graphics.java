@@ -29,7 +29,8 @@ import java.util.Set;
 public class Graphics {
 
     //TODO cleanly start using singletons.
-    private static VkDebugUtilsMessengerCreateInfoEXT instance;
+    private static VkDebugUtilsMessengerCreateInfoEXT vkDebugUtilsMessengerCreateInfoEXTinstance;
+    private static VkDebugUtilsMessengerCallbackEXT vkDebugUtilsMessengerCallbackEXTinstance;
 
     private PointerBuffer validateVulkanExtensions() {
         Set<String> supportedExtensions = new HashSet<>();
@@ -131,8 +132,15 @@ public class Graphics {
         }
     }
 
+    public void freeVkDebugUtilsMessengerCreateInfoEXT() {
+        if (vkDebugUtilsMessengerCreateInfoEXTinstance != null) {
+            vkDebugUtilsMessengerCreateInfoEXTinstance.free();
+            vkDebugUtilsMessengerCallbackEXTinstance.free();
+        }
+    }
+
     private VkDebugUtilsMessengerCreateInfoEXT getVkDebugUtilsMessengerCreateInfoEXT() {
-        if (instance == null) {
+        if (vkDebugUtilsMessengerCreateInfoEXTinstance == null) {
             VkDebugUtilsMessengerCallbackEXT callback = VkDebugUtilsMessengerCallbackEXT.create(
                     (messageSeverity, messageTypes, pCallbackData, pUserData) -> {
                         final String severity;
@@ -145,6 +153,9 @@ public class Graphics {
                         } else {
                             severity = "Error";
                         }
+                        //Previous commit said not to free things created by BufferUtils. That is wrong. I just don't need
+                        // to free this VkDebugUtilsMessengerCallbackDataEXT since it's a struct created from an existing
+                        // memory address that will be freed by whatever created it.
                         VkDebugUtilsMessengerCallbackDataEXT data = VkDebugUtilsMessengerCallbackDataEXT.create(pCallbackData);
                         System.out.printf("%s pCallBackData.pMessage: %s%n", severity, MemoryUtil.memASCII(data.pMessage()));
                         return VK13.VK_FALSE;
@@ -163,10 +174,11 @@ public class Graphics {
                                     EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT)
                     .pfnUserCallback(callback)
                     .pUserData(MemoryUtil.NULL);
-            instance = vkDebugUtilsMessengerCreateInfoEXT;
+            vkDebugUtilsMessengerCreateInfoEXTinstance = vkDebugUtilsMessengerCreateInfoEXT;
+            vkDebugUtilsMessengerCallbackEXTinstance = callback;
             return vkDebugUtilsMessengerCreateInfoEXT;
         } else {
-            return instance;
+            return vkDebugUtilsMessengerCreateInfoEXTinstance;
         }
     }
 
@@ -189,9 +201,9 @@ public class Graphics {
         try (MemoryStack stack = MemoryStack.stackPush()) {
             VkApplicationInfo appInfo = VkApplicationInfo.calloc(stack);
             appInfo.sType(VK13.VK_STRUCTURE_TYPE_APPLICATION_INFO);
-            appInfo.pApplicationName(MemoryUtil.memASCII("Hello Triangle"));
+            appInfo.pApplicationName(MemoryStack.stackASCII("Hello Triangle"));
             appInfo.applicationVersion(VK13.VK_MAKE_VERSION(1, 0, 0));
-            appInfo.pEngineName(MemoryUtil.memASCII("No Engine"));
+            appInfo.pEngineName(MemoryStack.stackASCII("No Engine"));
             appInfo.engineVersion(VK13.VK_MAKE_VERSION(1, 0, 0));
             appInfo.apiVersion(VK13.VK_API_VERSION_1_0);
 
@@ -204,12 +216,12 @@ public class Graphics {
                 vkInstanceCreateInfo.pNext(getVkDebugUtilsMessengerCreateInfoEXT());
             }
 
-            PointerBuffer pointerBuffer = stack.mallocPointer(1);
-            int result = VK13.vkCreateInstance(vkInstanceCreateInfo, null, pointerBuffer);
+            PointerBuffer vulkanInstancePointer = stack.mallocPointer(1);
+            int result = VK13.vkCreateInstance(vkInstanceCreateInfo, null, vulkanInstancePointer);
             if (result != VK13.VK_SUCCESS) {
                 throw new RuntimeException(String.format("creating vulkan instance failed error code %d", result));
             }
-            return new VkInstance(pointerBuffer.get(0), vkInstanceCreateInfo);
+            return new VkInstance(vulkanInstancePointer.get(0), vkInstanceCreateInfo);
         }
     }
 }
