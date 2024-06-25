@@ -46,6 +46,12 @@ public class HelloWorld {
         Devices devices = new Devices();
         PriorityQueue<Devices.PhysicalDeviceScore> physicalDeviceScores = devices.getPhysicalDevices(vkInstance);
 
+        if (physicalDeviceScores.isEmpty() || physicalDeviceScores.peek().score() == 0) {
+            throw new RuntimeException("No device found that is capable of rendering anything with. We give up");
+        }
+
+        VkPhysicalDevice chosenDevice = physicalDeviceScores.poll().physicalDevice();
+
         GLFW.glfwShowWindow(windowPointer);
         while (!GLFW.glfwWindowShouldClose(windowPointer)) {
             GLFW.glfwPollEvents();
