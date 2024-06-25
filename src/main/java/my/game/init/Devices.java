@@ -10,10 +10,12 @@ import org.lwjgl.vulkan.VkPhysicalDeviceProperties;
 
 import java.nio.IntBuffer;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.PriorityQueue;
 
 public class Devices {
-    public void getPhysicalDevices(VkInstance vkInstance) {
+    public PriorityQueue<PhysicalDeviceScore> getPhysicalDevices(VkInstance vkInstance) {
         List<VkPhysicalDevice> vkPhysicalDeviceList = new ArrayList<>();
         try(MemoryStack memoryStack = MemoryStack.stackPush()) {
             IntBuffer deviceCount = memoryStack.mallocInt(1);
@@ -35,15 +37,41 @@ public class Devices {
                 vkPhysicalDeviceList.add(new VkPhysicalDevice(devicesPointer.get(i), vkInstance));
             }
         }
+        PriorityQueue<PhysicalDeviceScore> priorityQueue = new PriorityQueue<>(Comparator.reverseOrder());
         for (VkPhysicalDevice vkPhysicalDevice : vkPhysicalDeviceList) {
-            VkPhysicalDeviceProperties vkPhysicalDeviceProperties = VkPhysicalDeviceProperties.calloc();
-            VkPhysicalDeviceFeatures vkPhysicalDeviceFeatures = VkPhysicalDeviceFeatures.calloc();
+            priorityQueue.add(determineDeviceSuitability(vkPhysicalDevice));
+        }
+        return priorityQueue;
+    }
+
+    public PhysicalDeviceScore determineDeviceSuitability(VkPhysicalDevice vkPhysicalDevice) {
+        try (MemoryStack memoryStack = MemoryStack.stackPush()) {
+            VkPhysicalDeviceProperties vkPhysicalDeviceProperties = VkPhysicalDeviceProperties.malloc(memoryStack);
+            VkPhysicalDeviceFeatures vkPhysicalDeviceFeatures = VkPhysicalDeviceFeatures.malloc(memoryStack);
             VK13.vkGetPhysicalDeviceProperties(vkPhysicalDevice, vkPhysicalDeviceProperties);
             VK13.vkGetPhysicalDeviceFeatures(vkPhysicalDevice, vkPhysicalDeviceFeatures);
             System.out.printf("physical device \"%s\" geometry shader availability: %b%n",
                     vkPhysicalDeviceProperties.deviceNameString(), vkPhysicalDeviceFeatures.geometryShader());
-            vkPhysicalDeviceProperties.free();
-            vkPhysicalDeviceFeatures.free();
+            int score = 0;
+            // Discrete GPUs have a significant performance advantage
+            if (vkPhysicalDeviceProperties.deviceType() == VK13.VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
+                score += 1000;
+            }
+            // Maximum possible size of textures affects graphics quality
+            score += vkPhysicalDeviceProperties.limits().maxImageDimension2D();
+            // Application can't function without geometry shaders
+            if (!vkPhysicalDeviceFeatures.geometryShader()) {
+                score = 0;
+            }
+            return new PhysicalDeviceScore(vkPhysicalDevice, score);
         }
     }
+
+    public record PhysicalDeviceScore(VkPhysicalDevice physicalDevice, int score) implements Comparable<PhysicalDeviceScore> {
+
+        @Override
+            public int compareTo(PhysicalDeviceScore o) {
+                return this.score - o.score;
+            }
+        }
 }

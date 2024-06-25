@@ -10,6 +10,9 @@ import org.lwjgl.glfw.GLFW;
 import org.lwjgl.vulkan.EXTDebugUtils;
 import org.lwjgl.vulkan.VK13;
 import org.lwjgl.vulkan.VkInstance;
+import org.lwjgl.vulkan.VkPhysicalDevice;
+
+import java.util.PriorityQueue;
 
 //TODO properly free memory when there are exceptions. Right now im just letting it leak like crazy especially in
 // the places where I just throw runtime exception
@@ -41,7 +44,7 @@ public class HelloWorld {
             pDebugUtilsMessengerEXT = graphics.createDebugUtilsMessengerEXT(vkInstance);
         }
         Devices devices = new Devices();
-        devices.getPhysicalDevices(vkInstance);
+        PriorityQueue<Devices.PhysicalDeviceScore> physicalDeviceScores = devices.getPhysicalDevices(vkInstance);
 
         GLFW.glfwShowWindow(windowPointer);
         while (!GLFW.glfwWindowShouldClose(windowPointer)) {
