@@ -12,10 +12,12 @@ import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.PriorityQueue;
 
 public class Devices {
-    public PriorityQueue<PhysicalDeviceScore> getPhysicalDevices(VkInstance vkInstance) {
+
+    public PriorityQueue<PhysicalDeviceInformation> getPhysicalDevices(VkInstance vkInstance) {
         List<VkPhysicalDevice> vkPhysicalDeviceList = new ArrayList<>();
         try(MemoryStack memoryStack = MemoryStack.stackPush()) {
             IntBuffer deviceCount = memoryStack.mallocInt(1);
@@ -37,14 +39,17 @@ public class Devices {
                 vkPhysicalDeviceList.add(new VkPhysicalDevice(devicesPointer.get(i), vkInstance));
             }
         }
-        PriorityQueue<PhysicalDeviceScore> priorityQueue = new PriorityQueue<>(Comparator.reverseOrder());
+        PriorityQueue<PhysicalDeviceInformation> priorityQueue = new PriorityQueue<>(Comparator.reverseOrder());
         for (VkPhysicalDevice vkPhysicalDevice : vkPhysicalDeviceList) {
-            priorityQueue.add(determineDeviceSuitability(vkPhysicalDevice));
+            PhysicalDeviceInformation curr = determineDeviceSuitability(vkPhysicalDevice);
+            if (curr.score() > 0) {
+                priorityQueue.add(curr);
+            }
         }
         return priorityQueue;
     }
 
-    public PhysicalDeviceScore determineDeviceSuitability(VkPhysicalDevice vkPhysicalDevice) {
+    public PhysicalDeviceInformation determineDeviceSuitability(VkPhysicalDevice vkPhysicalDevice) {
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             VkPhysicalDeviceProperties vkPhysicalDeviceProperties = VkPhysicalDeviceProperties.malloc(memoryStack);
             VkPhysicalDeviceFeatures vkPhysicalDeviceFeatures = VkPhysicalDeviceFeatures.malloc(memoryStack);
@@ -63,14 +68,17 @@ public class Devices {
             if (!vkPhysicalDeviceFeatures.geometryShader()) {
                 score = 0;
             }
-            return new PhysicalDeviceScore(vkPhysicalDevice, score);
+            QueueFamily queueFamily = QueueFamily.getInstance();
+            return new PhysicalDeviceInformation(vkPhysicalDevice, score, queueFamily.getGraphicsFamilyIndex(vkPhysicalDevice));
         }
     }
 
-    public record PhysicalDeviceScore(VkPhysicalDevice physicalDevice, int score) implements Comparable<PhysicalDeviceScore> {
+    public record PhysicalDeviceInformation(
+            VkPhysicalDevice physicalDevice, int score, Optional<Integer> graphicsQueueFamilyIndex
+    ) implements Comparable<PhysicalDeviceInformation> {
 
         @Override
-            public int compareTo(PhysicalDeviceScore o) {
+            public int compareTo(PhysicalDeviceInformation o) {
                 return this.score - o.score;
             }
         }

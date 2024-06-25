@@ -7,6 +7,7 @@ import my.game.shaders.ShaderLoader;
 import org.lwjgl.Version;
 import org.lwjgl.glfw.Callbacks;
 import org.lwjgl.glfw.GLFW;
+import org.lwjgl.system.Configuration;
 import org.lwjgl.vulkan.EXTDebugUtils;
 import org.lwjgl.vulkan.VK13;
 import org.lwjgl.vulkan.VkInstance;
@@ -23,8 +24,8 @@ public class HelloWorld {
     static {
         VULKAN_DEBUG = Boolean.parseBoolean(System.getProperty("myGameVulkanDebug"));
         if (VULKAN_DEBUG) {
-            System.setProperty("org.lwjgl.util.DebugAllocator", "true");
-            System.setProperty("org.lwjgl.util.DebugStack", "true");
+            Configuration.DEBUG_MEMORY_ALLOCATOR.set(true);
+            Configuration.DEBUG_STACK.set(true);
         }
     }
 
@@ -44,7 +45,7 @@ public class HelloWorld {
             pDebugUtilsMessengerEXT = graphics.createDebugUtilsMessengerEXT(vkInstance);
         }
         Devices devices = new Devices();
-        PriorityQueue<Devices.PhysicalDeviceScore> physicalDeviceScores = devices.getPhysicalDevices(vkInstance);
+        PriorityQueue<Devices.PhysicalDeviceInformation> physicalDeviceScores = devices.getPhysicalDevices(vkInstance);
 
         if (physicalDeviceScores.isEmpty() || physicalDeviceScores.peek().score() == 0) {
             throw new RuntimeException("No device found that is capable of rendering anything with. We give up");
