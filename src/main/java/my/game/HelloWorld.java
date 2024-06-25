@@ -15,7 +15,15 @@ import org.lwjgl.vulkan.VkInstance;
 // the places where I just throw runtime exception
 public class HelloWorld {
 
-    public static boolean VULKAN_DEBUG = Boolean.parseBoolean(System.getProperty("myGameVulkanDebug"));
+    public static boolean VULKAN_DEBUG;
+
+    static {
+        VULKAN_DEBUG = Boolean.parseBoolean(System.getProperty("myGameVulkanDebug"));
+        if (VULKAN_DEBUG) {
+            System.setProperty("org.lwjgl.util.DebugAllocator", "true");
+            System.setProperty("org.lwjgl.util.DebugStack", "true");
+        }
+    }
 
     public static void main(String[] args) {
         System.out.println("Hello LWJGL " + Version.getVersion() + "!");
