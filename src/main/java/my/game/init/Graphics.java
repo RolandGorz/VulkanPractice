@@ -24,8 +24,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-//TODO pop stack sooner. Think about how to free memory asap. ValidateVulkanExtensions is an example of stupidly not popping
-// stack until the end
 public class Graphics {
 
     //TODO cleanly start using singletons.

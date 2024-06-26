@@ -50,6 +50,7 @@ public class Devices {
     }
 
     public PhysicalDeviceInformation determineDeviceSuitability(VkPhysicalDevice vkPhysicalDevice) {
+        int score = 0;
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             VkPhysicalDeviceProperties vkPhysicalDeviceProperties = VkPhysicalDeviceProperties.malloc(memoryStack);
             VkPhysicalDeviceFeatures vkPhysicalDeviceFeatures = VkPhysicalDeviceFeatures.malloc(memoryStack);
@@ -57,7 +58,6 @@ public class Devices {
             VK13.vkGetPhysicalDeviceFeatures(vkPhysicalDevice, vkPhysicalDeviceFeatures);
             System.out.printf("physical device \"%s\" geometry shader availability: %b%n",
                     vkPhysicalDeviceProperties.deviceNameString(), vkPhysicalDeviceFeatures.geometryShader());
-            int score = 0;
             // Discrete GPUs have a significant performance advantage
             if (vkPhysicalDeviceProperties.deviceType() == VK13.VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
                 score += 1000;
@@ -68,9 +68,9 @@ public class Devices {
             if (!vkPhysicalDeviceFeatures.geometryShader()) {
                 score = 0;
             }
-            QueueFamily queueFamily = QueueFamily.getInstance();
-            return new PhysicalDeviceInformation(vkPhysicalDevice, score, queueFamily.getGraphicsFamilyIndex(vkPhysicalDevice));
         }
+        QueueFamily queueFamily = QueueFamily.getInstance();
+        return new PhysicalDeviceInformation(vkPhysicalDevice, score, queueFamily.getGraphicsFamilyIndex(vkPhysicalDevice));
     }
 
     public record PhysicalDeviceInformation(

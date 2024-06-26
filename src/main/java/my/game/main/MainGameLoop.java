@@ -13,7 +13,6 @@ import org.lwjgl.vulkan.VK13;
 import org.lwjgl.vulkan.VkInstance;
 import org.lwjgl.vulkan.VkPhysicalDevice;
 
-import java.io.IOException;
 import java.util.PriorityQueue;
 
 public class MainGameLoop {
@@ -28,7 +27,7 @@ public class MainGameLoop {
     private long pDebugUtilsMessengerEXT = 0L;
     private VkInstance vulkanInstance;
 
-    public MainGameLoop() throws IOException {
+    public MainGameLoop() {
         shaderCompiler = new ShaderCompiler();
         shaderLoader = new ShaderLoader();
         window = new Window();

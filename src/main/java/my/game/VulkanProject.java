@@ -4,8 +4,6 @@ import my.game.main.MainGameLoop;
 import org.lwjgl.Version;
 import org.lwjgl.system.Configuration;
 
-import java.io.IOException;
-
 //TODO properly free memory when there are exceptions. Right now im just letting it leak like crazy especially in
 // the places where I just throw runtime exception
 public class VulkanProject {
@@ -20,7 +18,7 @@ public class VulkanProject {
         }
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         System.out.println("Hello LWJGL " + Version.getVersion() + "!");
         new MainGameLoop().start();
     }
