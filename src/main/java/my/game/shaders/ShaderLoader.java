@@ -1,17 +1,33 @@
 package my.game.shaders;
 
-import org.lwjgl.util.shaderc.Shaderc;
-
 import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.util.Enumeration;
 
 public class ShaderLoader {
     public void loadShaders() {
-        //TODO this is kind of stupid and will only work running from intellij. Think of how you want to handle shaders
-        // properly.
-        File fragmentShader = new File("src/main/resources/shaders/simple_shader.frag.spv");
-        File vertexShader = new File("src/main/resources/shaders/simple_shader.vert.spv");
-
-        System.out.printf("Fragment shader code size %d\n", fragmentShader.length());
-        System.out.printf("Vertex shader code size %d\n", vertexShader.length());
+        Enumeration<URL> shaderResources;
+        try {
+            shaderResources = this.getClass().getClassLoader().getResources("shaders/compiled");
+        } catch (IOException e) {
+            System.out.printf("Error occurred trying to load compiled shaders. %s%n", e);
+            throw new RuntimeException(e);
+        }
+        if (!shaderResources.hasMoreElements()) {
+            throw new IllegalStateException("No shaders directory found. Giving up");
+        }
+        URL shadersDirectoryURL = shaderResources.nextElement();
+        if (shaderResources.hasMoreElements()) {
+            throw new IllegalStateException("More than one shaders directory found. Giving up");
+        }
+        File shadersDirectory = new File(shadersDirectoryURL.getFile());
+        File[] files = shadersDirectory.listFiles();
+        if (files == null) {
+            throw new IllegalStateException(String.format("Shaders directory is empty at %s", shadersDirectory.getName()));
+        }
+        for (File f : files) {
+            System.out.printf("%s shader code size %d\n", f.getName(), f.length());
+        }
     }
 }

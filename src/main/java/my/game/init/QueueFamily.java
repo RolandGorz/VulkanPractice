@@ -12,11 +12,11 @@ public class QueueFamily {
 
     private static final QueueFamily INSTANCE = new QueueFamily();
 
+    private QueueFamily() {}
+
     public static QueueFamily getInstance() {
         return INSTANCE;
     }
-
-    private QueueFamily() {}
 
     public Optional<Integer> getGraphicsFamilyIndex(VkPhysicalDevice physicalDevice) {
         try (MemoryStack stack = MemoryStack.stackPush()) {

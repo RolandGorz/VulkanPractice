@@ -1,6 +1,6 @@
 package my.game.init;
 
-import my.game.HelloWorld;
+import my.game.VulkanProject;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.GLFWVulkan;
 import org.lwjgl.system.MemoryStack;
@@ -122,7 +122,7 @@ public class Graphics {
 
     private PointerBuffer addExtensions(MemoryStack stack) {
         PointerBuffer glfwRequiredExtensions = validateVulkanExtensions();
-        if (HelloWorld.VULKAN_DEBUG) {
+        if (VulkanProject.VULKAN_DEBUG) {
             PointerBuffer extensions = stack.mallocPointer(glfwRequiredExtensions.capacity() + 1);
             extensions.put(glfwRequiredExtensions);
             extensions.put(stack.UTF8(EXTDebugUtils.VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
@@ -211,7 +211,7 @@ public class Graphics {
             vkInstanceCreateInfo.sType(VK13.VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO);
             vkInstanceCreateInfo.pApplicationInfo(appInfo);
             vkInstanceCreateInfo.ppEnabledExtensionNames(addExtensions(stack));
-            if (HelloWorld.VULKAN_DEBUG) {
+            if (VulkanProject.VULKAN_DEBUG) {
                 vkInstanceCreateInfo.ppEnabledLayerNames(addKhronosValidationLayer(stack));
                 vkInstanceCreateInfo.pNext(getVkDebugUtilsMessengerCreateInfoEXT());
             }

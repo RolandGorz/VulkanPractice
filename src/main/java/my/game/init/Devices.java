@@ -19,7 +19,7 @@ public class Devices {
 
     public PriorityQueue<PhysicalDeviceInformation> getPhysicalDevices(VkInstance vkInstance) {
         List<VkPhysicalDevice> vkPhysicalDeviceList = new ArrayList<>();
-        try(MemoryStack memoryStack = MemoryStack.stackPush()) {
+        try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             IntBuffer deviceCount = memoryStack.mallocInt(1);
             int result = VK13.vkEnumeratePhysicalDevices(vkInstance, deviceCount, null);
             if (result == VK13.VK_SUCCESS) {
@@ -78,8 +78,8 @@ public class Devices {
     ) implements Comparable<PhysicalDeviceInformation> {
 
         @Override
-            public int compareTo(PhysicalDeviceInformation o) {
-                return this.score - o.score;
-            }
+        public int compareTo(PhysicalDeviceInformation o) {
+            return this.score - o.score;
         }
+    }
 }
