@@ -2,8 +2,8 @@ package my.game.main;
 
 import my.game.VulkanProject;
 import my.game.init.Devices;
-import my.game.init.Graphics;
 import my.game.init.Window;
+import my.game.init.vulkan.VulkanInstanceBuilder;
 import my.game.shaders.ShaderCompiler;
 import my.game.shaders.ShaderLoader;
 import org.lwjgl.glfw.Callbacks;
@@ -20,7 +20,7 @@ public class MainGameLoop {
     private final ShaderCompiler shaderCompiler;
     private final ShaderLoader shaderLoader;
     private final Window window;
-    private final Graphics graphics;
+    private final VulkanInstanceBuilder vulkanInstanceBuilder;
     private final Devices devices;
 
     private long windowPointer;
@@ -31,7 +31,7 @@ public class MainGameLoop {
         shaderCompiler = new ShaderCompiler();
         shaderLoader = new ShaderLoader();
         window = new Window();
-        graphics = new Graphics();
+        vulkanInstanceBuilder = new VulkanInstanceBuilder();
         devices = new Devices();
     }
 
@@ -48,11 +48,7 @@ public class MainGameLoop {
         shaderCompiler.compileShaders();
         shaderLoader.loadShaders();
         windowPointer = window.initialize();
-        vulkanInstance = graphics.initVulkan();
-        //TODO checking if debug is enabled or not for this part sucks. Clean it up
-        if (VulkanProject.VULKAN_DEBUG) {
-            pDebugUtilsMessengerEXT = graphics.createDebugUtilsMessengerEXT(vulkanInstance);
-        }
+        vulkanInstance = vulkanInstanceBuilder.initVulkan();
         PriorityQueue<Devices.PhysicalDeviceInformation> physicalDeviceScores = devices.getPhysicalDevices(vulkanInstance);
         if (physicalDeviceScores.isEmpty() || physicalDeviceScores.peek().score() == 0) {
             throw new RuntimeException("No device found that is capable of rendering anything with. We give up");
@@ -61,14 +57,7 @@ public class MainGameLoop {
     }
 
     private void destroy() {
-        if (VulkanProject.VULKAN_DEBUG) {
-            EXTDebugUtils.vkDestroyDebugUtilsMessengerEXT(vulkanInstance, pDebugUtilsMessengerEXT, null);
-        }
-        //Free vulkan
-        VK13.vkDestroyInstance(vulkanInstance, null);
-        if (VulkanProject.VULKAN_DEBUG) {
-            graphics.freeVkDebugUtilsMessengerCreateInfoEXT();
-        }
+        vulkanInstanceBuilder.free();
 
         // Free the window callbacks and destroy the window
         Callbacks.glfwFreeCallbacks(windowPointer);
