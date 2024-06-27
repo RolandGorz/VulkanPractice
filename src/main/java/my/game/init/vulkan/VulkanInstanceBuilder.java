@@ -5,6 +5,7 @@ import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.GLFWVulkan;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
+import org.lwjgl.system.Platform;
 import org.lwjgl.vulkan.VK13;
 import org.lwjgl.vulkan.VkApplicationInfo;
 import org.lwjgl.vulkan.VkExtensionProperties;
@@ -42,7 +43,7 @@ public class VulkanInstanceBuilder {
             VkInstanceCreateInfo vkInstanceCreateInfo = VkInstanceCreateInfo.calloc(stack);
             vkInstanceCreateInfo.sType(VK13.VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO)
                     .pApplicationInfo(appInfo)
-                    .ppEnabledExtensionNames(getGlfwRequiredExtensions());
+                    .ppEnabledExtensionNames(getRequiredExtensions());
 
             if (VulkanProject.VULKAN_DEBUG) {
                 debugVulkanInstanceBuilder.addDebugForInitializationAndDestruction(vkInstanceCreateInfo, stack);
@@ -73,7 +74,7 @@ public class VulkanInstanceBuilder {
         }
     }
 
-    private PointerBuffer getGlfwRequiredExtensions() {
+    private PointerBuffer getRequiredExtensions() {
         Set<String> supportedExtensions = new HashSet<>();
         try (MemoryStack stack = MemoryStack.stackPush()) {
             IntBuffer extensionCount = stack.mallocInt(1); // int*

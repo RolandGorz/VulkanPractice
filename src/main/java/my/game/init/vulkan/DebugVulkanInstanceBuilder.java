@@ -133,7 +133,7 @@ public class DebugVulkanInstanceBuilder {
             } else {
                 System.out.println("vkEnumerateInstanceLayerProperties returned failure");
             }
-            System.out.printf("%d extensions supported%n", layerCount.get(0));
+            System.out.printf("%d available layers%n", layerCount.get(0));
             for (VkLayerProperties x : vkLayerPropertiesBuffer) {
                 System.out.printf("%s%n", x.layerNameString());
             }

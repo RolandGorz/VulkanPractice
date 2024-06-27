@@ -64,10 +64,6 @@ public class Devices {
             }
             // Maximum possible size of textures affects graphics quality
             score += vkPhysicalDeviceProperties.limits().maxImageDimension2D();
-            // Application can't function without geometry shaders
-            if (!vkPhysicalDeviceFeatures.geometryShader()) {
-                score = 0;
-            }
         }
         QueueFamily queueFamily = QueueFamily.getInstance();
         return new PhysicalDeviceInformation(vkPhysicalDevice, score, queueFamily.getGraphicsFamilyIndex(vkPhysicalDevice));
