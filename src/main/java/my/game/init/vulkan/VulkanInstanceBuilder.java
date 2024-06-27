@@ -6,6 +6,8 @@ import org.lwjgl.glfw.GLFWVulkan;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.system.Platform;
+import org.lwjgl.vulkan.EXTDebugUtils;
+import org.lwjgl.vulkan.KHRPortabilityEnumeration;
 import org.lwjgl.vulkan.VK13;
 import org.lwjgl.vulkan.VkApplicationInfo;
 import org.lwjgl.vulkan.VkExtensionProperties;
@@ -45,6 +47,12 @@ public class VulkanInstanceBuilder {
                     .pApplicationInfo(appInfo)
                     .ppEnabledExtensionNames(getRequiredExtensions());
 
+            if(Platform.get() == Platform.MACOSX) {
+                addRequiredMacExtensions(vkInstanceCreateInfo, stack);
+                int updatedFlags = vkInstanceCreateInfo.flags() | KHRPortabilityEnumeration.VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+                vkInstanceCreateInfo.flags(updatedFlags);
+            }
+
             if (VulkanProject.VULKAN_DEBUG) {
                 debugVulkanInstanceBuilder.addDebugForInitializationAndDestruction(vkInstanceCreateInfo, stack);
                 debugVulkanInstanceBuilder.addValidationLayers(vkInstanceCreateInfo, stack);
@@ -62,6 +70,18 @@ public class VulkanInstanceBuilder {
             debugVulkanInstanceBuilder.createDebugUtilsMessengerEXT(vkInstance);
         }
         return vkInstance;
+    }
+
+    private void addRequiredMacExtensions(VkInstanceCreateInfo vkInstanceCreateInfo, MemoryStack memoryStack) {
+        PointerBuffer originalExtensions = vkInstanceCreateInfo.ppEnabledExtensionNames();
+        int originalCapacity = originalExtensions == null ? 0 : originalExtensions.capacity();
+        PointerBuffer newExtensions = memoryStack.mallocPointer(originalCapacity + 1);
+        if (originalCapacity != 0) {
+            newExtensions.put(originalExtensions);
+        }
+        newExtensions.put(memoryStack.UTF8(KHRPortabilityEnumeration.VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME));
+        newExtensions.rewind();
+        vkInstanceCreateInfo.ppEnabledExtensionNames(newExtensions);
     }
 
     public void free() {
