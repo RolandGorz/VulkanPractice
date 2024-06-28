@@ -6,7 +6,7 @@ import org.lwjgl.system.MemoryUtil;
 
 public class Window {
     public long initialize() {
-        // Setup an error callback. The default implementation
+        // Set up an error callback. The default implementation
         // will print the error message in System.err.
         GLFWErrorCallback.createPrint(System.err).set();
 

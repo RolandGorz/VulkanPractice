@@ -10,7 +10,7 @@ import java.nio.file.Files;
 import java.util.Enumeration;
 
 // IMPORTANT!!! we must call this at runtime since the shaders are compiled to be understood by the user's cpu.
-// If i compiled the shader on my machine and then shipped the compiled shaders to be used by other people it
+// If I compiled the shader on my machine and then shipped the compiled shaders to be used by other people it
 // would fail spectacularly to be understood by their gpu.
 public class ShaderCompiler {
 

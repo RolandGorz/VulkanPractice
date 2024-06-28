@@ -6,7 +6,6 @@ import org.lwjgl.glfw.GLFWVulkan;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.system.Platform;
-import org.lwjgl.vulkan.EXTDebugUtils;
 import org.lwjgl.vulkan.KHRPortabilityEnumeration;
 import org.lwjgl.vulkan.VK13;
 import org.lwjgl.vulkan.VkApplicationInfo;
