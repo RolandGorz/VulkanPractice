@@ -1,6 +1,7 @@
 package my.game.main;
 
-import my.game.init.Devices;
+import my.game.init.vulkan.devices.physical.PhysicalDeviceInformation;
+import my.game.init.vulkan.devices.physical.PhysicalDevices;
 import my.game.init.Window;
 import my.game.init.vulkan.VulkanInstanceBuilder;
 import my.game.shaders.ShaderCompiler;
@@ -18,7 +19,7 @@ public class MainGameLoop {
     private final ShaderLoader shaderLoader;
     private final Window window;
     private final VulkanInstanceBuilder vulkanInstanceBuilder;
-    private final Devices devices;
+    private final PhysicalDevices devices;
 
     private long windowPointer;
 
@@ -27,7 +28,7 @@ public class MainGameLoop {
         shaderLoader = new ShaderLoader();
         window = new Window();
         vulkanInstanceBuilder = new VulkanInstanceBuilder();
-        devices = new Devices();
+        devices = new PhysicalDevices();
     }
 
     public void start() {
@@ -44,7 +45,7 @@ public class MainGameLoop {
         shaderLoader.loadShaders();
         windowPointer = window.initialize();
         VkInstance vulkanInstance = vulkanInstanceBuilder.initVulkan();
-        PriorityQueue<Devices.PhysicalDeviceInformation> physicalDeviceScores = devices.getPhysicalDevices(vulkanInstance);
+        PriorityQueue<PhysicalDeviceInformation> physicalDeviceScores = devices.getPhysicalDevices(vulkanInstance);
         if (physicalDeviceScores.isEmpty() || physicalDeviceScores.peek().score() == 0) {
             throw new RuntimeException("No device found that is capable of rendering anything with. We give up");
         }

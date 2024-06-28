@@ -1,5 +1,6 @@
-package my.game.init;
+package my.game.init.vulkan.devices.physical;
 
+import my.game.init.vulkan.devices.queue.QueueFamily;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VK13;
@@ -12,10 +13,9 @@ import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 import java.util.PriorityQueue;
 
-public class Devices {
+public class PhysicalDevices {
 
     public PriorityQueue<PhysicalDeviceInformation> getPhysicalDevices(VkInstance vkInstance) {
         List<VkPhysicalDevice> vkPhysicalDeviceList = new ArrayList<>();
@@ -67,15 +67,5 @@ public class Devices {
         }
         QueueFamily queueFamily = QueueFamily.getInstance();
         return new PhysicalDeviceInformation(vkPhysicalDevice, score, queueFamily.getGraphicsFamilyIndex(vkPhysicalDevice));
-    }
-
-    public record PhysicalDeviceInformation(
-            VkPhysicalDevice physicalDevice, int score, Optional<Integer> graphicsQueueFamilyIndex
-    ) implements Comparable<PhysicalDeviceInformation> {
-
-        @Override
-        public int compareTo(PhysicalDeviceInformation o) {
-            return this.score - o.score;
-        }
     }
 }

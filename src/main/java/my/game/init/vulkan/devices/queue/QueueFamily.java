@@ -1,4 +1,4 @@
-package my.game.init;
+package my.game.init.vulkan.devices.queue;
 
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VK13;
