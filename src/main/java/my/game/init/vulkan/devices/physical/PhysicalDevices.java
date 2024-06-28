@@ -1,6 +1,6 @@
 package my.game.init.vulkan.devices.physical;
 
-import my.game.init.vulkan.devices.queue.QueueFamily;
+import my.game.init.vulkan.devices.queue.DeviceQueueFamily;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VK13;
@@ -65,7 +65,7 @@ public class PhysicalDevices {
             // Maximum possible size of textures affects graphics quality
             score += vkPhysicalDeviceProperties.limits().maxImageDimension2D();
         }
-        QueueFamily queueFamily = QueueFamily.getInstance();
+        DeviceQueueFamily queueFamily = DeviceQueueFamily.getInstance();
         return new PhysicalDeviceInformation(vkPhysicalDevice, score, queueFamily.getGraphicsFamilyIndex(vkPhysicalDevice));
     }
 }

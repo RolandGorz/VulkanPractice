@@ -8,13 +8,13 @@ import org.lwjgl.vulkan.VkQueueFamilyProperties;
 import java.nio.IntBuffer;
 import java.util.Optional;
 
-public class QueueFamily {
+public class DeviceQueueFamily {
 
-    private static final QueueFamily INSTANCE = new QueueFamily();
+    private static final DeviceQueueFamily INSTANCE = new DeviceQueueFamily();
 
-    private QueueFamily() {}
+    private DeviceQueueFamily() {}
 
-    public static QueueFamily getInstance() {
+    public static DeviceQueueFamily getInstance() {
         return INSTANCE;
     }
 

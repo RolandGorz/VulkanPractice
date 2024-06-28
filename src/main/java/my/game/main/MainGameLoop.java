@@ -1,15 +1,16 @@
 package my.game.main;
 
+import my.game.init.vulkan.devices.logical.LogicalDevice;
 import my.game.init.vulkan.devices.physical.PhysicalDeviceInformation;
 import my.game.init.vulkan.devices.physical.PhysicalDevices;
 import my.game.init.Window;
 import my.game.init.vulkan.VulkanInstanceBuilder;
+import my.game.init.vulkan.devices.queue.GraphicsQueue;
 import my.game.shaders.ShaderCompiler;
 import my.game.shaders.ShaderLoader;
 import org.lwjgl.glfw.Callbacks;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.vulkan.VkInstance;
-import org.lwjgl.vulkan.VkPhysicalDevice;
 
 import java.util.PriorityQueue;
 
@@ -20,6 +21,8 @@ public class MainGameLoop {
     private final Window window;
     private final VulkanInstanceBuilder vulkanInstanceBuilder;
     private final PhysicalDevices devices;
+    private LogicalDevice logicalDevice;
+    private GraphicsQueue graphicsQueue;
 
     private long windowPointer;
 
@@ -49,10 +52,13 @@ public class MainGameLoop {
         if (physicalDeviceScores.isEmpty() || physicalDeviceScores.peek().score() == 0) {
             throw new RuntimeException("No device found that is capable of rendering anything with. We give up");
         }
-        VkPhysicalDevice chosenDevice = physicalDeviceScores.poll().physicalDevice();
+        PhysicalDeviceInformation chosenDevice = physicalDeviceScores.poll();
+        logicalDevice = new LogicalDevice(chosenDevice);
+        graphicsQueue = new GraphicsQueue(logicalDevice.getLogicalDeviceInformation());
     }
 
     private void destroy() {
+        logicalDevice.free();
         vulkanInstanceBuilder.free();
 
         // Free the window callbacks and destroy the window
