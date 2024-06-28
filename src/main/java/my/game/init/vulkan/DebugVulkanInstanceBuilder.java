@@ -17,7 +17,6 @@ import java.nio.LongBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-//TODO associate the vulkan instance with this. Should be a singleton pattern where this isn't a factory but a one and done.
 public class DebugVulkanInstanceBuilder {
     private static final DebugVulkanInstanceBuilder INSTANCE = new DebugVulkanInstanceBuilder();
     private static VkDebugUtilsMessengerCreateInfoEXT vkDebugUtilsMessengerCreateInfoEXTinstance;
