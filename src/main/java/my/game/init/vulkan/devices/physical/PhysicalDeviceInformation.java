@@ -4,9 +4,8 @@ import org.lwjgl.vulkan.VkPhysicalDevice;
 
 import java.util.Optional;
 
-public record PhysicalDeviceInformation(
-        VkPhysicalDevice physicalDevice, int score, Optional<Integer> graphicsQueueFamilyIndex
-) implements Comparable<PhysicalDeviceInformation> {
+public record PhysicalDeviceInformation(VkPhysicalDevice physicalDevice, int score, Optional<Integer> graphicsQueueFamilyIndex)
+        implements Comparable<PhysicalDeviceInformation> {
 
     @Override
     public int compareTo(PhysicalDeviceInformation o) {

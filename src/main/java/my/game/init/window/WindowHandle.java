@@ -1,11 +1,15 @@
-package my.game.init;
+package my.game.init.window;
 
+import org.lwjgl.glfw.Callbacks;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.system.MemoryUtil;
 
-public class Window {
-    public long initialize() {
+public class WindowHandle {
+
+    final long windowHandlePointer;
+
+    public WindowHandle() {
         // Set up an error callback. The default implementation
         // will print the error message in System.err.
         GLFWErrorCallback.createPrint(System.err).set();
@@ -20,9 +24,22 @@ public class Window {
         GLFW.glfwWindowHint(GLFW.GLFW_CLIENT_API, GLFW.GLFW_NO_API);
 
         // Create the window
-        final long window = GLFW.glfwCreateWindow(300, 300, "Hello World!", MemoryUtil.NULL, MemoryUtil.NULL);
-        if (window == MemoryUtil.NULL)
+        windowHandlePointer = GLFW.glfwCreateWindow(300, 300, "Hello World!", MemoryUtil.NULL, MemoryUtil.NULL);
+        if (windowHandlePointer == MemoryUtil.NULL)
             throw new RuntimeException("Failed to create the GLFW window");
-        return window;
+    }
+
+    public long getWindowHandlePointer() {
+        return windowHandlePointer;
+    }
+
+    public void free() {
+        // Free the window callbacks and destroy the window
+        Callbacks.glfwFreeCallbacks(windowHandlePointer);
+        GLFW.glfwDestroyWindow(windowHandlePointer);
+
+        // Terminate GLFW and free the error callback
+        GLFW.glfwTerminate();
+        GLFW.glfwSetErrorCallback(null).free();
     }
 }

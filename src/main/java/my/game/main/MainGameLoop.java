@@ -3,7 +3,7 @@ package my.game.main;
 import my.game.init.vulkan.devices.logical.LogicalDevice;
 import my.game.init.vulkan.devices.physical.PhysicalDeviceInformation;
 import my.game.init.vulkan.devices.physical.PhysicalDevices;
-import my.game.init.Window;
+import my.game.init.window.WindowHandle;
 import my.game.init.vulkan.VulkanInstanceBuilder;
 import my.game.init.vulkan.devices.queue.GraphicsQueue;
 import my.game.shaders.ShaderCompiler;
@@ -18,26 +18,23 @@ public class MainGameLoop {
 
     private final ShaderCompiler shaderCompiler;
     private final ShaderLoader shaderLoader;
-    private final Window window;
     private final VulkanInstanceBuilder vulkanInstanceBuilder;
     private final PhysicalDevices devices;
+    private WindowHandle windowHandle;
     private LogicalDevice logicalDevice;
     private GraphicsQueue graphicsQueue;
-
-    private long windowPointer;
 
     public MainGameLoop() {
         shaderCompiler = new ShaderCompiler();
         shaderLoader = new ShaderLoader();
-        window = new Window();
         vulkanInstanceBuilder = new VulkanInstanceBuilder();
         devices = new PhysicalDevices();
     }
 
     public void start() {
         initialize();
-        GLFW.glfwShowWindow(windowPointer);
-        while (!GLFW.glfwWindowShouldClose(windowPointer)) {
+        GLFW.glfwShowWindow(windowHandle.getWindowHandlePointer());
+        while (!GLFW.glfwWindowShouldClose(windowHandle.getWindowHandlePointer())) {
             GLFW.glfwPollEvents();
         }
         destroy();
@@ -46,7 +43,7 @@ public class MainGameLoop {
     private void initialize() {
         shaderCompiler.compileShaders();
         shaderLoader.loadShaders();
-        windowPointer = window.initialize();
+        windowHandle = new WindowHandle();
         VkInstance vulkanInstance = vulkanInstanceBuilder.initVulkan();
         PriorityQueue<PhysicalDeviceInformation> physicalDeviceScores = devices.getPhysicalDevices(vulkanInstance);
         if (physicalDeviceScores.isEmpty() || physicalDeviceScores.peek().score() == 0) {
@@ -60,13 +57,6 @@ public class MainGameLoop {
     private void destroy() {
         logicalDevice.free();
         vulkanInstanceBuilder.free();
-
-        // Free the window callbacks and destroy the window
-        Callbacks.glfwFreeCallbacks(windowPointer);
-        GLFW.glfwDestroyWindow(windowPointer);
-
-        // Terminate GLFW and free the error callback
-        GLFW.glfwTerminate();
-        GLFW.glfwSetErrorCallback(null).free();
+        windowHandle.free();
     }
 }

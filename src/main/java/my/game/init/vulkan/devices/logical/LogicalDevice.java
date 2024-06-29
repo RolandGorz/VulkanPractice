@@ -23,7 +23,7 @@ public class LogicalDevice {
             VkPhysicalDeviceFeatures vkPhysicalDeviceFeatures = VkPhysicalDeviceFeatures.calloc(memoryStack);
             //We only want 1 queue, so we are allocating 1 float in the buffer and then setting it as top priority.
             //The quantity of pQueuePriorities is required to be equal to the number of queues.
-            // This is why we don't need to and are unable to set the queueCount.
+            // This is why we don't need to and are unable to set the queueCount in vkDeviceQueueCreateInfo.
             FloatBuffer queuePriorities = memoryStack.mallocFloat(1);
             queuePriorities.put(1.0F);
             queuePriorities.rewind();
