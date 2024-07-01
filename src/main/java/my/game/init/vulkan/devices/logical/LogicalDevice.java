@@ -14,7 +14,7 @@ import java.nio.FloatBuffer;
 public class LogicalDevice {
     private final LogicalDeviceInformation logicalDeviceInformation;
     public LogicalDevice(PhysicalDeviceInformation physicalDeviceInformation) {
-        if (physicalDeviceInformation.graphicsQueueFamilyIndex().isEmpty()) {
+        if (physicalDeviceInformation.getQueueFamilyIndexes().getGraphicsQueueFamilyIndex().isEmpty()) {
             throw new IllegalStateException(String.format("PhysicalDeviceInformation does not have a graphics queue " +
                     "family associated with it. %s", physicalDeviceInformation));
         }
@@ -29,7 +29,7 @@ public class LogicalDevice {
             queuePriorities.rewind();
             vkDeviceQueueCreateInfo
                     .sType(VK13.VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO)
-                    .queueFamilyIndex(physicalDeviceInformation.graphicsQueueFamilyIndex().get())
+                    .queueFamilyIndex(physicalDeviceInformation.getQueueFamilyIndexes().getGraphicsQueueFamilyIndex().get())
                     .pQueuePriorities(queuePriorities);
             VkDeviceCreateInfo vkDeviceCreateInfo = VkDeviceCreateInfo.calloc(memoryStack);
             vkDeviceCreateInfo
@@ -37,11 +37,11 @@ public class LogicalDevice {
                     .pQueueCreateInfos(vkDeviceQueueCreateInfo)
                     .pEnabledFeatures(vkPhysicalDeviceFeatures);
             PointerBuffer logicalDevice = memoryStack.mallocPointer(1);
-            int result = VK13.vkCreateDevice(physicalDeviceInformation.physicalDevice(), vkDeviceCreateInfo, null, logicalDevice);
+            int result = VK13.vkCreateDevice(physicalDeviceInformation.getVkPhysicalDevice(), vkDeviceCreateInfo, null, logicalDevice);
             if (result != VK13.VK_SUCCESS) {
                 throw new RuntimeException(String.format("Failed to create device. Error code: %s", result));
             }
-            VkDevice vkDevice =  new VkDevice(logicalDevice.get(), physicalDeviceInformation.physicalDevice(), vkDeviceCreateInfo);
+            VkDevice vkDevice =  new VkDevice(logicalDevice.get(), physicalDeviceInformation.getVkPhysicalDevice(), vkDeviceCreateInfo);
             logicalDeviceInformation = new LogicalDeviceInformation(physicalDeviceInformation, vkDevice);
         }
     }

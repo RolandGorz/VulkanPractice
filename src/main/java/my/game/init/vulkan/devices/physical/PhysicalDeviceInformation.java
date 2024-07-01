@@ -1,14 +1,19 @@
 package my.game.init.vulkan.devices.physical;
 
+import my.game.init.vulkan.devices.queue.QueueFamilyIndexes;
+import org.immutables.value.Value;
 import org.lwjgl.vulkan.VkPhysicalDevice;
 
 import java.util.Optional;
 
-public record PhysicalDeviceInformation(VkPhysicalDevice physicalDevice, int score, Optional<Integer> graphicsQueueFamilyIndex)
-        implements Comparable<PhysicalDeviceInformation> {
+@Value.Immutable
+public abstract class PhysicalDeviceInformation implements Comparable<PhysicalDeviceInformation> {
 
+    public abstract VkPhysicalDevice getVkPhysicalDevice();
+    public abstract int getScore();
+    public abstract QueueFamilyIndexes getQueueFamilyIndexes();
     @Override
     public int compareTo(PhysicalDeviceInformation o) {
-        return this.score - o.score;
+        return this.getScore() - o.getScore();
     }
 }

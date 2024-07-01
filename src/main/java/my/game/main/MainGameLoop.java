@@ -47,19 +47,22 @@ public class MainGameLoop {
         shaderLoader.loadShaders();
         windowHandle = new WindowHandle();
         VkInstance vulkanInstance = vulkanInstanceBuilder.initVulkan();
-        PriorityQueue<PhysicalDeviceInformation> physicalDeviceScores = devices.getPhysicalDevices(vulkanInstance);
-        if (physicalDeviceScores.isEmpty() || physicalDeviceScores.peek().score() == 0) {
+        windowSurface = new WindowSurface(vulkanInstance, windowHandle);
+        PriorityQueue<PhysicalDeviceInformation> physicalDeviceScores = devices.getPhysicalDevices(vulkanInstance, windowSurface);
+        if (physicalDeviceScores.isEmpty() || physicalDeviceScores.peek().getScore() == 0) {
             throw new RuntimeException("No device found that is capable of rendering anything with. We give up");
         }
         PhysicalDeviceInformation chosenDevice = physicalDeviceScores.poll();
+        if (chosenDevice == null) {
+            throw new IllegalStateException("0 devices found that suit our needs. Giving up");
+        }
         logicalDevice = new LogicalDevice(chosenDevice);
         graphicsQueue = new GraphicsQueue(logicalDevice.getLogicalDeviceInformation());
-        windowSurface = new WindowSurface(vulkanInstance, windowHandle);
     }
 
     private void destroy() {
-        windowSurface.free();
         logicalDevice.free();
+        windowSurface.free();
         vulkanInstanceBuilder.free();
         windowHandle.free();
     }

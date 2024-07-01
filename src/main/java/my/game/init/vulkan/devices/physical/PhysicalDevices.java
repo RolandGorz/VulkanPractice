@@ -1,6 +1,7 @@
 package my.game.init.vulkan.devices.physical;
 
 import my.game.init.vulkan.devices.queue.DeviceQueueFamily;
+import my.game.init.window.WindowSurface;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VK13;
@@ -17,7 +18,7 @@ import java.util.PriorityQueue;
 
 public class PhysicalDevices {
 
-    public PriorityQueue<PhysicalDeviceInformation> getPhysicalDevices(VkInstance vkInstance) {
+    public PriorityQueue<PhysicalDeviceInformation> getPhysicalDevices(VkInstance vkInstance, WindowSurface windowSurface) {
         List<VkPhysicalDevice> vkPhysicalDeviceList = new ArrayList<>();
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             IntBuffer deviceCount = memoryStack.mallocInt(1);
@@ -41,15 +42,15 @@ public class PhysicalDevices {
         }
         PriorityQueue<PhysicalDeviceInformation> priorityQueue = new PriorityQueue<>(Comparator.reverseOrder());
         for (VkPhysicalDevice vkPhysicalDevice : vkPhysicalDeviceList) {
-            PhysicalDeviceInformation curr = determineDeviceSuitability(vkPhysicalDevice);
-            if (curr.score() > 0) {
+            PhysicalDeviceInformation curr = determineDeviceSuitability(vkPhysicalDevice, windowSurface);
+            if (curr.getScore() > 0) {
                 priorityQueue.add(curr);
             }
         }
         return priorityQueue;
     }
 
-    public PhysicalDeviceInformation determineDeviceSuitability(VkPhysicalDevice vkPhysicalDevice) {
+    public PhysicalDeviceInformation determineDeviceSuitability(VkPhysicalDevice vkPhysicalDevice, WindowSurface windowSurface) {
         int score = 0;
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             VkPhysicalDeviceProperties vkPhysicalDeviceProperties = VkPhysicalDeviceProperties.malloc(memoryStack);
@@ -66,6 +67,10 @@ public class PhysicalDevices {
             score += vkPhysicalDeviceProperties.limits().maxImageDimension2D();
         }
         DeviceQueueFamily queueFamily = DeviceQueueFamily.getInstance();
-        return new PhysicalDeviceInformation(vkPhysicalDevice, score, queueFamily.getGraphicsFamilyIndex(vkPhysicalDevice));
+        return ImmutablePhysicalDeviceInformation.builder()
+                .vkPhysicalDevice(vkPhysicalDevice)
+                .score(score)
+                .queueFamilyIndexes(queueFamily.getFamilyIndexes(vkPhysicalDevice, windowSurface))
+                .build();
     }
 }

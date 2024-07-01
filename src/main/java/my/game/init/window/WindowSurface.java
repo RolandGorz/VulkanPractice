@@ -25,6 +25,10 @@ public class WindowSurface {
         }
     }
 
+    public long getWindowSurfaceHandle() {
+        return windowSurfaceHandle;
+    }
+
     public void free() {
         KHRSurface.vkDestroySurfaceKHR(vkInstance, windowSurfaceHandle, null);
     }
