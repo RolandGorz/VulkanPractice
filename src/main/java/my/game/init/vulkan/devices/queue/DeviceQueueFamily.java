@@ -1,6 +1,5 @@
 package my.game.init.vulkan.devices.queue;
 
-import my.game.init.vulkan.devices.physical.ImmutablePhysicalDeviceInformation;
 import my.game.init.window.WindowSurface;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.KHRSurface;
