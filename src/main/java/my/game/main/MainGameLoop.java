@@ -9,7 +9,6 @@ import my.game.init.vulkan.devices.queue.GraphicsQueue;
 import my.game.init.window.WindowSurface;
 import my.game.shaders.ShaderCompiler;
 import my.game.shaders.ShaderLoader;
-import org.lwjgl.glfw.Callbacks;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.vulkan.VkInstance;
 
@@ -53,9 +52,6 @@ public class MainGameLoop {
             throw new RuntimeException("No device found that is capable of rendering anything with. We give up");
         }
         PhysicalDeviceInformation chosenDevice = physicalDeviceScores.poll();
-        if (chosenDevice == null) {
-            throw new IllegalStateException("0 devices found that suit our needs. Giving up");
-        }
         logicalDevice = new LogicalDevice(chosenDevice);
         graphicsQueue = new GraphicsQueue(logicalDevice.getLogicalDeviceInformation());
     }
