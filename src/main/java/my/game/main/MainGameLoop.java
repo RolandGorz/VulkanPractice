@@ -6,6 +6,7 @@ import my.game.init.vulkan.devices.physical.PhysicalDevices;
 import my.game.init.window.WindowHandle;
 import my.game.init.vulkan.VulkanInstanceBuilder;
 import my.game.init.vulkan.devices.queue.GraphicsQueue;
+import my.game.init.window.WindowSurface;
 import my.game.shaders.ShaderCompiler;
 import my.game.shaders.ShaderLoader;
 import org.lwjgl.glfw.Callbacks;
@@ -23,6 +24,7 @@ public class MainGameLoop {
     private WindowHandle windowHandle;
     private LogicalDevice logicalDevice;
     private GraphicsQueue graphicsQueue;
+    private WindowSurface windowSurface;
 
     public MainGameLoop() {
         shaderCompiler = new ShaderCompiler();
@@ -52,9 +54,11 @@ public class MainGameLoop {
         PhysicalDeviceInformation chosenDevice = physicalDeviceScores.poll();
         logicalDevice = new LogicalDevice(chosenDevice);
         graphicsQueue = new GraphicsQueue(logicalDevice.getLogicalDeviceInformation());
+        windowSurface = new WindowSurface(vulkanInstance, windowHandle);
     }
 
     private void destroy() {
+        windowSurface.free();
         logicalDevice.free();
         vulkanInstanceBuilder.free();
         windowHandle.free();
