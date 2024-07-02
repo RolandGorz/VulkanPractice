@@ -11,14 +11,14 @@ public class GraphicsQueue {
 
     //VkQueue is implicitly freed when the vkDevice is freed. We do not need to free ourselves.
     public GraphicsQueue(LogicalDeviceInformation logicalDeviceInformation) {
-        if (logicalDeviceInformation.physicalDeviceInformation().getQueueFamilyIndexes().getGraphicsQueueFamilyIndex().isEmpty()) {
+        if (logicalDeviceInformation.physicalDeviceInformation().queueFamilyIndexes().graphicsQueueFamilyIndex().isEmpty()) {
             throw new RuntimeException("No graphics queue family found. Cannot create graphics queue");
         }
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             PointerBuffer graphicsQueue = memoryStack.mallocPointer(1);
             VK13.vkGetDeviceQueue(logicalDeviceInformation.vkDevice(),
-                    logicalDeviceInformation.physicalDeviceInformation().getQueueFamilyIndexes()
-                            .getGraphicsQueueFamilyIndex().get(), 0, graphicsQueue);
+                    logicalDeviceInformation.physicalDeviceInformation().queueFamilyIndexes()
+                            .graphicsQueueFamilyIndex().get(), 0, graphicsQueue);
             vkQueue = new VkQueue(graphicsQueue.get(0), logicalDeviceInformation.vkDevice());
         }
     }

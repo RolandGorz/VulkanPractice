@@ -48,10 +48,10 @@ public class MainGameLoop {
         VkInstance vulkanInstance = vulkanInstanceBuilder.initVulkan();
         windowSurface = new WindowSurface(vulkanInstance, windowHandle);
         PriorityQueue<PhysicalDeviceInformation> physicalDeviceScores = devices.getPhysicalDevices(vulkanInstance, windowSurface);
-        if (physicalDeviceScores.isEmpty() || physicalDeviceScores.peek().getScore() == 0) {
+        PhysicalDeviceInformation chosenDevice = physicalDeviceScores.poll();
+        if (chosenDevice == null || chosenDevice.score() == 0) {
             throw new RuntimeException("No device found that is capable of rendering anything with. We give up");
         }
-        PhysicalDeviceInformation chosenDevice = physicalDeviceScores.poll();
         logicalDevice = new LogicalDevice(chosenDevice);
         graphicsQueue = new GraphicsQueue(logicalDevice.getLogicalDeviceInformation());
     }

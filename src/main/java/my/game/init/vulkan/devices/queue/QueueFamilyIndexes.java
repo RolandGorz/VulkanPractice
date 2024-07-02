@@ -6,6 +6,6 @@ import java.util.Optional;
 
 @Value.Immutable
 public interface QueueFamilyIndexes {
-    Optional<Integer> getPresentationQueueFamilyIndex();
-    Optional<Integer> getGraphicsQueueFamilyIndex();
+    Optional<Integer> presentationQueueFamilyIndex();
+    Optional<Integer> graphicsQueueFamilyIndex();
 }

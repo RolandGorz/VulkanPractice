@@ -43,7 +43,7 @@ public class PhysicalDevices {
         PriorityQueue<PhysicalDeviceInformation> priorityQueue = new PriorityQueue<>(Comparator.reverseOrder());
         for (VkPhysicalDevice vkPhysicalDevice : vkPhysicalDeviceList) {
             PhysicalDeviceInformation curr = determineDeviceSuitability(vkPhysicalDevice, windowSurface);
-            if (curr.getScore() > 0) {
+            if (curr.score() > 0) {
                 priorityQueue.add(curr);
             }
         }
@@ -68,7 +68,7 @@ public class PhysicalDevices {
         }
         DeviceQueueFamily queueFamily = DeviceQueueFamily.getInstance();
         return ImmutablePhysicalDeviceInformation.builder()
-                .vkPhysicalDevice(vkPhysicalDevice)
+                .physicalDevice(vkPhysicalDevice)
                 .score(score)
                 .queueFamilyIndexes(queueFamily.getFamilyIndexes(vkPhysicalDevice, windowSurface))
                 .build();
