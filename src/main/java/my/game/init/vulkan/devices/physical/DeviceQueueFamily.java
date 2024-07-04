@@ -1,4 +1,4 @@
-package my.game.init.vulkan.devices.queue;
+package my.game.init.vulkan.devices.physical;
 
 import my.game.init.window.WindowSurface;
 import org.lwjgl.system.MemoryStack;
@@ -8,7 +8,6 @@ import org.lwjgl.vulkan.VkPhysicalDevice;
 import org.lwjgl.vulkan.VkQueueFamilyProperties;
 
 import java.nio.IntBuffer;
-import java.util.Optional;
 
 public class DeviceQueueFamily {
 
@@ -21,8 +20,7 @@ public class DeviceQueueFamily {
     }
 
     public QueueFamilyIndexes getFamilyIndexes(VkPhysicalDevice physicalDevice, WindowSurface windowSurface) {
-        Optional<Integer> graphicsFamilyIndex = Optional.empty();
-        Optional<Integer> presentationFamilyIndex = Optional.empty();
+        QueueFamilyIndexes.Builder builder = QueueFamilyIndexes.builder();
         try (MemoryStack stack = MemoryStack.stackPush()) {
             IntBuffer queueFamilyCount = stack.mallocInt(1);
             VK13.vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, queueFamilyCount, null);
@@ -30,20 +28,18 @@ public class DeviceQueueFamily {
             VK13.vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, queueFamilyCount, queueFamilyProperties);
             for (int i = 0; i < queueFamilyProperties.capacity(); ++i) {
                 if (queueSupportsGraphics(queueFamilyProperties, i)) {
-                    graphicsFamilyIndex = Optional.of(i);
+                    builder.setGraphicsQueueFamilyIndex(i);
                 }
                 if (queueSupportsPresentation(stack, physicalDevice, i, windowSurface)) {
-                    presentationFamilyIndex = Optional.of(i);
+                    builder.setPresentationQueueFamilyIndex(i);
                 }
-                if (graphicsFamilyIndex.isPresent() && presentationFamilyIndex.isPresent()) {
+                if (builder.isComplete()) {
                     break;
                 }
             }
         }
-        return ImmutableQueueFamilyIndexes.builder()
-                .graphicsQueueFamilyIndex(graphicsFamilyIndex)
-                .presentationQueueFamilyIndex(presentationFamilyIndex)
-                .build();
+
+        return builder.build();
     }
 
     private boolean queueSupportsGraphics(VkQueueFamilyProperties.Buffer queueFamilyProperties, int index) {

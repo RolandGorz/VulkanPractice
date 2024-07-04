@@ -36,7 +36,7 @@ public class DebugVulkanInstanceBuilder {
             newExtensions.put(originalExtensions);
         }
         newExtensions.put(memoryStack.UTF8(EXTDebugUtils.VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
-        newExtensions.rewind();
+        newExtensions.flip();
         vkInstanceCreateInfo.ppEnabledExtensionNames(newExtensions);
     }
 
@@ -48,7 +48,7 @@ public class DebugVulkanInstanceBuilder {
         for (String layer : requestedValidationLayers) {
             validationLayers.put(stack.UTF8(layer));
         }
-        vkInstanceCreateInfo.ppEnabledLayerNames(validationLayers.rewind());
+        vkInstanceCreateInfo.ppEnabledLayerNames(validationLayers.flip());
     }
 
     public VkDebugUtilsMessengerCreateInfoEXT getVkDebugUtilsMessengerCreateInfoEXT() {

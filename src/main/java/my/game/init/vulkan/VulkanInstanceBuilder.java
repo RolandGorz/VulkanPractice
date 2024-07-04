@@ -79,7 +79,7 @@ public class VulkanInstanceBuilder {
             newExtensions.put(originalExtensions);
         }
         newExtensions.put(memoryStack.UTF8(KHRPortabilityEnumeration.VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME));
-        newExtensions.rewind();
+        newExtensions.flip();
         vkInstanceCreateInfo.ppEnabledExtensionNames(newExtensions);
     }
 

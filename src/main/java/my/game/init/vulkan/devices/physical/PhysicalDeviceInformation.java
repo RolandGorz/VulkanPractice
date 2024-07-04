@@ -1,6 +1,5 @@
 package my.game.init.vulkan.devices.physical;
 
-import my.game.init.vulkan.devices.queue.QueueFamilyIndexes;
 import org.immutables.value.Value;
 import org.lwjgl.vulkan.VkPhysicalDevice;
 

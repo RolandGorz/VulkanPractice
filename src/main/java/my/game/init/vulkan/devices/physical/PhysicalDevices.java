@@ -1,6 +1,5 @@
 package my.game.init.vulkan.devices.physical;
 
-import my.game.init.vulkan.devices.queue.DeviceQueueFamily;
 import my.game.init.window.WindowSurface;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
@@ -18,7 +17,7 @@ import java.util.PriorityQueue;
 
 public class PhysicalDevices {
 
-    public PriorityQueue<PhysicalDeviceInformation> getPhysicalDevices(VkInstance vkInstance, WindowSurface windowSurface) {
+    public ValidPhysicalDevice getValidPhysicalDevice(VkInstance vkInstance, WindowSurface windowSurface) {
         List<VkPhysicalDevice> vkPhysicalDeviceList = new ArrayList<>();
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             IntBuffer deviceCount = memoryStack.mallocInt(1);
@@ -47,7 +46,17 @@ public class PhysicalDevices {
                 priorityQueue.add(curr);
             }
         }
-        return priorityQueue;
+        return new ValidPhysicalDevice(choosePhysicalDevice(priorityQueue));
+    }
+
+    private PhysicalDeviceInformation choosePhysicalDevice(PriorityQueue<PhysicalDeviceInformation> devices) {
+        while (!devices.isEmpty()) {
+            PhysicalDeviceInformation curr = devices.poll();
+            if (curr.score() != 0 && curr.queueFamilyIndexes().isComplete()) {
+                return curr;
+            }
+        }
+        throw new RuntimeException("No device found that is capable of rendering anything with. We give up");
     }
 
     public PhysicalDeviceInformation determineDeviceSuitability(VkPhysicalDevice vkPhysicalDevice, WindowSurface windowSurface) {

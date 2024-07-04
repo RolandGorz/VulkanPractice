@@ -3,16 +3,15 @@ package my.game.main;
 import my.game.init.vulkan.devices.logical.LogicalDevice;
 import my.game.init.vulkan.devices.physical.PhysicalDeviceInformation;
 import my.game.init.vulkan.devices.physical.PhysicalDevices;
+import my.game.init.vulkan.devices.physical.ValidPhysicalDevice;
 import my.game.init.window.WindowHandle;
 import my.game.init.vulkan.VulkanInstanceBuilder;
-import my.game.init.vulkan.devices.queue.GraphicsQueue;
+import my.game.init.vulkan.devices.logical.queue.GraphicsQueue;
 import my.game.init.window.WindowSurface;
 import my.game.shaders.ShaderCompiler;
 import my.game.shaders.ShaderLoader;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.vulkan.VkInstance;
-
-import java.util.PriorityQueue;
 
 public class MainGameLoop {
 
@@ -47,13 +46,8 @@ public class MainGameLoop {
         windowHandle = new WindowHandle();
         VkInstance vulkanInstance = vulkanInstanceBuilder.initVulkan();
         windowSurface = new WindowSurface(vulkanInstance, windowHandle);
-        PriorityQueue<PhysicalDeviceInformation> physicalDeviceScores = devices.getPhysicalDevices(vulkanInstance, windowSurface);
-        PhysicalDeviceInformation chosenDevice = physicalDeviceScores.poll();
-        if (chosenDevice == null || chosenDevice.score() == 0) {
-            throw new RuntimeException("No device found that is capable of rendering anything with. We give up");
-        }
+        ValidPhysicalDevice chosenDevice = devices.getValidPhysicalDevice(vulkanInstance, windowSurface);
         logicalDevice = new LogicalDevice(chosenDevice);
-        graphicsQueue = new GraphicsQueue(logicalDevice.getLogicalDeviceInformation());
     }
 
     private void destroy() {
