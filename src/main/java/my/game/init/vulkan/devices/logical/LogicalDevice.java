@@ -1,8 +1,6 @@
 package my.game.init.vulkan.devices.logical;
 
-import my.game.init.vulkan.devices.physical.PhysicalDeviceInformation;
 import my.game.init.vulkan.devices.physical.ValidPhysicalDevice;
-import my.game.init.vulkan.devices.physical.util.QueueFamilyIndexSet;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VK13;

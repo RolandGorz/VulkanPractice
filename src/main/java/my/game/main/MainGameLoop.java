@@ -1,7 +1,6 @@
 package my.game.main;
 
 import my.game.init.vulkan.devices.logical.LogicalDevice;
-import my.game.init.vulkan.devices.physical.PhysicalDeviceInformation;
 import my.game.init.vulkan.devices.physical.PhysicalDevices;
 import my.game.init.vulkan.devices.physical.ValidPhysicalDevice;
 import my.game.init.window.WindowHandle;
