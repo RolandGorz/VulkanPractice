@@ -52,7 +52,7 @@ public class PhysicalDevices {
     private PhysicalDeviceInformation choosePhysicalDevice(PriorityQueue<PhysicalDeviceInformation> devices) {
         while (!devices.isEmpty()) {
             PhysicalDeviceInformation curr = devices.poll();
-            if (curr.score() != 0 && curr.queueFamilyIndexes().isComplete()) {
+            if (curr.score() != 0 && curr.queueFamilyIndexes().isComplete() && curr.requiredDeviceExtensionsSupported()) {
                 return curr;
             }
         }
