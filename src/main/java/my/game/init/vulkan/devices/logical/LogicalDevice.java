@@ -32,12 +32,17 @@ public class LogicalDevice {
                 vkDeviceQueueCreateInfos.put(info);
             }
             vkDeviceQueueCreateInfos.flip();
+            PointerBuffer pointerBuffer = memoryStack.callocPointer(ValidPhysicalDevice.REQUIRED_DEVICE_EXTENSIONS.size());
+            for (String x : ValidPhysicalDevice.REQUIRED_DEVICE_EXTENSIONS) {
+                pointerBuffer.put(memoryStack.UTF8(x));
+            }
             VkPhysicalDeviceFeatures vkPhysicalDeviceFeatures = VkPhysicalDeviceFeatures.calloc(memoryStack);
             VkDeviceCreateInfo vkDeviceCreateInfo = VkDeviceCreateInfo.calloc(memoryStack);
             vkDeviceCreateInfo
                     .sType(VK13.VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO)
                     .pQueueCreateInfos(vkDeviceQueueCreateInfos)
-                    .pEnabledFeatures(vkPhysicalDeviceFeatures);
+                    .pEnabledFeatures(vkPhysicalDeviceFeatures)
+                    .ppEnabledExtensionNames(pointerBuffer);
             PointerBuffer logicalDevice = memoryStack.mallocPointer(1);
             int result = VK13.vkCreateDevice(validPhysicalDevice.physicalDeviceInformation().physicalDevice(), vkDeviceCreateInfo, null, logicalDevice);
             if (result != VK13.VK_SUCCESS) {
