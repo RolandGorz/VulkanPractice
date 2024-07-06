@@ -8,4 +8,8 @@ public record ValidPhysicalDevice (PhysicalDeviceInformation physicalDeviceInfor
     public static List<String> REQUIRED_DEVICE_EXTENSIONS = List.of(
             KHRSwapchain.VK_KHR_SWAPCHAIN_EXTENSION_NAME
     );
+
+    public void free() {
+        physicalDeviceInformation.free();
+    }
 }

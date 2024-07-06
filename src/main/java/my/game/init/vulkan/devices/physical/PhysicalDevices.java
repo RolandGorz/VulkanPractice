@@ -46,17 +46,26 @@ public class PhysicalDevices {
                 priorityQueue.add(curr);
             }
         }
-        return new ValidPhysicalDevice(choosePhysicalDevice(priorityQueue));
+        return chooseValidPhysicalDevice(priorityQueue);
     }
 
-    private PhysicalDeviceInformation choosePhysicalDevice(PriorityQueue<PhysicalDeviceInformation> devices) {
+    private ValidPhysicalDevice chooseValidPhysicalDevice(PriorityQueue<PhysicalDeviceInformation> devices) {
+        ValidPhysicalDevice validPhysicalDevice = null;
         while (!devices.isEmpty()) {
             PhysicalDeviceInformation curr = devices.poll();
-            if (curr.score() != 0 && curr.queueFamilyIndexes().isComplete() && curr.requiredDeviceExtensionsSupported()) {
-                return curr;
+            if (curr.isValid()) {
+                validPhysicalDevice = new ValidPhysicalDevice(curr);
+                break;
             }
+            curr.free();
         }
-        throw new RuntimeException("No device found that is capable of rendering anything with. We give up");
+        while (!devices.isEmpty()) {
+            devices.poll().free();
+        }
+        if (validPhysicalDevice == null) {
+            throw new RuntimeException("No device found that is capable of rendering anything with. We give up");
+        }
+        return validPhysicalDevice;
     }
 
     public PhysicalDeviceInformation determineDeviceSuitability(VkPhysicalDevice vkPhysicalDevice, WindowSurface windowSurface) {
@@ -80,6 +89,7 @@ public class PhysicalDevices {
                 .physicalDevice(vkPhysicalDevice)
                 .score(score)
                 .queueFamilyIndexes(queueFamily.getFamilyIndexes(vkPhysicalDevice, windowSurface))
+                .windowSurface(windowSurface)
                 .build();
     }
 }

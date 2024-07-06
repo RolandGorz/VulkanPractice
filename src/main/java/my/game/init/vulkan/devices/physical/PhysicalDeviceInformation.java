@@ -1,5 +1,6 @@
 package my.game.init.vulkan.devices.physical;
 
+import my.game.init.window.WindowSurface;
 import org.immutables.value.Value;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VK13;
@@ -15,6 +16,7 @@ public abstract class PhysicalDeviceInformation implements Comparable<PhysicalDe
     public abstract VkPhysicalDevice physicalDevice();
     public abstract int score();
     public abstract QueueFamilyIndexes queueFamilyIndexes();
+    public abstract WindowSurface windowSurface();
     //TODO put this logic of checking the list of extensions in one place. This is repeated in like 4 places
     @Value.Derived
     public boolean requiredDeviceExtensionsSupported() {
@@ -45,8 +47,18 @@ public abstract class PhysicalDeviceInformation implements Comparable<PhysicalDe
         }
         return allFound;
     }
+    @Value.Derived
+    public SwapChainSupportDetails swapChainSupportDetails() {
+        return new SwapChainSupportDetails(physicalDevice(), windowSurface());
+    }
+    public boolean isValid() {
+        return score() != 0 && queueFamilyIndexes().isComplete() && requiredDeviceExtensionsSupported();
+    }
     @Override
     public int compareTo(PhysicalDeviceInformation o) {
         return this.score() - o.score();
+    }
+    public void free() {
+        swapChainSupportDetails().free();
     }
 }

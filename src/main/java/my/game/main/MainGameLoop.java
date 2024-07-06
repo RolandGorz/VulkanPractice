@@ -20,7 +20,7 @@ public class MainGameLoop {
     private final PhysicalDevices devices;
     private WindowHandle windowHandle;
     private LogicalDevice logicalDevice;
-    private GraphicsQueue graphicsQueue;
+    private ValidPhysicalDevice chosenPhysicalDevice;
     private WindowSurface windowSurface;
 
     public MainGameLoop() {
@@ -45,12 +45,13 @@ public class MainGameLoop {
         windowHandle = new WindowHandle();
         VkInstance vulkanInstance = vulkanInstanceBuilder.initVulkan();
         windowSurface = new WindowSurface(vulkanInstance, windowHandle);
-        ValidPhysicalDevice chosenDevice = devices.getValidPhysicalDevice(vulkanInstance, windowSurface);
-        logicalDevice = new LogicalDevice(chosenDevice);
+        chosenPhysicalDevice = devices.getValidPhysicalDevice(vulkanInstance, windowSurface);
+        logicalDevice = new LogicalDevice(chosenPhysicalDevice);
     }
 
     private void destroy() {
         logicalDevice.free();
+        chosenPhysicalDevice.free();
         windowSurface.free();
         vulkanInstanceBuilder.free();
         windowHandle.free();
