@@ -13,7 +13,9 @@ import java.nio.FloatBuffer;
 import java.util.Set;
 
 public class LogicalDevice {
+
     private final LogicalDeviceInformation logicalDeviceInformation;
+
     public LogicalDevice(ValidPhysicalDevice validPhysicalDevice) {
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             //We only want 1 queue, so we are allocating 1 float in the buffer and then setting it as top priority.
