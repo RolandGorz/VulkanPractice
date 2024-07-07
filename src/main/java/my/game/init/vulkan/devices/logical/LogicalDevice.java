@@ -36,6 +36,7 @@ public class LogicalDevice {
             for (String x : ValidPhysicalDevice.REQUIRED_DEVICE_EXTENSIONS) {
                 requiredDeviceExtensions.put(memoryStack.UTF8(x));
             }
+            requiredDeviceExtensions.flip();
             VkPhysicalDeviceFeatures vkPhysicalDeviceFeatures = VkPhysicalDeviceFeatures.calloc(memoryStack);
             VkDeviceCreateInfo vkDeviceCreateInfo = VkDeviceCreateInfo.calloc(memoryStack);
             vkDeviceCreateInfo

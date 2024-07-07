@@ -1,5 +1,6 @@
 package my.game.main;
 
+import my.game.init.vulkan.SwapChain;
 import my.game.init.vulkan.devices.logical.LogicalDevice;
 import my.game.init.vulkan.devices.physical.PhysicalDevices;
 import my.game.init.vulkan.devices.physical.ValidPhysicalDevice;
@@ -21,6 +22,7 @@ public class MainGameLoop {
     private LogicalDevice logicalDevice;
     private ValidPhysicalDevice chosenPhysicalDevice;
     private WindowSurface windowSurface;
+    private SwapChain swapChain;
 
     public MainGameLoop() {
         shaderCompiler = new ShaderCompiler();
@@ -46,9 +48,11 @@ public class MainGameLoop {
         windowSurface = new WindowSurface(vulkanInstance, windowHandle);
         chosenPhysicalDevice = devices.getValidPhysicalDevice(vulkanInstance, windowSurface);
         logicalDevice = new LogicalDevice(chosenPhysicalDevice);
+        swapChain = new SwapChain(logicalDevice, windowHandle, windowSurface);
     }
 
     private void destroy() {
+        swapChain.free();
         logicalDevice.free();
         chosenPhysicalDevice.free();
         windowSurface.free();
