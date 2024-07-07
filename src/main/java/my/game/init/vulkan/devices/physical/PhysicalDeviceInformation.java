@@ -17,7 +17,6 @@ public abstract class PhysicalDeviceInformation implements Comparable<PhysicalDe
     public abstract int score();
     public abstract QueueFamilyIndexes queueFamilyIndexes();
     public abstract WindowSurface windowSurface();
-    //TODO put this logic of checking the list of extensions in one place. This is repeated in like 4 places
     @Value.Derived
     public boolean requiredDeviceExtensionsSupported() {
         HashSet<String> supportedExtensions = new HashSet<>();
@@ -51,9 +50,16 @@ public abstract class PhysicalDeviceInformation implements Comparable<PhysicalDe
     public SwapChainSupportDetails swapChainSupportDetails() {
         return new SwapChainSupportDetails(physicalDevice(), windowSurface());
     }
-    public boolean isValid() {
-        return score() != 0 && queueFamilyIndexes().isComplete() && requiredDeviceExtensionsSupported();
+
+    @Value.Derived
+    protected boolean swapChainAdequate() {
+        return swapChainSupportDetails().formats().capacity() > 0 && swapChainSupportDetails().presentModes().capacity() > 0;
     }
+
+    public boolean isValid() {
+        return score() != 0 && queueFamilyIndexes().isComplete() && requiredDeviceExtensionsSupported() && swapChainAdequate();
+    }
+
     @Override
     public int compareTo(PhysicalDeviceInformation o) {
         return this.score() - o.score();

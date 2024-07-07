@@ -5,7 +5,6 @@ import my.game.init.vulkan.devices.physical.PhysicalDevices;
 import my.game.init.vulkan.devices.physical.ValidPhysicalDevice;
 import my.game.init.window.WindowHandle;
 import my.game.init.vulkan.VulkanInstanceBuilder;
-import my.game.init.vulkan.devices.logical.queue.GraphicsQueue;
 import my.game.init.window.WindowSurface;
 import my.game.shaders.ShaderCompiler;
 import my.game.shaders.ShaderLoader;
