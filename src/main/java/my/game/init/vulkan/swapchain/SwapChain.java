@@ -1,6 +1,6 @@
-package my.game.init.vulkan;
+package my.game.init.vulkan.swapchain;
 
-import com.google.common.collect.ImmutableList;
+import my.game.init.vulkan.VulkanUtil;
 import my.game.init.vulkan.devices.logical.LogicalDevice;
 import my.game.init.vulkan.devices.physical.QueueFamilyIndexes;
 import my.game.init.vulkan.devices.physical.SwapChainSupportDetails;
@@ -11,7 +11,6 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.KHRSurface;
 import org.lwjgl.vulkan.KHRSwapchain;
 import org.lwjgl.vulkan.VK13;
-import org.lwjgl.vulkan.VkDevice;
 import org.lwjgl.vulkan.VkExtent2D;
 import org.lwjgl.vulkan.VkSurfaceCapabilitiesKHR;
 import org.lwjgl.vulkan.VkSurfaceFormatKHR;
@@ -19,24 +18,30 @@ import org.lwjgl.vulkan.VkSwapchainCreateInfoKHR;
 
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
-import java.util.List;
 
 public class SwapChain {
 
-    private final VkDevice device;
+    private final LogicalDevice device;
+    private final WindowHandle windowHandle;
+    private final WindowSurface windowSurface;
     private final long swapChainPointer;
-    private final List<Long> swapChainImages;
-    private final VkSurfaceFormatKHR swapChainImageFormat;
+    private final VkSurfaceFormatKHR surfaceFormat;
     private final VkExtent2D swapChainExtent;
 
-    public SwapChain(LogicalDevice logicalDevice, WindowHandle windowHandle, WindowSurface windowSurface) {
-        device = logicalDevice.getLogicalDeviceInformation().vkDevice();
-        SwapChainSupportDetails swapChainSupportDetails = logicalDevice.getLogicalDeviceInformation().validPhysicalDevice().physicalDeviceInformation().swapChainSupportDetails();
-        swapChainImageFormat = chooseSwapSurfaceFormat(swapChainSupportDetails.formats());
+    public SwapChain(LogicalDevice device, WindowHandle windowHandle, WindowSurface windowSurface) {
+        this.device = device;
+        this.windowHandle = windowHandle;
+        this.windowSurface = windowSurface;
+        SwapChainSupportDetails swapChainSupportDetails = this.device.getLogicalDeviceInformation().validPhysicalDevice().physicalDeviceInformation().swapChainSupportDetails();
+        surfaceFormat = chooseSwapSurfaceFormat(swapChainSupportDetails.formats());
         int presentMode = choosePresentMode(swapChainSupportDetails.presentModes());
+        swapChainExtent = chooseSwapExtent(swapChainSupportDetails.capabilities(),
+                this.windowHandle);
+        swapChainPointer = createSwapChain(swapChainSupportDetails, this.windowSurface, this.device, presentMode);
+    }
+
+    private long createSwapChain(SwapChainSupportDetails swapChainSupportDetails, WindowSurface windowSurface, LogicalDevice logicalDevice, int presentMode) {
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
-            swapChainExtent = chooseSwapExtent(swapChainSupportDetails.capabilities(),
-                    windowHandle, memoryStack);
             int imageCount = swapChainSupportDetails.capabilities().minImageCount() + 1;
             //We should also make sure to not exceed the maximum number of images while doing this, where 0 is a special value that means that there is no maximum:
             if (swapChainSupportDetails.capabilities().maxImageCount() > 0 && imageCount > swapChainSupportDetails.capabilities().maxImageCount()) {
@@ -47,8 +52,8 @@ public class SwapChain {
                     .sType(KHRSwapchain.VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR)
                     .surface(windowSurface.getWindowSurfaceHandle())
                     .minImageCount(imageCount)
-                    .imageFormat(swapChainImageFormat.format())
-                    .imageColorSpace(swapChainImageFormat.colorSpace())
+                    .imageFormat(surfaceFormat.format())
+                    .imageColorSpace(surfaceFormat.colorSpace())
                     .imageExtent(swapChainExtent)
                     .imageArrayLayers(1)
                     .imageUsage(VK13.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
@@ -83,49 +88,32 @@ public class SwapChain {
             if (result != VK13.VK_SUCCESS) {
                 throw new IllegalStateException(String.format("Failed to create swap chain. Error code: %d", result));
             }
-            swapChainPointer = swapChainPointerBuffer.get(0);
-        }
-        try (MemoryStack memoryStack = MemoryStack.stackPush()) {
-            IntBuffer imageCount = memoryStack.mallocInt(1);
-            int result = KHRSwapchain.vkGetSwapchainImagesKHR(device, swapChainPointer, imageCount, null);
-            if (result != VK13.VK_SUCCESS) {
-                throw new IllegalStateException(String.format("Failed to get count of swap chain images. Error code: %d", result));
-            }
-            LongBuffer imagePointers = memoryStack.mallocLong(imageCount.get(0));
-            int result2 = KHRSwapchain.vkGetSwapchainImagesKHR(device, swapChainPointer, imageCount, imagePointers);
-            if (result2 != VK13.VK_SUCCESS) {
-                throw new IllegalStateException(String.format("Failed to get swap chain images. Error code: %d", result2));
-            }
-            ImmutableList.Builder<Long> builder = ImmutableList.<Long>builder();
-            for (int i = 0; i < imagePointers.capacity(); ++i) {
-                builder.add(imagePointers.get(i));
-            }
-            swapChainImages = builder.build();
+            return swapChainPointerBuffer.get(0);
         }
     }
 
-    public VkDevice getDevice() {
+    public LogicalDevice getLogicalDevice() {
         return device;
     }
 
-    public long getSwapChainPointer() {
+    public WindowHandle getWindowHandle() {
+        return windowHandle;
+    }
+
+    public WindowSurface getWindowSurface() {
+        return windowSurface;
+    }
+
+    public Long getSwapChainPointer() {
         return swapChainPointer;
     }
 
-    public List<Long> getSwapChainImages() {
-        return swapChainImages;
-    }
-
-    public VkSurfaceFormatKHR getSwapChainImageFormat() {
-        return swapChainImageFormat;
-    }
-
-    public VkExtent2D getSwapChainExtent() {
-        return swapChainExtent;
+    public VkSurfaceFormatKHR getSurfaceFormat() {
+        return surfaceFormat;
     }
 
     public void free() {
-        KHRSwapchain.vkDestroySwapchainKHR(device, swapChainPointer, null);
+        KHRSwapchain.vkDestroySwapchainKHR(device.getLogicalDeviceInformation().vkDevice(), swapChainPointer, null);
         swapChainExtent.free();
     }
 
@@ -149,7 +137,7 @@ public class SwapChain {
         return KHRSurface.VK_PRESENT_MODE_FIFO_KHR;
     }
 
-    private VkExtent2D chooseSwapExtent(VkSurfaceCapabilitiesKHR capabilities, WindowHandle windowHandle, MemoryStack memoryStack) {
+    private VkExtent2D chooseSwapExtent(VkSurfaceCapabilitiesKHR capabilities, WindowHandle windowHandle) {
         VkExtent2D vkExtent2D = VkExtent2D.malloc();
         if (capabilities.currentExtent().width() != VulkanUtil.UINT32_MAX) {
             vkExtent2D.set(
@@ -157,14 +145,16 @@ public class SwapChain {
                     capabilities.currentExtent().height());
             return vkExtent2D;
         }
-        IntBuffer width = memoryStack.mallocInt(1);
-        IntBuffer height = memoryStack.mallocInt(1);
-        GLFW.glfwGetFramebufferSize(windowHandle.getWindowHandlePointer(), width, height);
+        try (MemoryStack memoryStack = MemoryStack.stackPush()) {
+            IntBuffer width = memoryStack.mallocInt(1);
+            IntBuffer height = memoryStack.mallocInt(1);
+            GLFW.glfwGetFramebufferSize(windowHandle.getWindowHandlePointer(), width, height);
 
-        vkExtent2D.set(
-                Math.clamp(width.get(0), capabilities.minImageExtent().width(), capabilities.maxImageExtent().width()),
-                Math.clamp(height.get(0), capabilities.minImageExtent().height(), capabilities.maxImageExtent().height()));
-        return vkExtent2D;
+            vkExtent2D.set(
+                    Math.clamp(width.get(0), capabilities.minImageExtent().width(), capabilities.maxImageExtent().width()),
+                    Math.clamp(height.get(0), capabilities.minImageExtent().height(), capabilities.maxImageExtent().height()));
+            return vkExtent2D;
+        }
     }
 
 }
