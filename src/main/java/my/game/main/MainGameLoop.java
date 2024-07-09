@@ -1,22 +1,21 @@
 package my.game.main;
 
-import my.game.init.vulkan.swapchain.SwapChain;
+import my.game.init.vulkan.VulkanInstanceBuilder;
 import my.game.init.vulkan.devices.logical.LogicalDevice;
 import my.game.init.vulkan.devices.physical.PhysicalDevices;
 import my.game.init.vulkan.devices.physical.ValidPhysicalDevice;
+import my.game.init.vulkan.pipeline.GraphicsPipeline;
+import my.game.init.vulkan.pipeline.shaders.ShaderCompiler;
+import my.game.init.vulkan.swapchain.SwapChain;
 import my.game.init.vulkan.swapchain.SwapChainImages;
 import my.game.init.window.WindowHandle;
-import my.game.init.vulkan.VulkanInstanceBuilder;
 import my.game.init.window.WindowSurface;
-import my.game.shaders.ShaderCompiler;
-import my.game.shaders.ShaderLoader;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.vulkan.VkInstance;
 
 public class MainGameLoop {
 
     private final ShaderCompiler shaderCompiler;
-    private final ShaderLoader shaderLoader;
     private final VulkanInstanceBuilder vulkanInstanceBuilder;
     private final PhysicalDevices devices;
     private WindowHandle windowHandle;
@@ -25,10 +24,10 @@ public class MainGameLoop {
     private WindowSurface windowSurface;
     private SwapChain swapChain;
     private SwapChainImages swapChainImages;
+    private GraphicsPipeline graphicsPipeline;
 
     public MainGameLoop() {
         shaderCompiler = new ShaderCompiler();
-        shaderLoader = new ShaderLoader();
         vulkanInstanceBuilder = new VulkanInstanceBuilder();
         devices = new PhysicalDevices();
     }
@@ -44,7 +43,6 @@ public class MainGameLoop {
 
     private void initialize() {
         shaderCompiler.compileShaders();
-        shaderLoader.loadShaders();
         windowHandle = new WindowHandle();
         VkInstance vulkanInstance = vulkanInstanceBuilder.initVulkan();
         windowSurface = new WindowSurface(vulkanInstance, windowHandle);
@@ -52,9 +50,11 @@ public class MainGameLoop {
         logicalDevice = new LogicalDevice(chosenPhysicalDevice);
         swapChain = new SwapChain(logicalDevice, windowHandle, windowSurface);
         swapChainImages = new SwapChainImages(swapChain);
+        graphicsPipeline = new GraphicsPipeline(logicalDevice.getLogicalDeviceInformation().vkDevice());
     }
 
     private void destroy() {
+        graphicsPipeline.free();
         swapChainImages.free();
         swapChain.free();
         logicalDevice.free();

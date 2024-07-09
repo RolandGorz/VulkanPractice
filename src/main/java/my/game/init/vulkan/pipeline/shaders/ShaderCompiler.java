@@ -1,4 +1,4 @@
-package my.game.shaders;
+package my.game.init.vulkan.pipeline.shaders;
 
 import org.lwjgl.util.shaderc.Shaderc;
 
