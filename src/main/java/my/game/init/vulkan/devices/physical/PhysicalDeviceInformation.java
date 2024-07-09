@@ -64,7 +64,4 @@ public abstract class PhysicalDeviceInformation implements Comparable<PhysicalDe
     public int compareTo(PhysicalDeviceInformation o) {
         return this.score() - o.score();
     }
-    public void free() {
-        swapChainSupportDetails().free();
-    }
 }

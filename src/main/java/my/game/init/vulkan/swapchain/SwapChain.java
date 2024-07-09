@@ -26,7 +26,6 @@ public class SwapChain {
     private final WindowSurface windowSurface;
     private final long swapChainPointer;
     private final VkSurfaceFormatKHR surfaceFormat;
-    private final VkExtent2D swapChainExtent;
 
     public SwapChain(LogicalDevice device, WindowHandle windowHandle, WindowSurface windowSurface) {
         this.device = device;
@@ -35,12 +34,12 @@ public class SwapChain {
         SwapChainSupportDetails swapChainSupportDetails = this.device.getLogicalDeviceInformation().validPhysicalDevice().physicalDeviceInformation().swapChainSupportDetails();
         surfaceFormat = chooseSwapSurfaceFormat(swapChainSupportDetails.formats());
         int presentMode = choosePresentMode(swapChainSupportDetails.presentModes());
-        swapChainExtent = chooseSwapExtent(swapChainSupportDetails.capabilities(),
-                this.windowHandle);
         swapChainPointer = createSwapChain(swapChainSupportDetails, this.windowSurface, this.device, presentMode);
     }
 
     private long createSwapChain(SwapChainSupportDetails swapChainSupportDetails, WindowSurface windowSurface, LogicalDevice logicalDevice, int presentMode) {
+        VkExtent2D swapChainExtent = chooseSwapExtent(swapChainSupportDetails.capabilities(),
+                this.windowHandle);
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             int imageCount = swapChainSupportDetails.capabilities().minImageCount() + 1;
             //We should also make sure to not exceed the maximum number of images while doing this, where 0 is a special value that means that there is no maximum:
@@ -89,6 +88,9 @@ public class SwapChain {
                 throw new IllegalStateException(String.format("Failed to create swap chain. Error code: %d", result));
             }
             return swapChainPointerBuffer.get(0);
+        } finally {
+            swapChainExtent.free();
+            device.getLogicalDeviceInformation().validPhysicalDevice().physicalDeviceInformation().swapChainSupportDetails().free();
         }
     }
 
@@ -114,7 +116,6 @@ public class SwapChain {
 
     public void free() {
         KHRSwapchain.vkDestroySwapchainKHR(device.getLogicalDeviceInformation().vkDevice(), swapChainPointer, null);
-        swapChainExtent.free();
     }
 
     private VkSurfaceFormatKHR chooseSwapSurfaceFormat(VkSurfaceFormatKHR.Buffer formats) {
