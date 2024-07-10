@@ -13,7 +13,7 @@ import java.nio.LongBuffer;
 
 public class RenderPass {
     private final long renderPassPointer;
-    private SwapChainImages swapChainImages;
+    private final SwapChainImages swapChainImages;
 
     public RenderPass(SwapChainImages swapChainImages) {
         this.swapChainImages = swapChainImages;
@@ -31,7 +31,21 @@ public class RenderPass {
             VkSubpassDescription subpassDescription = VkSubpassDescription.calloc(memoryStack);
             subpassDescription
                     .pipelineBindPoint(VK13.VK_PIPELINE_BIND_POINT_GRAPHICS)
-                    .pColorAttachments(colorAttachmentRefBuffer);
+                    .pColorAttachments(colorAttachmentRefBuffer)
+                    /*
+                    Quote from Spasi author of lwjgl:
+
+                    When there are multiple buffer members that are sized by the same count/length member,
+                    then that member has an explicit setter. In the case of VkSubpassDescription,
+                    both pColorAttachments and pResolveAttachments are sized by colorAttachmentCount.
+                    One could argue that you may set pColorAttachments without setting pResolveAttachments.
+                    You also cannot set pResolveAttachments without setting pColorAttachments.
+                    Both are optional, but pResolveAttachments is "more" optional. Additional logic for this scenario
+                    could be added to the LWJGL code generator, but I didn't think it was important enough.
+                    There are currently only two such cases in structs: vkSubpassDescription::pColorAttachments
+                    and AIMesh::mVertices.
+                    */
+                    .colorAttachmentCount(colorAttachmentRefBuffer.capacity());
             subpassDescriptionBuffer.put(subpassDescription);
             subpassDescriptionBuffer.flip();
 
@@ -65,6 +79,10 @@ public class RenderPass {
             }
             renderPassPointer = renderPassPointerBuffer.get(0);
         }
+    }
+
+    public long getRenderPassPointer() {
+        return renderPassPointer;
     }
 
     public void free() {

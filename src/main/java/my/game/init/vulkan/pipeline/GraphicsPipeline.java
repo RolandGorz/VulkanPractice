@@ -7,6 +7,7 @@ import my.game.init.vulkan.swapchain.SwapChainImages;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VK13;
 import org.lwjgl.vulkan.VkDevice;
+import org.lwjgl.vulkan.VkGraphicsPipelineCreateInfo;
 import org.lwjgl.vulkan.VkOffset2D;
 import org.lwjgl.vulkan.VkPipelineColorBlendAttachmentState;
 import org.lwjgl.vulkan.VkPipelineColorBlendStateCreateInfo;
@@ -16,6 +17,7 @@ import org.lwjgl.vulkan.VkPipelineLayoutCreateInfo;
 import org.lwjgl.vulkan.VkPipelineMultisampleStateCreateInfo;
 import org.lwjgl.vulkan.VkPipelineRasterizationStateCreateInfo;
 import org.lwjgl.vulkan.VkPipelineShaderStageCreateInfo;
+import org.lwjgl.vulkan.VkPipelineVertexInputStateCreateInfo;
 import org.lwjgl.vulkan.VkPipelineViewportStateCreateInfo;
 import org.lwjgl.vulkan.VkRect2D;
 import org.lwjgl.vulkan.VkViewport;
@@ -25,38 +27,41 @@ import java.nio.LongBuffer;
 import java.util.List;
 
 public class GraphicsPipeline {
-    final ShaderModule simpleVertexShader;
-    final ShaderModule simpleFragmentShader;
-    final Long pipelineLayoutPointer;
-    final SwapChainImages swapChainImages;
+    private final Long pipelineLayoutPointer;
+    private final SwapChainImages swapChainImages;
+    private final Long graphicsPipelinePointer;
 
     List<Integer> dynamicStates = ImmutableList.of(
             VK13.VK_DYNAMIC_STATE_VIEWPORT,
             VK13.VK_DYNAMIC_STATE_SCISSOR
     );
 
-    public GraphicsPipeline(final SwapChainImages swapChainImages) {
+    public GraphicsPipeline(final SwapChainImages swapChainImages, final RenderPass renderPass) {
         this.swapChainImages = swapChainImages;
         VkDevice device = swapChainImages.getSwapChain().getLogicalDevice().getLogicalDeviceInformation().vkDevice();
         LoadedShader loadedVertex = new LoadedShader("shaders/compiled/simple_shader.vert.spv");
-        simpleVertexShader = new ShaderModule(device, loadedVertex);
+        ShaderModule simpleVertexShader = new ShaderModule(device, loadedVertex);
         loadedVertex.free();
         LoadedShader loadedFragment = new LoadedShader("shaders/compiled/simple_shader.frag.spv");
-        simpleFragmentShader = new ShaderModule(device, loadedFragment);
+        ShaderModule simpleFragmentShader = new ShaderModule(device, loadedFragment);
         loadedFragment.free();
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
+            VkPipelineShaderStageCreateInfo.Buffer shaderStageCreateInfoBuffer = VkPipelineShaderStageCreateInfo.malloc(2, memoryStack);
             VkPipelineShaderStageCreateInfo vertexShaderStageInfo = VkPipelineShaderStageCreateInfo.calloc(memoryStack);
             vertexShaderStageInfo
                     .sType(VK13.VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO)
                     .stage(VK13.VK_SHADER_STAGE_VERTEX_BIT)
                     .module(simpleVertexShader.getShaderModulePointer())
                     .pName(memoryStack.UTF8("main"));
+            shaderStageCreateInfoBuffer.put(vertexShaderStageInfo);
             VkPipelineShaderStageCreateInfo fragmentShaderStageInfo = VkPipelineShaderStageCreateInfo.calloc(memoryStack);
             fragmentShaderStageInfo
                     .sType(VK13.VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO)
                     .stage(VK13.VK_SHADER_STAGE_FRAGMENT_BIT)
                     .module(simpleFragmentShader.getShaderModulePointer())
                     .pName(memoryStack.UTF8("main"));
+            shaderStageCreateInfoBuffer.put(fragmentShaderStageInfo);
+            shaderStageCreateInfoBuffer.flip();
 
             IntBuffer pDynamicStates = memoryStack.mallocInt(dynamicStates.size());
             for (Integer x : dynamicStates) {
@@ -68,40 +73,23 @@ public class GraphicsPipeline {
                     .sType(VK13.VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO)
                     .pDynamicStates(pDynamicStates);
 
+            VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo = VkPipelineVertexInputStateCreateInfo.calloc(memoryStack);
+            vertexInputStateCreateInfo
+                    .sType(VK13.VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO)
+                    .pVertexBindingDescriptions(null)
+                    .pVertexAttributeDescriptions(null);
+
             VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo = VkPipelineInputAssemblyStateCreateInfo.calloc(memoryStack);
             inputAssemblyStateCreateInfo
                     .sType(VK13.VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO)
                     .topology(VK13.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
                     .primitiveRestartEnable(false);
-            VkViewport.Buffer viewportBuffer = VkViewport.calloc(1, memoryStack);
-            VkViewport viewport = VkViewport.calloc(memoryStack);
-            viewport
-                    .x(0.0f)
-                    .y(0.0f)
-                    .width(swapChainImages.getSwapChain().getSwapChainExtent().width())
-                    .height(swapChainImages.getSwapChain().getSwapChainExtent().height())
-                    .minDepth(0.0f)
-                    .maxDepth(1.0f);
-            viewportBuffer.put(viewport);
-            viewportBuffer.flip();
-
-            VkRect2D.Buffer scissorBuffer = VkRect2D.calloc(1, memoryStack);
-            VkRect2D scissor = VkRect2D.calloc(memoryStack);
-            VkOffset2D offset = VkOffset2D.calloc(memoryStack);
-            offset
-                    .x(0)
-                    .y(0);
-            scissor
-                    .offset(offset)
-                    .extent(swapChainImages.getSwapChain().getSwapChainExtent());
-            scissorBuffer.put(scissor);
-            scissorBuffer.flip();
 
             VkPipelineViewportStateCreateInfo viewportStateCreateInfo = VkPipelineViewportStateCreateInfo.calloc(memoryStack);
             viewportStateCreateInfo
                     .sType(VK13.VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO)
-                    .pViewports(viewportBuffer)
-                    .pScissors(scissorBuffer);
+                    .viewportCount(1)
+                    .scissorCount(1);
 
             VkPipelineRasterizationStateCreateInfo rasterizationStateCreateInfo = VkPipelineRasterizationStateCreateInfo.calloc(memoryStack);
             rasterizationStateCreateInfo
@@ -132,13 +120,7 @@ public class GraphicsPipeline {
             VkPipelineColorBlendAttachmentState colorBlendAttachment = VkPipelineColorBlendAttachmentState.calloc(memoryStack);
             colorBlendAttachment
                     .colorWriteMask(VK13.VK_COLOR_COMPONENT_R_BIT | VK13.VK_COLOR_COMPONENT_G_BIT | VK13.VK_COLOR_COMPONENT_B_BIT | VK13.VK_COLOR_COMPONENT_A_BIT)
-                    .blendEnable(false)
-                    .srcColorBlendFactor(VK13.VK_BLEND_FACTOR_ONE)
-                    .dstAlphaBlendFactor(VK13.VK_BLEND_FACTOR_ZERO)
-                    .colorBlendOp(VK13.VK_BLEND_OP_ADD)
-                    .srcAlphaBlendFactor(VK13.VK_BLEND_FACTOR_ONE)
-                    .dstAlphaBlendFactor(VK13.VK_BLEND_FACTOR_ZERO)
-                    .alphaBlendOp(VK13.VK_BLEND_OP_ADD);
+                    .blendEnable(false);
             colorBlendAttachmentBuffer.put(colorBlendAttachment);
             colorBlendAttachmentBuffer.flip();
 
@@ -164,12 +146,40 @@ public class GraphicsPipeline {
                 throw new IllegalStateException(String.format("Failed to create pipeline layout. Error code", result));
             }
             pipelineLayoutPointer = pPipelineLayout.get(0);
+            VkGraphicsPipelineCreateInfo.Buffer graphicsPipelineCreateInfoBuffer = VkGraphicsPipelineCreateInfo.malloc(1, memoryStack);
+            VkGraphicsPipelineCreateInfo graphicsPipelineCreateInfo = VkGraphicsPipelineCreateInfo.calloc(memoryStack);
+            graphicsPipelineCreateInfo
+                    .sType(VK13.VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO)
+                    .pStages(shaderStageCreateInfoBuffer)
+                    .pVertexInputState(vertexInputStateCreateInfo)
+                    .pInputAssemblyState(inputAssemblyStateCreateInfo)
+                    .pViewportState(viewportStateCreateInfo)
+                    .pRasterizationState(rasterizationStateCreateInfo)
+                    .pMultisampleState(multiSampleStateCreateInfo)
+                    .pDepthStencilState(null)
+                    .pColorBlendState(colorBlendStateCreateInfo)
+                    .pDynamicState(dynamicStateCreateInfo)
+                    .layout(pipelineLayoutPointer)
+                    .renderPass(renderPass.getRenderPassPointer())
+                    .subpass(0)
+                    .basePipelineHandle(VK13.VK_NULL_HANDLE)
+                    .basePipelineIndex(-1);
+            graphicsPipelineCreateInfoBuffer.put(graphicsPipelineCreateInfo);
+            graphicsPipelineCreateInfoBuffer.flip();
+            LongBuffer graphicsPipelinePointerBuffer = memoryStack.mallocLong(1);
+            int graphicsPipelineResult = VK13.vkCreateGraphicsPipelines(device, VK13.VK_NULL_HANDLE, graphicsPipelineCreateInfoBuffer, null, graphicsPipelinePointerBuffer);
+            if (graphicsPipelineResult != VK13.VK_SUCCESS) {
+                throw new IllegalStateException(String.format("Failed to create graphics pipeline. Error code %d", graphicsPipelineResult));
+            }
+            graphicsPipelinePointer = graphicsPipelinePointerBuffer.get(0);
+        } finally {
+            simpleVertexShader.free();
+            simpleFragmentShader.free();
         }
     }
 
     public void free() {
+        VK13.vkDestroyPipeline(swapChainImages.getSwapChain().getLogicalDevice().getLogicalDeviceInformation().vkDevice(), graphicsPipelinePointer, null);
         VK13.vkDestroyPipelineLayout(swapChainImages.getSwapChain().getLogicalDevice().getLogicalDeviceInformation().vkDevice(), pipelineLayoutPointer, null);
-        simpleVertexShader.free();
-        simpleFragmentShader.free();
     }
 }

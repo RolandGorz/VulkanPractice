@@ -53,7 +53,7 @@ public class MainGameLoop {
         swapChain = new SwapChain(logicalDevice, windowHandle, windowSurface);
         swapChainImages = new SwapChainImages(swapChain);
         renderPass = new RenderPass(swapChainImages);
-        graphicsPipeline = new GraphicsPipeline(swapChainImages);
+        graphicsPipeline = new GraphicsPipeline(swapChainImages, renderPass);
     }
 
     private void destroy() {
