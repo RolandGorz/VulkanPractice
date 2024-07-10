@@ -50,7 +50,7 @@ public class MainGameLoop {
         logicalDevice = new LogicalDevice(chosenPhysicalDevice);
         swapChain = new SwapChain(logicalDevice, windowHandle, windowSurface);
         swapChainImages = new SwapChainImages(swapChain);
-        graphicsPipeline = new GraphicsPipeline(logicalDevice.getLogicalDeviceInformation().vkDevice());
+        graphicsPipeline = new GraphicsPipeline(swapChainImages);
     }
 
     private void destroy() {

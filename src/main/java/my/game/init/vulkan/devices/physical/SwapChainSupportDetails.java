@@ -23,7 +23,7 @@ public class SwapChainSupportDetails {
             IntBuffer formatsCount = memoryStack.mallocInt(1);
             getFormatsCount(physicalDevice, windowSurface, formatsCount);
             formats = VkSurfaceFormatKHR.malloc(formatsCount.get(0));
-            getPhysicalDeviceSurfaceFormats(physicalDevice, windowSurface, formatsCount);
+            getPhysicalDeviceSurfaceFormats(physicalDevice, windowSurface, formatsCount, formats);
             IntBuffer presentModesCount = memoryStack.mallocInt(1);
             getPresentModesCount(physicalDevice, windowSurface, presentModesCount);
             presentModes = MemoryUtil.memAllocInt(presentModesCount.get(0));
@@ -66,12 +66,13 @@ public class SwapChainSupportDetails {
 
     private void getPhysicalDeviceSurfaceFormats(VkPhysicalDevice physicalDevice,
                                                  WindowSurface windowSurface,
-                                                 IntBuffer formatsCount) {
+                                                 IntBuffer formatsCount,
+                                                 VkSurfaceFormatKHR.Buffer formatsBuffer) {
         int result = KHRSurface.vkGetPhysicalDeviceSurfaceFormatsKHR(
                 physicalDevice,
                 windowSurface.getWindowSurfaceHandle(),
                 formatsCount,
-                formats);
+                formatsBuffer);
         if (result != VK13.VK_SUCCESS) {
             throw new IllegalStateException(String.format("Failed to get physical device surface formats. Error code: %d", result));
         }

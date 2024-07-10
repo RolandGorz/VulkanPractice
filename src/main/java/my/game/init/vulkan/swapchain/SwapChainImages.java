@@ -24,6 +24,10 @@ public class SwapChainImages {
         swapChainImageViewPointers = createSwapChainImageViews();
     }
 
+    public SwapChain getSwapChain() {
+        return swapChain;
+    }
+
     private List<Long> createSwapChainImages() {
         Long swapChainPointer = swapChain.getSwapChainPointer();
         VkDevice device = swapChain.getLogicalDevice().getLogicalDeviceInformation().vkDevice();

@@ -35,8 +35,7 @@ public class SwapChain {
         SwapChainSupportDetails swapChainSupportDetails = this.device.getLogicalDeviceInformation().validPhysicalDevice().physicalDeviceInformation().swapChainSupportDetails();
         surfaceFormat = chooseSwapSurfaceFormat(swapChainSupportDetails.formats());
         int presentMode = choosePresentMode(swapChainSupportDetails.presentModes());
-        swapChainExtent = chooseSwapExtent(swapChainSupportDetails.capabilities(),
-                this.windowHandle);
+        swapChainExtent = chooseSwapExtent(swapChainSupportDetails.capabilities(), this.windowHandle);
         swapChainPointer = createSwapChain(swapChainSupportDetails, this.windowSurface, this.device, presentMode);
     }
 
@@ -112,9 +111,8 @@ public class SwapChain {
         return surfaceFormat;
     }
 
-    public void free() {
-        KHRSwapchain.vkDestroySwapchainKHR(device.getLogicalDeviceInformation().vkDevice(), swapChainPointer, null);
-        swapChainExtent.free();
+    public VkExtent2D getSwapChainExtent() {
+        return swapChainExtent;
     }
 
     private VkSurfaceFormatKHR chooseSwapSurfaceFormat(VkSurfaceFormatKHR.Buffer formats) {
@@ -157,4 +155,8 @@ public class SwapChain {
         }
     }
 
+    public void free() {
+        KHRSwapchain.vkDestroySwapchainKHR(device.getLogicalDeviceInformation().vkDevice(), swapChainPointer, null);
+        swapChainExtent.free();
+    }
 }
