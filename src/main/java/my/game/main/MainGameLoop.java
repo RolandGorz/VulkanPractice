@@ -58,6 +58,7 @@ public class MainGameLoop {
         swapChainImages.free();
         swapChain.free();
         logicalDevice.free();
+        chosenPhysicalDevice.free();
         windowSurface.free();
         vulkanInstanceBuilder.free();
         windowHandle.free();

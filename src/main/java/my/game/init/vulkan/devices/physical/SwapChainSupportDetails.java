@@ -99,9 +99,7 @@ public class SwapChainSupportDetails {
         }
     }
 
-    //TODO when data is freed like this make getters exception if someone tries to read.
-    //Should be called once the swap chain has been created
-    public void free() {
+    protected void free() {
         capabilities.free();
         formats.free();
         MemoryUtil.memFree(presentModes);
