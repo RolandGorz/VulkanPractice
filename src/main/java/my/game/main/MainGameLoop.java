@@ -5,6 +5,7 @@ import my.game.init.vulkan.devices.logical.LogicalDevice;
 import my.game.init.vulkan.devices.physical.PhysicalDevices;
 import my.game.init.vulkan.devices.physical.ValidPhysicalDevice;
 import my.game.init.vulkan.pipeline.GraphicsPipeline;
+import my.game.init.vulkan.pipeline.RenderPass;
 import my.game.init.vulkan.pipeline.shaders.ShaderCompiler;
 import my.game.init.vulkan.swapchain.SwapChain;
 import my.game.init.vulkan.swapchain.SwapChainImages;
@@ -24,6 +25,7 @@ public class MainGameLoop {
     private WindowSurface windowSurface;
     private SwapChain swapChain;
     private SwapChainImages swapChainImages;
+    private RenderPass renderPass;
     private GraphicsPipeline graphicsPipeline;
 
     public MainGameLoop() {
@@ -50,11 +52,13 @@ public class MainGameLoop {
         logicalDevice = new LogicalDevice(chosenPhysicalDevice);
         swapChain = new SwapChain(logicalDevice, windowHandle, windowSurface);
         swapChainImages = new SwapChainImages(swapChain);
+        renderPass = new RenderPass(swapChainImages);
         graphicsPipeline = new GraphicsPipeline(swapChainImages);
     }
 
     private void destroy() {
         graphicsPipeline.free();
+        renderPass.free();
         swapChainImages.free();
         swapChain.free();
         logicalDevice.free();

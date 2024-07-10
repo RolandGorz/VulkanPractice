@@ -138,9 +138,9 @@ public class SwapChain {
     private VkExtent2D chooseSwapExtent(VkSurfaceCapabilitiesKHR capabilities, WindowHandle windowHandle) {
         VkExtent2D vkExtent2D = VkExtent2D.malloc();
         if (capabilities.currentExtent().width() != VulkanUtil.UINT32_MAX) {
-            vkExtent2D.set(
-                    capabilities.currentExtent().width(),
-                    capabilities.currentExtent().height());
+            vkExtent2D
+                    .width(capabilities.currentExtent().width())
+                    .height(capabilities.currentExtent().height());
             return vkExtent2D;
         }
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
@@ -148,9 +148,9 @@ public class SwapChain {
             IntBuffer height = memoryStack.mallocInt(1);
             GLFW.glfwGetFramebufferSize(windowHandle.getWindowHandlePointer(), width, height);
 
-            vkExtent2D.set(
-                    Math.clamp(width.get(0), capabilities.minImageExtent().width(), capabilities.maxImageExtent().width()),
-                    Math.clamp(height.get(0), capabilities.minImageExtent().height(), capabilities.maxImageExtent().height()));
+            vkExtent2D
+                    .width(Math.clamp(width.get(0), capabilities.minImageExtent().width(), capabilities.maxImageExtent().width()))
+                    .height(Math.clamp(height.get(0), capabilities.minImageExtent().height(), capabilities.maxImageExtent().height()));
             return vkExtent2D;
         }
     }

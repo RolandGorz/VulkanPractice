@@ -14,21 +14,25 @@ import java.util.HashSet;
 public abstract class PhysicalDeviceInformation implements Comparable<PhysicalDeviceInformation> {
 
     public abstract VkPhysicalDevice physicalDevice();
+
     public abstract int score();
+
     public abstract QueueFamilyIndexes queueFamilyIndexes();
+
     public abstract WindowSurface windowSurface();
+
     @Value.Derived
     public boolean requiredDeviceExtensionsSupported() {
         HashSet<String> supportedExtensions = new HashSet<>();
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             IntBuffer deviceExtensionPropertiesCount = memoryStack.mallocInt(1);
-            int result = VK13.vkEnumerateDeviceExtensionProperties(physicalDevice(), (String)null, deviceExtensionPropertiesCount, null);
+            int result = VK13.vkEnumerateDeviceExtensionProperties(physicalDevice(), (String) null, deviceExtensionPropertiesCount, null);
             if (result != VK13.VK_SUCCESS) {
                 throw new IllegalStateException(String.format("Failed to enumerate device extension properties. Error code: %d5", result));
             }
             System.out.printf("Found %d device extension properties%n", deviceExtensionPropertiesCount.get(0));
             VkExtensionProperties.Buffer vkExtensionProperties = VkExtensionProperties.malloc(deviceExtensionPropertiesCount.get(0), memoryStack);
-            int result2 = VK13.vkEnumerateDeviceExtensionProperties(physicalDevice(), (String)null, deviceExtensionPropertiesCount, vkExtensionProperties);
+            int result2 = VK13.vkEnumerateDeviceExtensionProperties(physicalDevice(), (String) null, deviceExtensionPropertiesCount, vkExtensionProperties);
             if (result2 != VK13.VK_SUCCESS) {
                 throw new IllegalStateException(String.format("Failed to enumerate device extension properties. Error code: %d5", result2));
             }
@@ -46,6 +50,7 @@ public abstract class PhysicalDeviceInformation implements Comparable<PhysicalDe
         }
         return allFound;
     }
+
     @Value.Derived
     public SwapChainSupportDetails swapChainSupportDetails() {
         return new SwapChainSupportDetails(physicalDevice(), windowSurface());

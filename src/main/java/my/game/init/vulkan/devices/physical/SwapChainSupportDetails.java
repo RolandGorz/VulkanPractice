@@ -54,14 +54,14 @@ public class SwapChainSupportDetails {
     }
 
     private void getFormatsCount(VkPhysicalDevice physicalDevice, WindowSurface windowSurface, IntBuffer formatsCount) {
-            int result = KHRSurface.vkGetPhysicalDeviceSurfaceFormatsKHR(
-                    physicalDevice,
-                    windowSurface.getWindowSurfaceHandle(),
-                    formatsCount,
-                    null);
-            if (result != VK13.VK_SUCCESS) {
-                throw new IllegalStateException(String.format("Failed to get physical device surface formats count. Error code: %d", result));
-            }
+        int result = KHRSurface.vkGetPhysicalDeviceSurfaceFormatsKHR(
+                physicalDevice,
+                windowSurface.getWindowSurfaceHandle(),
+                formatsCount,
+                null);
+        if (result != VK13.VK_SUCCESS) {
+            throw new IllegalStateException(String.format("Failed to get physical device surface formats count. Error code: %d", result));
+        }
     }
 
     private void getPhysicalDeviceSurfaceFormats(VkPhysicalDevice physicalDevice,

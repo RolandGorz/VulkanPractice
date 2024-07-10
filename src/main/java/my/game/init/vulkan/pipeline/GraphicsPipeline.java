@@ -88,8 +88,12 @@ public class GraphicsPipeline {
             VkRect2D.Buffer scissorBuffer = VkRect2D.calloc(1, memoryStack);
             VkRect2D scissor = VkRect2D.calloc(memoryStack);
             VkOffset2D offset = VkOffset2D.calloc(memoryStack);
-            offset.set(0, 0);
-            scissor.set(offset, swapChainImages.getSwapChain().getSwapChainExtent());
+            offset
+                    .x(0)
+                    .y(0);
+            scissor
+                    .offset(offset)
+                    .extent(swapChainImages.getSwapChain().getSwapChainExtent());
             scissorBuffer.put(scissor);
             scissorBuffer.flip();
 
