@@ -39,10 +39,10 @@ public class GraphicsPipeline {
     public GraphicsPipeline(final SwapChainImages swapChainImages, final RenderPass renderPass) {
         this.swapChainImages = swapChainImages;
         VkDevice device = swapChainImages.getSwapChain().getLogicalDevice().getLogicalDeviceInformation().vkDevice();
-        LoadedShader loadedVertex = new LoadedShader("shaders/compiled/simple_shader.vert.spv");
+        LoadedShader loadedVertex = new LoadedShader("shaders/compiled/multi_color_triangle.vert.spv");
         ShaderModule simpleVertexShader = new ShaderModule(device, loadedVertex);
         loadedVertex.free();
-        LoadedShader loadedFragment = new LoadedShader("shaders/compiled/simple_shader.frag.spv");
+        LoadedShader loadedFragment = new LoadedShader("shaders/compiled/multi_color_triangle.frag.spv");
         ShaderModule simpleFragmentShader = new ShaderModule(device, loadedFragment);
         loadedFragment.free();
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {

@@ -41,6 +41,10 @@ public class CommandBuffer {
         }
     }
 
+    public VkCommandBuffer getCommandBuffer() {
+        return commandBuffer;
+    }
+
     public void recordCommandBuffer(int imageIndex) {
         beginCommandBuffer();
         beginRenderPass(imageIndex);

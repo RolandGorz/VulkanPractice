@@ -7,6 +7,7 @@ import org.lwjgl.vulkan.VK13;
 import org.lwjgl.vulkan.VkAttachmentDescription;
 import org.lwjgl.vulkan.VkAttachmentReference;
 import org.lwjgl.vulkan.VkRenderPassCreateInfo;
+import org.lwjgl.vulkan.VkSubpassDependency;
 import org.lwjgl.vulkan.VkSubpassDescription;
 
 import java.nio.LongBuffer;
@@ -63,11 +64,21 @@ public class RenderPass {
             colorAttachmentBuffer.put(colorAttachment);
             colorAttachmentBuffer.flip();
 
+            VkSubpassDependency.Buffer subpassDependency = VkSubpassDependency.calloc(1, memoryStack);
+            subpassDependency
+                    .srcSubpass(VK13.VK_SUBPASS_EXTERNAL)
+                    .dstSubpass(0)
+                    .srcStageMask(VK13.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
+                    .srcAccessMask(0)
+                    .dstStageMask(VK13.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
+                    .dstAccessMask(VK13.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
+
             VkRenderPassCreateInfo renderPassCreateInfo = VkRenderPassCreateInfo.calloc(memoryStack);
             renderPassCreateInfo
                     .sType(VK13.VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO)
                     .pAttachments(colorAttachmentBuffer)
-                    .pSubpasses(subpassDescriptionBuffer);
+                    .pSubpasses(subpassDescriptionBuffer)
+                    .pDependencies(subpassDependency);
             LongBuffer renderPassPointerBuffer = memoryStack.mallocLong(1);
             int result = VK13.vkCreateRenderPass(
                     swapChainImages.getSwapChain().getLogicalDevice().getLogicalDeviceInformation().vkDevice(),
