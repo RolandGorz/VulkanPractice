@@ -178,6 +178,10 @@ public class GraphicsPipeline {
         }
     }
 
+    public Long getGraphicsPipelinePointer() {
+        return graphicsPipelinePointer;
+    }
+
     public void free() {
         VK13.vkDestroyPipeline(swapChainImages.getSwapChain().getLogicalDevice().getLogicalDeviceInformation().vkDevice(), graphicsPipelinePointer, null);
         VK13.vkDestroyPipelineLayout(swapChainImages.getSwapChain().getLogicalDevice().getLogicalDeviceInformation().vkDevice(), pipelineLayoutPointer, null);

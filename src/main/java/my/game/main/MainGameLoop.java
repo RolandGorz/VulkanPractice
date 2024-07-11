@@ -1,9 +1,12 @@
 package my.game.main;
 
 import my.game.init.vulkan.VulkanInstanceBuilder;
+import my.game.init.vulkan.drawing.CommandBuffer;
+import my.game.init.vulkan.drawing.CommandPool;
 import my.game.init.vulkan.devices.logical.LogicalDevice;
 import my.game.init.vulkan.devices.physical.PhysicalDevices;
 import my.game.init.vulkan.devices.physical.ValidPhysicalDevice;
+import my.game.init.vulkan.drawing.FrameBuffers;
 import my.game.init.vulkan.pipeline.GraphicsPipeline;
 import my.game.init.vulkan.pipeline.RenderPass;
 import my.game.init.vulkan.pipeline.shaders.ShaderCompiler;
@@ -27,6 +30,9 @@ public class MainGameLoop {
     private SwapChainImages swapChainImages;
     private RenderPass renderPass;
     private GraphicsPipeline graphicsPipeline;
+    private FrameBuffers frameBuffers;
+    private CommandPool commandPool;
+    private CommandBuffer commandBuffer;
 
     public MainGameLoop() {
         shaderCompiler = new ShaderCompiler();
@@ -39,8 +45,13 @@ public class MainGameLoop {
         GLFW.glfwShowWindow(windowHandle.getWindowHandlePointer());
         while (!GLFW.glfwWindowShouldClose(windowHandle.getWindowHandlePointer())) {
             GLFW.glfwPollEvents();
+            drawFrame();
         }
         destroy();
+    }
+
+    private void drawFrame() {
+
     }
 
     private void initialize() {
@@ -54,9 +65,14 @@ public class MainGameLoop {
         swapChainImages = new SwapChainImages(swapChain);
         renderPass = new RenderPass(swapChainImages);
         graphicsPipeline = new GraphicsPipeline(swapChainImages, renderPass);
+        frameBuffers = new FrameBuffers(renderPass);
+        commandPool = new CommandPool(logicalDevice);
+        commandBuffer = new CommandBuffer(commandPool, frameBuffers, graphicsPipeline);
     }
 
     private void destroy() {
+        commandPool.free();
+        frameBuffers.free();
         graphicsPipeline.free();
         renderPass.free();
         swapChainImages.free();

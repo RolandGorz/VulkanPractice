@@ -8,19 +8,25 @@ import org.lwjgl.vulkan.VkQueue;
 
 public abstract class VulkanQueue {
     private final VkQueue vkQueue;
+    private final Integer queueIndex;
 
     //VkQueue is implicitly freed when the vkDevice is freed. We do not need to free ourselves.
     protected VulkanQueue(Integer queueIndex, VkDevice vkDevice) {
+        this.queueIndex = queueIndex;
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
-            PointerBuffer graphicsQueue = memoryStack.mallocPointer(1);
+            PointerBuffer vulkanQueue = memoryStack.mallocPointer(1);
             VK13.vkGetDeviceQueue(vkDevice,
-                    queueIndex, 0, graphicsQueue);
-            vkQueue =  new VkQueue(graphicsQueue.get(0), vkDevice);
+                    queueIndex, 0, vulkanQueue);
+            vkQueue =  new VkQueue(vulkanQueue.get(0), vkDevice);
         }
     }
 
     public VkQueue getVkQueue() {
         return vkQueue;
+    }
+
+    public Integer getQueueIndex() {
+        return queueIndex;
     }
 
     @Override

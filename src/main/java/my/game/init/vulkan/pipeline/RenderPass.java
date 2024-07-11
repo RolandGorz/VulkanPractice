@@ -85,6 +85,10 @@ public class RenderPass {
         return renderPassPointer;
     }
 
+    public SwapChainImages getSwapChainImages() {
+        return swapChainImages;
+    }
+
     public void free() {
         VK13.vkDestroyRenderPass(swapChainImages.getSwapChain().getLogicalDevice().getLogicalDeviceInformation().vkDevice(),
                 renderPassPointer,

@@ -2,6 +2,7 @@ package my.game.init.vulkan.swapchain;
 
 import com.google.common.collect.ImmutableList;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.KHRSwapchain;
 import org.lwjgl.vulkan.VK13;
 import org.lwjgl.vulkan.VkComponentMapping;
@@ -16,16 +17,12 @@ import java.util.List;
 public class SwapChainImages {
     final SwapChain swapChain;
     final List<Long> swapChainImagePointers;
-    final List<Long> swapChainImageViewPointers;
+    final List<LongBuffer> swapChainImageViewPointers;
 
     public SwapChainImages(SwapChain swapChain) {
         this.swapChain = swapChain;
         swapChainImagePointers = createSwapChainImages();
         swapChainImageViewPointers = createSwapChainImageViews();
-    }
-
-    public SwapChain getSwapChain() {
-        return swapChain;
     }
 
     private List<Long> createSwapChainImages() {
@@ -50,7 +47,7 @@ public class SwapChainImages {
         }
     }
 
-    private List<Long> createSwapChainImageViews() {
+    private List<LongBuffer> createSwapChainImageViews() {
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             VkComponentMapping vkComponentMapping = VkComponentMapping.calloc(memoryStack);
             vkComponentMapping
@@ -65,9 +62,9 @@ public class SwapChainImages {
                     .levelCount(1)
                     .baseArrayLayer(0)
                     .layerCount(1);
-            ImmutableList.Builder<Long> imageViewsBuilder = ImmutableList.builder();
-            LongBuffer imageViewPointer = memoryStack.mallocLong(1);
+            ImmutableList.Builder<LongBuffer> imageViewsBuilder = ImmutableList.builder();
             for (int i = 0; i < swapChainImagePointers.size(); ++i) {
+                LongBuffer imageViewPointer = MemoryUtil.memAllocLong(1);
                 VkImageViewCreateInfo vkImageViewCreateInfo = VkImageViewCreateInfo.calloc(memoryStack);
                 vkImageViewCreateInfo
                         .sType(VK13.VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO)
@@ -81,15 +78,26 @@ public class SwapChainImages {
                     throw new IllegalStateException(String.format("Failed to create image for swap chain image in position %d of the list of swap chain images. Error code %d",
                             i, result));
                 }
-                imageViewsBuilder.add(imageViewPointer.get(0));
+                imageViewsBuilder.add(imageViewPointer);
             }
             return imageViewsBuilder.build();
         }
     }
 
+    public SwapChain getSwapChain() {
+        return swapChain;
+    }
+
+    public List<LongBuffer> getSwapChainImageViewPointers() {
+        return swapChainImageViewPointers;
+    }
+
     public void free() {
-        for (Long x : swapChainImageViewPointers) {
-            VK13.vkDestroyImageView(swapChain.getLogicalDevice().getLogicalDeviceInformation().vkDevice(), x, null);
+        for (LongBuffer x : swapChainImageViewPointers) {
+            VK13.vkDestroyImageView(
+                    swapChain.getLogicalDevice().getLogicalDeviceInformation().vkDevice(),
+                    x.get(0), null);
+            MemoryUtil.memFree(x);
         }
     }
 }
