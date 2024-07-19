@@ -1,6 +1,5 @@
 package my.game;
 
-import my.game.main.MainGameLoop;
 import org.lwjgl.Version;
 import org.lwjgl.system.Configuration;
 

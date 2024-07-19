@@ -1,8 +1,10 @@
 package my.game.init.vulkan.devices.physical;
 
+import com.google.common.collect.ImmutableList;
 import my.game.init.window.WindowSurface;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.vulkan.KHRSwapchain;
 import org.lwjgl.vulkan.VK13;
 import org.lwjgl.vulkan.VkInstance;
 import org.lwjgl.vulkan.VkPhysicalDevice;
@@ -15,9 +17,41 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.PriorityQueue;
 
-public class PhysicalDevices {
+public class PhysicalDevice {
 
-    public ValidPhysicalDevice getValidPhysicalDevice(VkInstance vkInstance, WindowSurface windowSurface) {
+    private PhysicalDeviceInformation physicalDeviceInformation;
+
+    public static List<String> REQUIRED_DEVICE_EXTENSIONS = ImmutableList.of(
+            KHRSwapchain.VK_KHR_SWAPCHAIN_EXTENSION_NAME
+    );
+
+    public PhysicalDevice(final VkInstance vkInstance, final WindowSurface windowSurface) {
+        PriorityQueue<PhysicalDeviceInformation> priorityQueue = getDevices(vkInstance, windowSurface);
+        while (!priorityQueue.isEmpty()) {
+            PhysicalDeviceInformation curr = priorityQueue.poll();
+            if (curr.isValid()) {
+                physicalDeviceInformation = curr;
+                break;
+            }
+            curr.free();
+        }
+        while (!priorityQueue.isEmpty()) {
+            priorityQueue.poll().free();
+        }
+        if (physicalDeviceInformation == null) {
+            throw new RuntimeException("No device found that is capable of rendering anything with. We give up");
+        }
+    }
+
+    public PhysicalDeviceInformation physicalDeviceInformation() {
+        return physicalDeviceInformation;
+    }
+
+    public void free() {
+        physicalDeviceInformation.free();
+    }
+
+    private PriorityQueue<PhysicalDeviceInformation> getDevices(VkInstance vkInstance, WindowSurface windowSurface) {
         List<VkPhysicalDevice> vkPhysicalDeviceList = new ArrayList<>();
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             IntBuffer deviceCount = memoryStack.mallocInt(1);
@@ -46,29 +80,10 @@ public class PhysicalDevices {
                 priorityQueue.add(curr);
             }
         }
-        return chooseValidPhysicalDevice(priorityQueue);
+        return priorityQueue;
     }
 
-    private ValidPhysicalDevice chooseValidPhysicalDevice(PriorityQueue<PhysicalDeviceInformation> devices) {
-        ValidPhysicalDevice validPhysicalDevice = null;
-        while (!devices.isEmpty()) {
-            PhysicalDeviceInformation curr = devices.poll();
-            if (curr.isValid()) {
-                validPhysicalDevice = new ValidPhysicalDevice(curr);
-                break;
-            }
-            curr.free();
-        }
-        while (!devices.isEmpty()) {
-            devices.poll().free();
-        }
-        if (validPhysicalDevice == null) {
-            throw new RuntimeException("No device found that is capable of rendering anything with. We give up");
-        }
-        return validPhysicalDevice;
-    }
-
-    public PhysicalDeviceInformation determineDeviceSuitability(VkPhysicalDevice vkPhysicalDevice, WindowSurface windowSurface) {
+    private PhysicalDeviceInformation determineDeviceSuitability(VkPhysicalDevice vkPhysicalDevice, WindowSurface windowSurface) {
         int score = 0;
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             VkPhysicalDeviceProperties vkPhysicalDeviceProperties = VkPhysicalDeviceProperties.malloc(memoryStack);

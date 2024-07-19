@@ -45,14 +45,12 @@ public class QueueFamilyIndexes {
 
         private Builder() {}
 
-        public Builder setGraphicsQueueFamilyIndex(final int graphicsQueueFamilyIndex) {
+        public void setGraphicsQueueFamilyIndex(final int graphicsQueueFamilyIndex) {
             graphicsQueueFamilyIndexBuilder = graphicsQueueFamilyIndex;
-            return this;
         }
 
-        public Builder setPresentationQueueFamilyIndex(final int presentationQueueFamilyIndex) {
+        public void setPresentationQueueFamilyIndex(final int presentationQueueFamilyIndex) {
             presentationQueueFamilyIndexBuilder = presentationQueueFamilyIndex;
-            return this;
         }
 
         public boolean isComplete() {

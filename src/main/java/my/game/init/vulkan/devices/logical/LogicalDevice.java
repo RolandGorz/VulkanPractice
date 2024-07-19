@@ -1,6 +1,6 @@
 package my.game.init.vulkan.devices.logical;
 
-import my.game.init.vulkan.devices.physical.ValidPhysicalDevice;
+import my.game.init.vulkan.devices.physical.PhysicalDevice;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VK13;
@@ -16,7 +16,7 @@ public class LogicalDevice {
 
     private final LogicalDeviceInformation logicalDeviceInformation;
 
-    public LogicalDevice(ValidPhysicalDevice validPhysicalDevice) {
+    public LogicalDevice(PhysicalDevice validPhysicalDevice) {
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             //We only want 1 queue, so we are allocating 1 float in the buffer and then setting it as top priority.
             //The quantity of pQueuePriorities is required to be equal to the number of queues.
@@ -34,8 +34,8 @@ public class LogicalDevice {
                 vkDeviceQueueCreateInfos.put(info);
             }
             vkDeviceQueueCreateInfos.flip();
-            PointerBuffer requiredDeviceExtensions = memoryStack.callocPointer(ValidPhysicalDevice.REQUIRED_DEVICE_EXTENSIONS.size());
-            for (String x : ValidPhysicalDevice.REQUIRED_DEVICE_EXTENSIONS) {
+            PointerBuffer requiredDeviceExtensions = memoryStack.callocPointer(PhysicalDevice.REQUIRED_DEVICE_EXTENSIONS.size());
+            for (String x : PhysicalDevice.REQUIRED_DEVICE_EXTENSIONS) {
                 requiredDeviceExtensions.put(memoryStack.UTF8(x));
             }
             requiredDeviceExtensions.flip();

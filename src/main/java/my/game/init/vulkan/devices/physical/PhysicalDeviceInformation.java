@@ -42,7 +42,7 @@ public abstract class PhysicalDeviceInformation implements Comparable<PhysicalDe
             }
         }
         boolean allFound = true;
-        for (String x : ValidPhysicalDevice.REQUIRED_DEVICE_EXTENSIONS) {
+        for (String x : PhysicalDevice.REQUIRED_DEVICE_EXTENSIONS) {
             if (!supportedExtensions.contains(x)) {
                 System.out.printf("Device extension %s not found%n", x);
                 allFound = false;

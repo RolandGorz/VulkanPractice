@@ -22,21 +22,17 @@ import java.nio.LongBuffer;
 public class SwapChain {
 
     private final LogicalDevice device;
-    private final WindowHandle windowHandle;
-    private final WindowSurface windowSurface;
     private final long swapChainPointer;
     private final VkSurfaceFormatKHR surfaceFormat;
     private final VkExtent2D swapChainExtent;
 
     public SwapChain(LogicalDevice device, WindowHandle windowHandle, WindowSurface windowSurface) {
         this.device = device;
-        this.windowHandle = windowHandle;
-        this.windowSurface = windowSurface;
         SwapChainSupportDetails swapChainSupportDetails = this.device.getLogicalDeviceInformation().validPhysicalDevice().physicalDeviceInformation().swapChainSupportDetails();
         surfaceFormat = chooseSwapSurfaceFormat(swapChainSupportDetails.formats());
         int presentMode = choosePresentMode(swapChainSupportDetails.presentModes());
-        swapChainExtent = chooseSwapExtent(swapChainSupportDetails.capabilities(), this.windowHandle);
-        swapChainPointer = createSwapChain(swapChainSupportDetails, this.windowSurface, this.device, presentMode);
+        swapChainExtent = chooseSwapExtent(swapChainSupportDetails.capabilities(), windowHandle);
+        swapChainPointer = createSwapChain(swapChainSupportDetails, windowSurface, this.device, presentMode);
     }
 
     private long createSwapChain(SwapChainSupportDetails swapChainSupportDetails, WindowSurface windowSurface, LogicalDevice logicalDevice, int presentMode) {
@@ -93,14 +89,6 @@ public class SwapChain {
 
     public LogicalDevice getLogicalDevice() {
         return device;
-    }
-
-    public WindowHandle getWindowHandle() {
-        return windowHandle;
-    }
-
-    public WindowSurface getWindowSurface() {
-        return windowSurface;
     }
 
     public Long getSwapChainPointer() {

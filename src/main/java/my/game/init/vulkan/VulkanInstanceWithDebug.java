@@ -17,16 +17,60 @@ import java.nio.LongBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DebugVulkanInstanceBuilder {
-    private static final DebugVulkanInstanceBuilder INSTANCE = new DebugVulkanInstanceBuilder();
-    private static VkDebugUtilsMessengerCreateInfoEXT vkDebugUtilsMessengerCreateInfoEXTinstance;
-    private static VkDebugUtilsMessengerCallbackEXT vkDebugUtilsMessengerCallbackEXTinstance;
-    private static long pDebugUtilsMessengerEXT;
-    public static DebugVulkanInstanceBuilder getInstance() {
-        return INSTANCE;
+public class VulkanInstanceWithDebug extends VulkanInstance {
+
+    private final VkDebugUtilsMessengerCreateInfoEXT debugUtilsMessengerCreateInfo;
+    private final VkDebugUtilsMessengerCallbackEXT callback;
+    private long pDebugUtilsMessengerEXT;
+
+    public VulkanInstanceWithDebug() {
+        callback = VkDebugUtilsMessengerCallbackEXT.create(
+                (messageSeverity, messageTypes, pCallbackData, pUserData) -> {
+                    final String severity = getSeverityString(messageSeverity);
+                    //Previous commit said not to free things created by BufferUtils. That is wrong. I just don't need
+                    // to free this VkDebugUtilsMessengerCallbackDataEXT since it's a struct created from an existing
+                    // memory address that will be freed by whatever created it.
+                    VkDebugUtilsMessengerCallbackDataEXT data = VkDebugUtilsMessengerCallbackDataEXT.create(pCallbackData);
+                    System.out.printf("%s pCallBackData.pMessage: %s%n", severity, MemoryUtil.memASCII(data.pMessage()));
+                    return VK13.VK_FALSE;
+                }
+        );
+        debugUtilsMessengerCreateInfo = VkDebugUtilsMessengerCreateInfoEXT.calloc();
+        debugUtilsMessengerCreateInfo
+                .sType(EXTDebugUtils.VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT)
+                .messageSeverity(
+                        EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
+                                EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+                                EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
+                .messageType(
+                        EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+                                EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+                                EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT)
+                .pfnUserCallback(callback)
+                .pUserData(MemoryUtil.NULL);
+        try (MemoryStack memoryStack = MemoryStack.stackPush()) {
+            VkInstanceCreateInfo createInfo = super.createCreateInfo(memoryStack);
+            addDebugForInitializationAndDestruction(createInfo, memoryStack);
+            addValidationLayers(createInfo, memoryStack);
+            createInfo.pNext(debugUtilsMessengerCreateInfo);
+            super.createVulkanInstance(memoryStack, createInfo);
+        }
+        createDebugUtilsMessengerEXT(super.vkInstance);
     }
 
-    private DebugVulkanInstanceBuilder() {}
+    private String getSeverityString(int messageSeverity) {
+        final String severity;
+        if (messageSeverity == EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) {
+            severity = "Verbose";
+        } else if (messageSeverity == EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
+            severity = "Warning";
+        } else if (messageSeverity == EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT) {
+            severity = "Info";
+        } else {
+            severity = "Error";
+        }
+        return severity;
+    }
 
     public void addDebugForInitializationAndDestruction(VkInstanceCreateInfo vkInstanceCreateInfo, MemoryStack memoryStack) {
         PointerBuffer originalExtensions = vkInstanceCreateInfo.ppEnabledExtensionNames();
@@ -51,54 +95,11 @@ public class DebugVulkanInstanceBuilder {
         vkInstanceCreateInfo.ppEnabledLayerNames(validationLayers.flip());
     }
 
-    public VkDebugUtilsMessengerCreateInfoEXT getVkDebugUtilsMessengerCreateInfoEXT() {
-        if (vkDebugUtilsMessengerCreateInfoEXTinstance == null) {
-            VkDebugUtilsMessengerCallbackEXT callback = VkDebugUtilsMessengerCallbackEXT.create(
-                    (messageSeverity, messageTypes, pCallbackData, pUserData) -> {
-                        final String severity;
-                        if (messageSeverity == EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) {
-                            severity = "Verbose";
-                        } else if (messageSeverity == EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
-                            severity = "Warning";
-                        } else if (messageSeverity == EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT) {
-                            severity = "Info";
-                        } else {
-                            severity = "Error";
-                        }
-                        //Previous commit said not to free things created by BufferUtils. That is wrong. I just don't need
-                        // to free this VkDebugUtilsMessengerCallbackDataEXT since it's a struct created from an existing
-                        // memory address that will be freed by whatever created it.
-                        VkDebugUtilsMessengerCallbackDataEXT data = VkDebugUtilsMessengerCallbackDataEXT.create(pCallbackData);
-                        System.out.printf("%s pCallBackData.pMessage: %s%n", severity, MemoryUtil.memASCII(data.pMessage()));
-                        return VK13.VK_FALSE;
-                    }
-            );
-            VkDebugUtilsMessengerCreateInfoEXT vkDebugUtilsMessengerCreateInfoEXT = VkDebugUtilsMessengerCreateInfoEXT.calloc();
-            vkDebugUtilsMessengerCreateInfoEXT
-                    .sType(EXTDebugUtils.VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT)
-                    .messageSeverity(
-                            EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
-                                    EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
-                                    EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
-                    .messageType(
-                            EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
-                                    EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
-                                    EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT)
-                    .pfnUserCallback(callback)
-                    .pUserData(MemoryUtil.NULL);
-            vkDebugUtilsMessengerCreateInfoEXTinstance = vkDebugUtilsMessengerCreateInfoEXT;
-            vkDebugUtilsMessengerCallbackEXTinstance = callback;
-            return vkDebugUtilsMessengerCreateInfoEXT;
-        } else {
-            return vkDebugUtilsMessengerCreateInfoEXTinstance;
-        }
-    }
-
     public void createDebugUtilsMessengerEXT(VkInstance vkInstance) {
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             LongBuffer longBuffer = memoryStack.callocLong(1);
             int result = EXTDebugUtils.vkCreateDebugUtilsMessengerEXT(vkInstance,
-                    getVkDebugUtilsMessengerCreateInfoEXT(), null, longBuffer);
+                    debugUtilsMessengerCreateInfo, null, longBuffer);
             if (result != VK13.VK_SUCCESS) {
                 throw new RuntimeException(String.format("creating debug utils messenger failed error code %d", result));
             }
@@ -106,13 +107,12 @@ public class DebugVulkanInstanceBuilder {
         }
     }
 
-    public void destroyDebugUtilsMessengerEXT(VkInstance vkInstance) {
-        EXTDebugUtils.vkDestroyDebugUtilsMessengerEXT(vkInstance, pDebugUtilsMessengerEXT, null);
-    }
-
+    @Override
     public void free() {
-        vkDebugUtilsMessengerCreateInfoEXTinstance.free();
-        vkDebugUtilsMessengerCallbackEXTinstance.free();
+        EXTDebugUtils.vkDestroyDebugUtilsMessengerEXT(vkInstance, pDebugUtilsMessengerEXT, null);
+        super.free();
+        debugUtilsMessengerCreateInfo.free();
+        callback.free();
     }
 
     private void validateValidationLayers(List<String> requestedValidationLayers) {

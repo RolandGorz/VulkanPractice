@@ -8,7 +8,6 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VK13;
 import org.lwjgl.vulkan.VkDevice;
 import org.lwjgl.vulkan.VkGraphicsPipelineCreateInfo;
-import org.lwjgl.vulkan.VkOffset2D;
 import org.lwjgl.vulkan.VkPipelineColorBlendAttachmentState;
 import org.lwjgl.vulkan.VkPipelineColorBlendStateCreateInfo;
 import org.lwjgl.vulkan.VkPipelineDynamicStateCreateInfo;
@@ -19,8 +18,6 @@ import org.lwjgl.vulkan.VkPipelineRasterizationStateCreateInfo;
 import org.lwjgl.vulkan.VkPipelineShaderStageCreateInfo;
 import org.lwjgl.vulkan.VkPipelineVertexInputStateCreateInfo;
 import org.lwjgl.vulkan.VkPipelineViewportStateCreateInfo;
-import org.lwjgl.vulkan.VkRect2D;
-import org.lwjgl.vulkan.VkViewport;
 
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
