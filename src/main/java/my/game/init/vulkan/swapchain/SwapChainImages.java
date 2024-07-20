@@ -15,19 +15,18 @@ import java.nio.LongBuffer;
 import java.util.List;
 
 public class SwapChainImages {
-    final SwapChain swapChain;
-    final List<Long> swapChainImagePointers;
-    final List<LongBuffer> swapChainImageViewPointers;
+    private final List<Long> swapChainImagePointers;
+    private final List<LongBuffer> swapChainImageViewPointers;
+    private final VkDevice device;
 
-    public SwapChainImages(SwapChain swapChain) {
-        this.swapChain = swapChain;
-        swapChainImagePointers = createSwapChainImages();
-        swapChainImageViewPointers = createSwapChainImageViews();
+    public SwapChainImages(VkDevice device, SwapChain swapChain) {
+        this.device = device;
+        swapChainImagePointers = createSwapChainImages(swapChain);
+        swapChainImageViewPointers = createSwapChainImageViews(swapChain);
     }
 
-    private List<Long> createSwapChainImages() {
+    private List<Long> createSwapChainImages(SwapChain swapChain) {
         Long swapChainPointer = swapChain.getSwapChainPointer();
-        VkDevice device = swapChain.getLogicalDevice().getLogicalDeviceInformation().vkDevice();
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             IntBuffer imageCount = memoryStack.mallocInt(1);
             int result = KHRSwapchain.vkGetSwapchainImagesKHR(device, swapChainPointer, imageCount, null);
@@ -47,7 +46,7 @@ public class SwapChainImages {
         }
     }
 
-    private List<LongBuffer> createSwapChainImageViews() {
+    private List<LongBuffer> createSwapChainImageViews(SwapChain swapChain) {
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             VkComponentMapping vkComponentMapping = VkComponentMapping.calloc(memoryStack);
             vkComponentMapping
@@ -73,7 +72,7 @@ public class SwapChainImages {
                         .format(swapChain.getSurfaceFormat().format())
                         .components(vkComponentMapping)
                         .subresourceRange(vkImageSubresourceRange);
-                int result = VK13.vkCreateImageView(swapChain.getLogicalDevice().getLogicalDeviceInformation().vkDevice(), vkImageViewCreateInfo, null, imageViewPointer);
+                int result = VK13.vkCreateImageView(device, vkImageViewCreateInfo, null, imageViewPointer);
                 if (result != VK13.VK_SUCCESS) {
                     throw new IllegalStateException(String.format("Failed to create image for swap chain image in position %d of the list of swap chain images. Error code %d",
                             i, result));
@@ -84,19 +83,13 @@ public class SwapChainImages {
         }
     }
 
-    public SwapChain getSwapChain() {
-        return swapChain;
-    }
-
     public List<LongBuffer> getSwapChainImageViewPointers() {
         return swapChainImageViewPointers;
     }
 
     public void free() {
         for (LongBuffer x : swapChainImageViewPointers) {
-            VK13.vkDestroyImageView(
-                    swapChain.getLogicalDevice().getLogicalDeviceInformation().vkDevice(),
-                    x.get(0), null);
+            VK13.vkDestroyImageView(device, x.get(0), null);
             MemoryUtil.memFree(x);
         }
     }

@@ -4,12 +4,14 @@ import com.google.common.collect.ImmutableList;
 import my.game.init.window.WindowSurface;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.vulkan.KHRSurface;
 import org.lwjgl.vulkan.KHRSwapchain;
 import org.lwjgl.vulkan.VK13;
 import org.lwjgl.vulkan.VkInstance;
 import org.lwjgl.vulkan.VkPhysicalDevice;
 import org.lwjgl.vulkan.VkPhysicalDeviceFeatures;
 import org.lwjgl.vulkan.VkPhysicalDeviceProperties;
+import org.lwjgl.vulkan.VkQueueFamilyProperties;
 
 import java.nio.IntBuffer;
 import java.util.ArrayList;
@@ -17,7 +19,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.PriorityQueue;
 
-public class PhysicalDevice {
+public class PhysicalDeviceRetriever {
 
     private PhysicalDeviceInformation physicalDeviceInformation;
 
@@ -25,7 +27,7 @@ public class PhysicalDevice {
             KHRSwapchain.VK_KHR_SWAPCHAIN_EXTENSION_NAME
     );
 
-    public PhysicalDevice(final VkInstance vkInstance, final WindowSurface windowSurface) {
+    public PhysicalDeviceRetriever(final VkInstance vkInstance, final WindowSurface windowSurface) {
         PriorityQueue<PhysicalDeviceInformation> priorityQueue = getDevices(vkInstance, windowSurface);
         while (!priorityQueue.isEmpty()) {
             PhysicalDeviceInformation curr = priorityQueue.poll();
@@ -99,12 +101,47 @@ public class PhysicalDevice {
             // Maximum possible size of textures affects graphics quality
             score += vkPhysicalDeviceProperties.limits().maxImageDimension2D();
         }
-        DeviceQueueFamily queueFamily = DeviceQueueFamily.getInstance();
-        return ImmutablePhysicalDeviceInformation.builder()
-                .physicalDevice(vkPhysicalDevice)
+        ImmutablePhysicalDeviceInformation.Builder builder = ImmutablePhysicalDeviceInformation.builder();
+        builder.physicalDevice(vkPhysicalDevice)
                 .score(score)
-                .queueFamilyIndexes(queueFamily.getFamilyIndexes(vkPhysicalDevice, windowSurface))
-                .windowSurface(windowSurface)
-                .build();
+                .windowSurface(windowSurface);
+        getFamilyIndexes(vkPhysicalDevice, windowSurface, builder);
+        return builder.build();
+    }
+
+    public void getFamilyIndexes(VkPhysicalDevice physicalDevice, WindowSurface windowSurface, ImmutablePhysicalDeviceInformation.Builder builder) {
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            IntBuffer queueFamilyCount = stack.mallocInt(1);
+            VK13.vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, queueFamilyCount, null);
+            VkQueueFamilyProperties.Buffer queueFamilyProperties = VkQueueFamilyProperties.malloc(queueFamilyCount.get(0), stack);
+            VK13.vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, queueFamilyCount, queueFamilyProperties);
+            for (int i = 0; i < queueFamilyProperties.capacity(); ++i) {
+                if (queueSupportsGraphics(queueFamilyProperties, i, builder)
+                        && queueSupportsPresentation(stack, physicalDevice, i, windowSurface, builder)) {
+                    break;
+                }
+            }
+        }
+    }
+
+    private boolean queueSupportsGraphics(VkQueueFamilyProperties.Buffer queueFamilyProperties, int index, ImmutablePhysicalDeviceInformation.Builder builder) {
+        if ((queueFamilyProperties.get(index).queueFlags() & VK13.VK_QUEUE_GRAPHICS_BIT) == VK13.VK_QUEUE_GRAPHICS_BIT) {
+            builder.graphicsQueueIndex(index);
+            return true;
+        }
+        return false;
+    }
+
+    private boolean queueSupportsPresentation(MemoryStack stack, VkPhysicalDevice physicalDevice, int index, WindowSurface windowSurface, ImmutablePhysicalDeviceInformation.Builder builder) {
+        IntBuffer presentationSupported = stack.mallocInt(1);
+        int result = KHRSurface.vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, index, windowSurface.getWindowSurfaceHandle(), presentationSupported);
+        if (result != VK13.VK_SUCCESS) {
+            throw new IllegalStateException(String.format("Error occurred when trying to determine Physical Device Surface Support. Error code : %d", result));
+        }
+        if (presentationSupported.get(0) == VK13.VK_TRUE) {
+            builder.presentationQueueIndex(index);
+            return true;
+        }
+        return false;
     }
 }

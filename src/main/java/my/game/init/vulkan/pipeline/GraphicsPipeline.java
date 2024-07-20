@@ -24,8 +24,8 @@ import java.nio.LongBuffer;
 import java.util.List;
 
 public class GraphicsPipeline {
+    private final VkDevice device;
     private final Long pipelineLayoutPointer;
-    private final SwapChainImages swapChainImages;
     private final Long graphicsPipelinePointer;
 
     List<Integer> dynamicStates = ImmutableList.of(
@@ -33,9 +33,8 @@ public class GraphicsPipeline {
             VK13.VK_DYNAMIC_STATE_SCISSOR
     );
 
-    public GraphicsPipeline(final SwapChainImages swapChainImages, final RenderPass renderPass) {
-        this.swapChainImages = swapChainImages;
-        VkDevice device = swapChainImages.getSwapChain().getLogicalDevice().getLogicalDeviceInformation().vkDevice();
+    public GraphicsPipeline(final VkDevice device, final RenderPass renderPass) {
+        this.device = device;
         LoadedShader loadedVertex = new LoadedShader("shaders/compiled/multi_color_triangle.vert.spv");
         ShaderModule simpleVertexShader = new ShaderModule(device, loadedVertex);
         loadedVertex.free();
@@ -180,7 +179,7 @@ public class GraphicsPipeline {
     }
 
     public void free() {
-        VK13.vkDestroyPipeline(swapChainImages.getSwapChain().getLogicalDevice().getLogicalDeviceInformation().vkDevice(), graphicsPipelinePointer, null);
-        VK13.vkDestroyPipelineLayout(swapChainImages.getSwapChain().getLogicalDevice().getLogicalDeviceInformation().vkDevice(), pipelineLayoutPointer, null);
+        VK13.vkDestroyPipeline(device, graphicsPipelinePointer, null);
+        VK13.vkDestroyPipelineLayout(device, pipelineLayoutPointer, null);
     }
 }

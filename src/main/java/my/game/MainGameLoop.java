@@ -3,7 +3,8 @@ package my.game;
 import my.game.init.vulkan.VulkanInstance;
 import my.game.init.vulkan.VulkanInstanceWithDebug;
 import my.game.init.vulkan.VulkanInstanceWithoutDebug;
-import my.game.init.vulkan.devices.physical.PhysicalDevice;
+import my.game.init.vulkan.devices.logical.ImmutableLogicalDevice;
+import my.game.init.vulkan.devices.physical.PhysicalDeviceRetriever;
 import my.game.init.vulkan.drawing.CommandBuffer;
 import my.game.init.vulkan.drawing.CommandPool;
 import my.game.init.vulkan.devices.logical.LogicalDevice;
@@ -23,7 +24,7 @@ public class MainGameLoop {
     private final WindowHandle windowHandle;
     private final VulkanInstance vulkanInstance;
     private final LogicalDevice logicalDevice;
-    private final PhysicalDevice chosenPhysicalDevice;
+    private final PhysicalDeviceRetriever chosenPhysicalDevice;
     private final WindowSurface windowSurface;
     private final SwapChain swapChain;
     private final SwapChainImages swapChainImages;
@@ -43,25 +44,29 @@ public class MainGameLoop {
             vulkanInstance = new VulkanInstanceWithoutDebug();
         }
         windowSurface = new WindowSurface(vulkanInstance.getHandle(), windowHandle);
-        chosenPhysicalDevice = new PhysicalDevice(vulkanInstance.getHandle(), windowSurface);
-        logicalDevice = new LogicalDevice(chosenPhysicalDevice);
-        swapChain = new SwapChain(logicalDevice, windowHandle, windowSurface);
-        swapChainImages = new SwapChainImages(swapChain);
-        renderPass = new RenderPass(swapChainImages);
-        graphicsPipeline = new GraphicsPipeline(swapChainImages, renderPass);
-        frameBuffers = new FrameBuffers(renderPass);
+        chosenPhysicalDevice = new PhysicalDeviceRetriever(vulkanInstance.getHandle(), windowSurface);
+        logicalDevice = ImmutableLogicalDevice.builder().physicalDevice(chosenPhysicalDevice).build();
+        swapChain = new SwapChain(
+                logicalDevice.vkDevice(),
+                chosenPhysicalDevice.physicalDeviceInformation(),
+                windowHandle,
+                windowSurface);
+        swapChainImages = new SwapChainImages(logicalDevice.vkDevice(), swapChain);
+        renderPass = new RenderPass(logicalDevice.vkDevice(), swapChain);
+        graphicsPipeline = new GraphicsPipeline(logicalDevice.vkDevice(), renderPass);
+        frameBuffers = new FrameBuffers(logicalDevice.vkDevice(), renderPass, swapChainImages, swapChain);
         commandPool = new CommandPool(logicalDevice);
-        CommandBuffer commandBuffer = new CommandBuffer(commandPool, frameBuffers, graphicsPipeline);
+        CommandBuffer commandBuffer = new CommandBuffer(commandPool, frameBuffers, renderPass, graphicsPipeline, swapChain);
         graphicsRenderer = new GraphicsRenderer(logicalDevice, swapChain, commandBuffer);
     }
 
     public void start() {
         GLFW.glfwShowWindow(windowHandle.getWindowHandlePointer());
         while (!GLFW.glfwWindowShouldClose(windowHandle.getWindowHandlePointer())) {
-            GLFW.glfwPollEvents();
             graphicsRenderer.drawFrame();
+            GLFW.glfwWaitEvents();
         }
-        VK13.vkDeviceWaitIdle(logicalDevice.getLogicalDeviceInformation().vkDevice());
+        VK13.vkDeviceWaitIdle(logicalDevice.vkDevice());
         destroy();
     }
 

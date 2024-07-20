@@ -1,11 +1,13 @@
 package my.game.init.vulkan.pipeline;
 
+import my.game.init.vulkan.swapchain.SwapChain;
 import my.game.init.vulkan.swapchain.SwapChainImages;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.KHRSwapchain;
 import org.lwjgl.vulkan.VK13;
 import org.lwjgl.vulkan.VkAttachmentDescription;
 import org.lwjgl.vulkan.VkAttachmentReference;
+import org.lwjgl.vulkan.VkDevice;
 import org.lwjgl.vulkan.VkRenderPassCreateInfo;
 import org.lwjgl.vulkan.VkSubpassDependency;
 import org.lwjgl.vulkan.VkSubpassDescription;
@@ -13,11 +15,11 @@ import org.lwjgl.vulkan.VkSubpassDescription;
 import java.nio.LongBuffer;
 
 public class RenderPass {
+    private final VkDevice device;
     private final long renderPassPointer;
-    private final SwapChainImages swapChainImages;
 
-    public RenderPass(SwapChainImages swapChainImages) {
-        this.swapChainImages = swapChainImages;
+    public RenderPass(VkDevice device, SwapChain swapChain) {
+        this.device = device;
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
 
             VkAttachmentReference.Buffer colorAttachmentRefBuffer = VkAttachmentReference.malloc(1, memoryStack);
@@ -53,7 +55,7 @@ public class RenderPass {
             VkAttachmentDescription.Buffer colorAttachmentBuffer = VkAttachmentDescription.malloc(1, memoryStack);
             VkAttachmentDescription colorAttachment = VkAttachmentDescription.calloc(memoryStack);
             colorAttachment
-                    .format(swapChainImages.getSwapChain().getSurfaceFormat().format())
+                    .format(swapChain.getSurfaceFormat().format())
                     .samples(VK13.VK_SAMPLE_COUNT_1_BIT)
                     .loadOp(VK13.VK_ATTACHMENT_LOAD_OP_CLEAR)
                     .storeOp(VK13.VK_ATTACHMENT_STORE_OP_STORE)
@@ -81,7 +83,7 @@ public class RenderPass {
                     .pDependencies(subpassDependency);
             LongBuffer renderPassPointerBuffer = memoryStack.mallocLong(1);
             int result = VK13.vkCreateRenderPass(
-                    swapChainImages.getSwapChain().getLogicalDevice().getLogicalDeviceInformation().vkDevice(),
+                    device,
                     renderPassCreateInfo,
                     null,
                     renderPassPointerBuffer);
@@ -96,12 +98,8 @@ public class RenderPass {
         return renderPassPointer;
     }
 
-    public SwapChainImages getSwapChainImages() {
-        return swapChainImages;
-    }
-
     public void free() {
-        VK13.vkDestroyRenderPass(swapChainImages.getSwapChain().getLogicalDevice().getLogicalDeviceInformation().vkDevice(),
+        VK13.vkDestroyRenderPass(device,
                 renderPassPointer,
                 null);
     }

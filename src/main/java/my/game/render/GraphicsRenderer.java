@@ -40,17 +40,17 @@ public class GraphicsRenderer {
                     .sType(VK13.VK_STRUCTURE_TYPE_FENCE_CREATE_INFO)
                     .flags(VK13.VK_FENCE_CREATE_SIGNALED_BIT);
             imageAvailableSemaphore = MemoryUtil.memAllocLong(1);
-            int result = VK13.vkCreateSemaphore(logicalDevice.getLogicalDeviceInformation().vkDevice(), semaphoreCreateInfo, null, imageAvailableSemaphore);
+            int result = VK13.vkCreateSemaphore(logicalDevice.vkDevice(), semaphoreCreateInfo, null, imageAvailableSemaphore);
             if (result != VK13.VK_SUCCESS) {
                 throw new IllegalStateException(String.format("Failed to create semaphore. Error code: %d", result));
             }
             renderFinishedSemaphore = MemoryUtil.memAllocLong(1);
-            int result2 = VK13.vkCreateSemaphore(logicalDevice.getLogicalDeviceInformation().vkDevice(), semaphoreCreateInfo, null, renderFinishedSemaphore);
+            int result2 = VK13.vkCreateSemaphore(logicalDevice.vkDevice(), semaphoreCreateInfo, null, renderFinishedSemaphore);
             if (result2 != VK13.VK_SUCCESS) {
                 throw new IllegalStateException(String.format("Failed to create semaphore. Error code: %d", result2));
             }
             inFlightFence = MemoryUtil.memAllocLong(1);
-            int result3 = VK13.vkCreateFence(logicalDevice.getLogicalDeviceInformation().vkDevice(), fenceCreateInfo, null, inFlightFence);
+            int result3 = VK13.vkCreateFence(logicalDevice.vkDevice(), fenceCreateInfo, null, inFlightFence);
             if (result3 != VK13.VK_SUCCESS) {
                 throw new IllegalStateException(String.format("Failed to create fence. Error code: %d", result3));
             }
@@ -58,7 +58,7 @@ public class GraphicsRenderer {
     }
 
     public void drawFrame() {
-        VkDevice device = logicalDevice.getLogicalDeviceInformation().vkDevice();
+        VkDevice device = logicalDevice.vkDevice();
         VK13.vkWaitForFences(device, inFlightFence, true, VulkanUtil.UINT64_MAX);
         VK13.vkResetFences(device, inFlightFence);
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
@@ -84,7 +84,7 @@ public class GraphicsRenderer {
                     .pCommandBuffers(commandBuffersPointer)
                     .pSignalSemaphores(renderFinishedSemaphore);
 
-            int result = VK13.vkQueueSubmit(logicalDevice.getLogicalDeviceInformation().graphicsQueue().getVkQueue(), vkSubmitInfo, inFlightFence.get(0));
+            int result = VK13.vkQueueSubmit(logicalDevice.graphicsQueue().getVkQueue(), vkSubmitInfo, inFlightFence.get(0));
             if (result != VK13.VK_SUCCESS) {
                 throw new IllegalStateException(String.format("Failed to submit draw command buffer. Error code: %d", result));
             }
@@ -100,16 +100,16 @@ public class GraphicsRenderer {
                     .swapchainCount(1)
                     .pImageIndices(imageIndex)
                     .pResults(null);
-            KHRSwapchain.vkQueuePresentKHR(logicalDevice.getLogicalDeviceInformation().presentationQueue().getVkQueue(), presentInfo);
+            KHRSwapchain.vkQueuePresentKHR(logicalDevice.presentationQueue().getVkQueue(), presentInfo);
         }
     }
 
     public void free() {
-        VK13.vkDestroyFence(logicalDevice.getLogicalDeviceInformation().vkDevice(), inFlightFence.get(0), null);
+        VK13.vkDestroyFence(logicalDevice.vkDevice(), inFlightFence.get(0), null);
         MemoryUtil.memFree(inFlightFence);
-        VK13.vkDestroySemaphore(logicalDevice.getLogicalDeviceInformation().vkDevice(), renderFinishedSemaphore.get(0), null);
+        VK13.vkDestroySemaphore(logicalDevice.vkDevice(), renderFinishedSemaphore.get(0), null);
         MemoryUtil.memFree(renderFinishedSemaphore);
-        VK13.vkDestroySemaphore(logicalDevice.getLogicalDeviceInformation().vkDevice(), imageAvailableSemaphore.get(0), null);
+        VK13.vkDestroySemaphore(logicalDevice.vkDevice(), imageAvailableSemaphore.get(0), null);
         MemoryUtil.memFree(imageAvailableSemaphore);
     }
 }

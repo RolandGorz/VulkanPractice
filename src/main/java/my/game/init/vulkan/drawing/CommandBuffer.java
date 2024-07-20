@@ -1,6 +1,8 @@
 package my.game.init.vulkan.drawing;
 
 import my.game.init.vulkan.pipeline.GraphicsPipeline;
+import my.game.init.vulkan.pipeline.RenderPass;
+import my.game.init.vulkan.swapchain.SwapChain;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VK13;
@@ -19,10 +21,14 @@ public class CommandBuffer {
     private final VkCommandBuffer commandBuffer;
     private final FrameBuffers frameBuffers;
     private final GraphicsPipeline graphicsPipeline;
+    private final SwapChain swapChain;
+    private final RenderPass renderPass;
 
-    public CommandBuffer(CommandPool commandPool, FrameBuffers frameBuffers, GraphicsPipeline graphicsPipeline) {
+    public CommandBuffer(CommandPool commandPool, FrameBuffers frameBuffers, RenderPass renderPass, GraphicsPipeline graphicsPipeline, SwapChain swapChain) {
         this.frameBuffers = frameBuffers;
         this.graphicsPipeline = graphicsPipeline;
+        this.swapChain = swapChain;
+        this.renderPass = renderPass;
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             VkCommandBufferAllocateInfo commandBufferAllocateInfo = VkCommandBufferAllocateInfo.calloc(memoryStack);
             commandBufferAllocateInfo
@@ -31,13 +37,13 @@ public class CommandBuffer {
                     .level(VK13.VK_COMMAND_BUFFER_LEVEL_PRIMARY)
                     .commandBufferCount(1);
             PointerBuffer commandBuffersPointerBuffer = memoryStack.mallocPointer(1);
-            int result = VK13.vkAllocateCommandBuffers(commandPool.getLogicalDevice().getLogicalDeviceInformation().vkDevice(),
+            int result = VK13.vkAllocateCommandBuffers(commandPool.getLogicalDevice().vkDevice(),
                     commandBufferAllocateInfo, commandBuffersPointerBuffer);
             if (result != VK13.VK_SUCCESS) {
                 throw new IllegalStateException(String.format("Failed to create command buffer. Error code: %d", result));
             }
             commandBuffer = new VkCommandBuffer(commandBuffersPointerBuffer.get(0),
-                    commandPool.getLogicalDevice().getLogicalDeviceInformation().vkDevice());
+                    commandPool.getLogicalDevice().vkDevice());
         }
     }
 
@@ -50,10 +56,7 @@ public class CommandBuffer {
         beginRenderPass(imageIndex);
         VK13.vkCmdBindPipeline(commandBuffer, VK13.VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.getGraphicsPipelinePointer());
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
-            VkExtent2D swapChainExtent = frameBuffers
-                    .getRenderPass()
-                    .getSwapChainImages()
-                    .getSwapChain()
+            VkExtent2D swapChainExtent = swapChain
                     .getSwapChainExtent();
             VkViewport.Buffer viewport = VkViewport.calloc(1, memoryStack);
             viewport
@@ -99,11 +102,7 @@ public class CommandBuffer {
             renderArea.offset()
                     .x(0)
                     .y(0);
-            renderArea.extent(frameBuffers
-                    .getRenderPass()
-                    .getSwapChainImages()
-                    .getSwapChain()
-                    .getSwapChainExtent());
+            renderArea.extent(swapChain.getSwapChainExtent());
 
             VkClearColorValue clearColorValue = VkClearColorValue.calloc(memoryStack);
             clearColorValue
@@ -117,7 +116,7 @@ public class CommandBuffer {
             VkRenderPassBeginInfo renderPassBeginInfo = VkRenderPassBeginInfo.calloc(memoryStack);
             renderPassBeginInfo
                     .sType(VK13.VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO)
-                    .renderPass(frameBuffers.getRenderPass().getRenderPassPointer())
+                    .renderPass(renderPass.getRenderPassPointer())
                     .framebuffer(frameBuffers.getSwapChainFrameBuffers().get(imageIndex))
                     .renderArea(renderArea)
                     .pClearValues(clearValue);

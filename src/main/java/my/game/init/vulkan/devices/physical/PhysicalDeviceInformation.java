@@ -1,5 +1,6 @@
 package my.game.init.vulkan.devices.physical;
 
+import com.google.common.collect.ImmutableSet;
 import my.game.init.window.WindowSurface;
 import org.immutables.value.Value;
 import org.lwjgl.system.MemoryStack;
@@ -8,16 +9,26 @@ import org.lwjgl.vulkan.VkExtensionProperties;
 import org.lwjgl.vulkan.VkPhysicalDevice;
 
 import java.nio.IntBuffer;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Set;
 
 @Value.Immutable
 public abstract class PhysicalDeviceInformation implements Comparable<PhysicalDeviceInformation> {
 
     public abstract VkPhysicalDevice physicalDevice();
 
-    public abstract int score();
+    abstract int score();
 
-    public abstract QueueFamilyIndexes queueFamilyIndexes();
+    @Value.Default
+    public int graphicsQueueIndex() {
+        return -1;
+    }
+
+    @Value.Default
+    public int presentationQueueIndex() {
+        return -1;
+    }
 
     public abstract WindowSurface windowSurface();
 
@@ -42,7 +53,7 @@ public abstract class PhysicalDeviceInformation implements Comparable<PhysicalDe
             }
         }
         boolean allFound = true;
-        for (String x : PhysicalDevice.REQUIRED_DEVICE_EXTENSIONS) {
+        for (String x : PhysicalDeviceRetriever.REQUIRED_DEVICE_EXTENSIONS) {
             if (!supportedExtensions.contains(x)) {
                 System.out.printf("Device extension %s not found%n", x);
                 allFound = false;
@@ -61,8 +72,22 @@ public abstract class PhysicalDeviceInformation implements Comparable<PhysicalDe
         return swapChainSupportDetails().formats().capacity() > 0 && swapChainSupportDetails().presentModes().capacity() > 0;
     }
 
+    @Value.Derived
     public boolean isValid() {
-        return score() != 0 && queueFamilyIndexes().isComplete() && requiredDeviceExtensionsSupported() && swapChainAdequate();
+        return score() != 0
+                && graphicsQueueIndex() != -1
+                && presentationQueueIndex() != -1
+                && requiredDeviceExtensionsSupported()
+                && swapChainAdequate();
+    }
+
+    @Value.Derived
+    public Set<Integer> uniqueQueueIndexes() {
+        if (isValid()) {
+            return ImmutableSet.of(graphicsQueueIndex(), presentationQueueIndex());
+        } else {
+            return Collections.emptySet();
+        }
     }
 
     @Override

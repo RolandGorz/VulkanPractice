@@ -19,9 +19,9 @@ public class CommandPool {
             vkCommandPoolCreateInfo
                     .sType(VK13.VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO)
                     .flags(VK13.VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT)
-                    .queueFamilyIndex(logicalDevice.getLogicalDeviceInformation().graphicsQueue().getQueueIndex());
+                    .queueFamilyIndex(logicalDevice.graphicsQueue().getQueueIndex());
             LongBuffer commandPoolPointerBuffer = memoryStack.mallocLong(1);
-            int result = VK13.vkCreateCommandPool(logicalDevice.getLogicalDeviceInformation().vkDevice(), vkCommandPoolCreateInfo, null, commandPoolPointerBuffer);
+            int result = VK13.vkCreateCommandPool(logicalDevice.vkDevice(), vkCommandPoolCreateInfo, null, commandPoolPointerBuffer);
             if (result != VK13.VK_SUCCESS) {
                 throw new IllegalStateException(String.format("Failed to create command pool. Error code: %d", result));
             }
@@ -38,6 +38,6 @@ public class CommandPool {
     }
 
     public void free() {
-        VK13.vkDestroyCommandPool(logicalDevice.getLogicalDeviceInformation().vkDevice(), commandPoolPointer, null);
+        VK13.vkDestroyCommandPool(logicalDevice.vkDevice(), commandPoolPointer, null);
     }
 }

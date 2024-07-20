@@ -2,7 +2,7 @@ package my.game.init.vulkan.swapchain;
 
 import my.game.init.vulkan.VulkanUtil;
 import my.game.init.vulkan.devices.logical.LogicalDevice;
-import my.game.init.vulkan.devices.physical.QueueFamilyIndexes;
+import my.game.init.vulkan.devices.physical.PhysicalDeviceInformation;
 import my.game.init.vulkan.devices.physical.SwapChainSupportDetails;
 import my.game.init.window.WindowHandle;
 import my.game.init.window.WindowSurface;
@@ -11,6 +11,7 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.KHRSurface;
 import org.lwjgl.vulkan.KHRSwapchain;
 import org.lwjgl.vulkan.VK13;
+import org.lwjgl.vulkan.VkDevice;
 import org.lwjgl.vulkan.VkExtent2D;
 import org.lwjgl.vulkan.VkSurfaceCapabilitiesKHR;
 import org.lwjgl.vulkan.VkSurfaceFormatKHR;
@@ -20,22 +21,21 @@ import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 
 public class SwapChain {
-
-    private final LogicalDevice device;
+    private final VkDevice device;
     private final long swapChainPointer;
     private final VkSurfaceFormatKHR surfaceFormat;
     private final VkExtent2D swapChainExtent;
 
-    public SwapChain(LogicalDevice device, WindowHandle windowHandle, WindowSurface windowSurface) {
+    public SwapChain(VkDevice device, PhysicalDeviceInformation physicalDeviceInformation, WindowHandle windowHandle, WindowSurface windowSurface) {
         this.device = device;
-        SwapChainSupportDetails swapChainSupportDetails = this.device.getLogicalDeviceInformation().validPhysicalDevice().physicalDeviceInformation().swapChainSupportDetails();
+        SwapChainSupportDetails swapChainSupportDetails = physicalDeviceInformation.swapChainSupportDetails();
         surfaceFormat = chooseSwapSurfaceFormat(swapChainSupportDetails.formats());
         int presentMode = choosePresentMode(swapChainSupportDetails.presentModes());
         swapChainExtent = chooseSwapExtent(swapChainSupportDetails.capabilities(), windowHandle);
-        swapChainPointer = createSwapChain(swapChainSupportDetails, windowSurface, this.device, presentMode);
+        swapChainPointer = createSwapChain(swapChainSupportDetails, windowSurface, physicalDeviceInformation, presentMode);
     }
 
-    private long createSwapChain(SwapChainSupportDetails swapChainSupportDetails, WindowSurface windowSurface, LogicalDevice logicalDevice, int presentMode) {
+    private long createSwapChain(SwapChainSupportDetails swapChainSupportDetails, WindowSurface windowSurface, PhysicalDeviceInformation physicalDeviceInformation, int presentMode) {
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             int imageCount = swapChainSupportDetails.capabilities().minImageCount() + 1;
             //We should also make sure to not exceed the maximum number of images while doing this, where 0 is a special value that means that there is no maximum:
@@ -52,20 +52,18 @@ public class SwapChain {
                     .imageExtent(swapChainExtent)
                     .imageArrayLayers(1)
                     .imageUsage(VK13.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
-            QueueFamilyIndexes queueFamilyIndexes = logicalDevice.getLogicalDeviceInformation().validPhysicalDevice().physicalDeviceInformation().queueFamilyIndexes();
-            if (queueFamilyIndexes.graphicsQueueFamilyIndex() != queueFamilyIndexes.presentationQueueFamilyIndex()) {
-                IntBuffer queueFamilyIndexesPointer = memoryStack.mallocInt(2);
-                queueFamilyIndexesPointer.put(queueFamilyIndexes.graphicsQueueFamilyIndex());
-                queueFamilyIndexesPointer.put(queueFamilyIndexes.presentationQueueFamilyIndex());
+            if (physicalDeviceInformation.uniqueQueueIndexes().size() > 1) {
+                IntBuffer queueFamilyIndexesPointer = memoryStack.mallocInt(physicalDeviceInformation.uniqueQueueIndexes().size());
+                for (Integer x : physicalDeviceInformation.uniqueQueueIndexes()) {
+                    queueFamilyIndexesPointer.put(x);
+                }
                 queueFamilyIndexesPointer.flip();
                 vkSwapchainCreateInfoKHR
                         .imageSharingMode(VK13.VK_SHARING_MODE_CONCURRENT)
-                        .queueFamilyIndexCount(2)
                         .pQueueFamilyIndices(queueFamilyIndexesPointer);
             } else {
                 vkSwapchainCreateInfoKHR
                         .imageSharingMode(VK13.VK_SHARING_MODE_EXCLUSIVE)
-                        .queueFamilyIndexCount(0)
                         .pQueueFamilyIndices(null);
             }
             vkSwapchainCreateInfoKHR
@@ -76,7 +74,7 @@ public class SwapChain {
                     .oldSwapchain(VK13.VK_NULL_HANDLE);
             LongBuffer swapChainPointerBuffer = memoryStack.mallocLong(1);
             int result = KHRSwapchain.vkCreateSwapchainKHR(
-                    logicalDevice.getLogicalDeviceInformation().vkDevice(),
+                    device,
                     vkSwapchainCreateInfoKHR,
                     null,
                     swapChainPointerBuffer);
@@ -85,10 +83,6 @@ public class SwapChain {
             }
             return swapChainPointerBuffer.get(0);
         }
-    }
-
-    public LogicalDevice getLogicalDevice() {
-        return device;
     }
 
     public Long getSwapChainPointer() {
@@ -144,7 +138,7 @@ public class SwapChain {
     }
 
     public void free() {
-        KHRSwapchain.vkDestroySwapchainKHR(device.getLogicalDeviceInformation().vkDevice(), swapChainPointer, null);
+        KHRSwapchain.vkDestroySwapchainKHR(device, swapChainPointer, null);
         swapChainExtent.free();
     }
 }
