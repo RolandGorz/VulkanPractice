@@ -1,7 +1,6 @@
 package my.game.init.vulkan.swapchain;
 
 import my.game.init.vulkan.VulkanUtil;
-import my.game.init.vulkan.devices.logical.LogicalDevice;
 import my.game.init.vulkan.devices.physical.PhysicalDeviceInformation;
 import my.game.init.vulkan.devices.physical.SwapChainSupportDetails;
 import my.game.init.window.WindowHandle;

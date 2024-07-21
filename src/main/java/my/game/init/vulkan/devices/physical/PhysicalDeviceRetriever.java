@@ -21,16 +21,14 @@ import java.util.PriorityQueue;
 
 public class PhysicalDeviceRetriever {
 
-    private PhysicalDeviceInformation physicalDeviceInformation;
-
     public static List<String> REQUIRED_DEVICE_EXTENSIONS = ImmutableList.of(
             KHRSwapchain.VK_KHR_SWAPCHAIN_EXTENSION_NAME
     );
-
     //We only include these extensions if they are available. In the case of VK_KHR_portability_subset if it is available then it is required.
     public static List<String> OPTIONAL_DEVICE_EXTENSIONS = ImmutableList.of(
-        "VK_KHR_portability_subset"
+            "VK_KHR_portability_subset"
     );
+    private PhysicalDeviceInformation physicalDeviceInformation;
 
     public PhysicalDeviceRetriever(final VkInstance vkInstance, final WindowSurface windowSurface) {
         PriorityQueue<PhysicalDeviceInformation> priorityQueue = getDevices(vkInstance, windowSurface);

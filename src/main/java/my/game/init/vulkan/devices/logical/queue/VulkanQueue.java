@@ -17,7 +17,7 @@ public abstract class VulkanQueue {
             PointerBuffer vulkanQueue = memoryStack.mallocPointer(1);
             VK13.vkGetDeviceQueue(vkDevice,
                     queueIndex, 0, vulkanQueue);
-            vkQueue =  new VkQueue(vulkanQueue.get(0), vkDevice);
+            vkQueue = new VkQueue(vulkanQueue.get(0), vkDevice);
         }
     }
 
@@ -32,7 +32,7 @@ public abstract class VulkanQueue {
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof VulkanQueue) {
-            return vkQueue.address() == ((VulkanQueue)obj).vkQueue.address();
+            return vkQueue.address() == ((VulkanQueue) obj).vkQueue.address();
         }
         return false;
     }

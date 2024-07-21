@@ -5,9 +5,7 @@ import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.GLFWVulkan;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
-import org.lwjgl.system.Platform;
 import org.lwjgl.vulkan.KHRGetPhysicalDeviceProperties2;
-import org.lwjgl.vulkan.KHRPortabilityEnumeration;
 import org.lwjgl.vulkan.VK13;
 import org.lwjgl.vulkan.VkApplicationInfo;
 import org.lwjgl.vulkan.VkExtensionProperties;
@@ -21,14 +19,14 @@ import java.util.Set;
 
 public class VulkanInstance {
 
-    VulkanInstance() {}
-
     protected VkInstance vkInstance;
-
     //If this exists we add it because VK_KHR_portability_subset will require it if we use that
-    private ImmutableSet<String> OPTIONAL_EXTENSIONS = ImmutableSet.of(
-        KHRGetPhysicalDeviceProperties2.VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME
+    private final ImmutableSet<String> OPTIONAL_EXTENSIONS = ImmutableSet.of(
+            KHRGetPhysicalDeviceProperties2.VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME
     );
+
+    VulkanInstance() {
+    }
 
     protected VkInstanceCreateInfo createCreateInfo(final MemoryStack memoryStack) {
         //Must use calloc when not initializing every value of a struct. Otherwise, garbage is at those values

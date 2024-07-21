@@ -74,7 +74,7 @@ public class CommandBuffer {
             scissor.extent(swapChainExtent);
             VK13.vkCmdSetScissor(commandBuffer, 0, scissor);
         }
-        VK13.vkCmdDraw(commandBuffer, 3, 1,0, 0);
+        VK13.vkCmdDraw(commandBuffer, 3, 1, 0, 0);
         VK13.vkCmdEndRenderPass(commandBuffer);
         int result = VK13.vkEndCommandBuffer(commandBuffer);
         if (result != VK13.VK_SUCCESS) {

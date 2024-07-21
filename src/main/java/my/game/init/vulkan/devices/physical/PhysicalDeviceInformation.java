@@ -10,7 +10,6 @@ import org.lwjgl.vulkan.VkPhysicalDevice;
 
 import java.nio.IntBuffer;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 
 @Value.Immutable

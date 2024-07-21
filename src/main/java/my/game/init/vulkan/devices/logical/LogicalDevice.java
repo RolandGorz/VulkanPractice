@@ -69,6 +69,7 @@ public abstract class LogicalDevice {
     public GraphicsQueue graphicsQueue() {
         return new GraphicsQueue(physicalDevice().physicalDeviceInformation().graphicsQueueIndex(), vkDevice());
     }
+
     @Value.Derived
     public PresentationQueue presentationQueue() {
         return new PresentationQueue(physicalDevice().physicalDeviceInformation().presentationQueueIndex(), vkDevice());
