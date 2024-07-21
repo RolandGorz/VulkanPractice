@@ -1,10 +1,12 @@
 package my.game.init.vulkan;
 
+import com.google.common.collect.ImmutableSet;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.GLFWVulkan;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.system.Platform;
+import org.lwjgl.vulkan.KHRGetPhysicalDeviceProperties2;
 import org.lwjgl.vulkan.KHRPortabilityEnumeration;
 import org.lwjgl.vulkan.VK13;
 import org.lwjgl.vulkan.VkApplicationInfo;
@@ -23,6 +25,11 @@ public class VulkanInstance {
 
     protected VkInstance vkInstance;
 
+    //If this exists we add it because VK_KHR_portability_subset will require it if we use that
+    private ImmutableSet<String> OPTIONAL_EXTENSIONS = ImmutableSet.of(
+        KHRGetPhysicalDeviceProperties2.VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME
+    );
+
     protected VkInstanceCreateInfo createCreateInfo(final MemoryStack memoryStack) {
         //Must use calloc when not initializing every value of a struct. Otherwise, garbage is at those values
         //and can result in a crash
@@ -38,13 +45,7 @@ public class VulkanInstance {
         VkInstanceCreateInfo vkInstanceCreateInfo = VkInstanceCreateInfo.calloc(memoryStack);
         vkInstanceCreateInfo.sType(VK13.VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO)
                 .pApplicationInfo(appInfo)
-                .ppEnabledExtensionNames(getRequiredExtensions());
-
-        if(Platform.get() == Platform.MACOSX) {
-            addRequiredMacExtensions(vkInstanceCreateInfo, memoryStack);
-            int updatedFlags = vkInstanceCreateInfo.flags() | KHRPortabilityEnumeration.VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
-            vkInstanceCreateInfo.flags(updatedFlags);
-        }
+                .ppEnabledExtensionNames(getExtensions(memoryStack));
 
         return vkInstanceCreateInfo;
     }
@@ -66,8 +67,9 @@ public class VulkanInstance {
         VK13.vkDestroyInstance(vkInstance, null);
     }
 
-    private PointerBuffer getRequiredExtensions() {
+    private PointerBuffer getExtensions(MemoryStack memoryStack) {
         Set<String> supportedExtensions = new HashSet<>();
+        //Extending the stack to prevent running out of memory
         try (MemoryStack stack = MemoryStack.stackPush()) {
             IntBuffer extensionCount = stack.mallocInt(1); // int*
             int result = VK13.vkEnumerateInstanceExtensionProperties((ByteBuffer) null, extensionCount, null);
@@ -94,6 +96,7 @@ public class VulkanInstance {
         if (glfwRequiredExtensions == null) {
             throw new RuntimeException("glfwGetRequiredInstanceExtensions returned null");
         }
+        PointerBuffer extensions = memoryStack.callocPointer(glfwRequiredExtensions.capacity() + OPTIONAL_EXTENSIONS.size());
         for (int i = 0; i < glfwRequiredExtensions.capacity(); ++i) {
             String curr = MemoryUtil.memASCII(glfwRequiredExtensions.get(i));
             if (supportedExtensions.contains(curr)) {
@@ -103,18 +106,13 @@ public class VulkanInstance {
                 throw new RuntimeException(String.format("GLFW required extension: %s is not supported%n", curr));
             }
         }
-        return glfwRequiredExtensions;
-    }
-
-    private void addRequiredMacExtensions(VkInstanceCreateInfo vkInstanceCreateInfo, MemoryStack memoryStack) {
-        PointerBuffer originalExtensions = vkInstanceCreateInfo.ppEnabledExtensionNames();
-        int originalCapacity = originalExtensions == null ? 0 : originalExtensions.capacity();
-        PointerBuffer newExtensions = memoryStack.mallocPointer(originalCapacity + 1);
-        if (originalCapacity != 0) {
-            newExtensions.put(originalExtensions);
+        extensions.put(glfwRequiredExtensions);
+        for (String x : OPTIONAL_EXTENSIONS) {
+            if (supportedExtensions.contains(x)) {
+                extensions.put(MemoryStack.stackASCII(x));
+            }
         }
-        newExtensions.put(memoryStack.UTF8(KHRPortabilityEnumeration.VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME));
-        newExtensions.flip();
-        vkInstanceCreateInfo.ppEnabledExtensionNames(newExtensions);
+        extensions.flip();
+        return extensions;
     }
 }

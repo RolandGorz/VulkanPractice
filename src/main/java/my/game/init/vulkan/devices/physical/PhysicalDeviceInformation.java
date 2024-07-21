@@ -33,8 +33,8 @@ public abstract class PhysicalDeviceInformation implements Comparable<PhysicalDe
     public abstract WindowSurface windowSurface();
 
     @Value.Derived
-    public boolean requiredDeviceExtensionsSupported() {
-        HashSet<String> supportedExtensions = new HashSet<>();
+    public Set<String> supportedExtensions() {
+        ImmutableSet.Builder<String> supportedExtensions = ImmutableSet.builder();
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             IntBuffer deviceExtensionPropertiesCount = memoryStack.mallocInt(1);
             int result = VK13.vkEnumerateDeviceExtensionProperties(physicalDevice(), (String) null, deviceExtensionPropertiesCount, null);
@@ -52,9 +52,14 @@ public abstract class PhysicalDeviceInformation implements Comparable<PhysicalDe
                 supportedExtensions.add(vkExtensionProperties.get(i).extensionNameString());
             }
         }
+        return supportedExtensions.build();
+    }
+
+    @Value.Derived
+    public boolean requiredDeviceExtensionsSupported() {
         boolean allFound = true;
         for (String x : PhysicalDeviceRetriever.REQUIRED_DEVICE_EXTENSIONS) {
-            if (!supportedExtensions.contains(x)) {
+            if (!supportedExtensions().contains(x)) {
                 System.out.printf("Device extension %s not found%n", x);
                 allFound = false;
             }

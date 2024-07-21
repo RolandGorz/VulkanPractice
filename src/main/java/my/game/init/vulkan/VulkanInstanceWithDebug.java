@@ -3,7 +3,9 @@ package my.game.init.vulkan;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
+import org.lwjgl.system.Platform;
 import org.lwjgl.vulkan.EXTDebugUtils;
+import org.lwjgl.vulkan.KHRPortabilityEnumeration;
 import org.lwjgl.vulkan.VK13;
 import org.lwjgl.vulkan.VkDebugUtilsMessengerCallbackDataEXT;
 import org.lwjgl.vulkan.VkDebugUtilsMessengerCallbackEXT;
@@ -50,12 +52,29 @@ public class VulkanInstanceWithDebug extends VulkanInstance {
                 .pUserData(MemoryUtil.NULL);
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             VkInstanceCreateInfo createInfo = super.createCreateInfo(memoryStack);
+            if(Platform.get() == Platform.MACOSX) {
+                addRequiredMacExtensions(createInfo, memoryStack);
+                int updatedFlags = createInfo.flags() | KHRPortabilityEnumeration.VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+                createInfo.flags(updatedFlags);
+            }
             addDebugForInitializationAndDestruction(createInfo, memoryStack);
             addValidationLayers(createInfo, memoryStack);
             createInfo.pNext(debugUtilsMessengerCreateInfo);
             super.createVulkanInstance(memoryStack, createInfo);
         }
         createDebugUtilsMessengerEXT(super.vkInstance);
+    }
+
+    private void addRequiredMacExtensions(VkInstanceCreateInfo vkInstanceCreateInfo, MemoryStack memoryStack) {
+        PointerBuffer originalExtensions = vkInstanceCreateInfo.ppEnabledExtensionNames();
+        int originalCapacity = originalExtensions == null ? 0 : originalExtensions.capacity();
+        PointerBuffer newExtensions = memoryStack.mallocPointer(originalCapacity + 1);
+        if (originalCapacity != 0) {
+            newExtensions.put(originalExtensions);
+        }
+        newExtensions.put(memoryStack.UTF8(KHRPortabilityEnumeration.VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME));
+        newExtensions.flip();
+        vkInstanceCreateInfo.ppEnabledExtensionNames(newExtensions);
     }
 
     private String getSeverityString(int messageSeverity) {

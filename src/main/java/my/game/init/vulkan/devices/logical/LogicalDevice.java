@@ -39,9 +39,14 @@ public abstract class LogicalDevice {
                 vkDeviceQueueCreateInfos.put(info);
             }
             vkDeviceQueueCreateInfos.flip();
-            PointerBuffer requiredDeviceExtensions = memoryStack.callocPointer(PhysicalDeviceRetriever.REQUIRED_DEVICE_EXTENSIONS.size());
+            PointerBuffer requiredDeviceExtensions = memoryStack.callocPointer(PhysicalDeviceRetriever.REQUIRED_DEVICE_EXTENSIONS.size() + PhysicalDeviceRetriever.OPTIONAL_DEVICE_EXTENSIONS.size());
             for (String x : PhysicalDeviceRetriever.REQUIRED_DEVICE_EXTENSIONS) {
                 requiredDeviceExtensions.put(memoryStack.UTF8(x));
+            }
+            for (String x : PhysicalDeviceRetriever.OPTIONAL_DEVICE_EXTENSIONS) {
+                if (physicalDevice().physicalDeviceInformation().supportedExtensions().contains(x)) {
+                    requiredDeviceExtensions.put(memoryStack.UTF8(x));
+                }
             }
             requiredDeviceExtensions.flip();
             VkPhysicalDeviceFeatures vkPhysicalDeviceFeatures = VkPhysicalDeviceFeatures.calloc(memoryStack);
