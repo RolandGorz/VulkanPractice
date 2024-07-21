@@ -5,7 +5,7 @@ import my.game.init.vulkan.VulkanInstanceWithDebug;
 import my.game.init.vulkan.VulkanInstanceWithoutDebug;
 import my.game.init.vulkan.devices.logical.ImmutableLogicalDevice;
 import my.game.init.vulkan.devices.physical.PhysicalDeviceRetriever;
-import my.game.init.vulkan.drawing.CommandBuffer;
+import my.game.init.vulkan.drawing.CommandBuffers;
 import my.game.init.vulkan.drawing.CommandPool;
 import my.game.init.vulkan.devices.logical.LogicalDevice;
 import my.game.init.vulkan.drawing.FrameBuffers;
@@ -56,15 +56,15 @@ public class MainGameLoop {
         graphicsPipeline = new GraphicsPipeline(logicalDevice.vkDevice(), renderPass);
         frameBuffers = new FrameBuffers(logicalDevice.vkDevice(), renderPass, swapChainImages, swapChain);
         commandPool = new CommandPool(logicalDevice);
-        CommandBuffer commandBuffer = new CommandBuffer(commandPool, frameBuffers, renderPass, graphicsPipeline, swapChain);
+        CommandBuffers commandBuffer = new CommandBuffers(commandPool, frameBuffers, renderPass, graphicsPipeline, swapChain);
         graphicsRenderer = new GraphicsRenderer(logicalDevice, swapChain, commandBuffer);
     }
 
     public void start() {
         GLFW.glfwShowWindow(windowHandle.getWindowHandlePointer());
         while (!GLFW.glfwWindowShouldClose(windowHandle.getWindowHandlePointer())) {
+            GLFW.glfwPollEvents();
             graphicsRenderer.drawFrame();
-            GLFW.glfwWaitEvents();
         }
         VK13.vkDeviceWaitIdle(logicalDevice.vkDevice());
         destroy();

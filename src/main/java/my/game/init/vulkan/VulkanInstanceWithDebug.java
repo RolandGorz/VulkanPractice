@@ -1,5 +1,6 @@
 package my.game.init.vulkan;
 
+import com.google.common.collect.ImmutableList;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
@@ -16,13 +17,15 @@ import org.lwjgl.vulkan.VkLayerProperties;
 
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
-import java.util.ArrayList;
 import java.util.List;
 
 public class VulkanInstanceWithDebug extends VulkanInstance {
 
     private final VkDebugUtilsMessengerCreateInfoEXT debugUtilsMessengerCreateInfo;
     private final VkDebugUtilsMessengerCallbackEXT callback;
+    List<String> REQUESTED_VALIDATION_LAYERS = ImmutableList.of(
+            "VK_LAYER_KHRONOS_validation"
+    );
     private long pDebugUtilsMessengerEXT;
 
     public VulkanInstanceWithDebug() {
@@ -52,7 +55,7 @@ public class VulkanInstanceWithDebug extends VulkanInstance {
                 .pUserData(MemoryUtil.NULL);
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             VkInstanceCreateInfo createInfo = super.createCreateInfo(memoryStack);
-            if(Platform.get() == Platform.MACOSX) {
+            if (Platform.get() == Platform.MACOSX) {
                 addRequiredMacExtensions(createInfo, memoryStack);
                 int updatedFlags = createInfo.flags() | KHRPortabilityEnumeration.VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
                 createInfo.flags(updatedFlags);
@@ -104,11 +107,9 @@ public class VulkanInstanceWithDebug extends VulkanInstance {
     }
 
     public void addValidationLayers(VkInstanceCreateInfo vkInstanceCreateInfo, MemoryStack stack) {
-        List<String> requestedValidationLayers = new ArrayList<>();
-        requestedValidationLayers.add("VK_LAYER_KHRONOS_validation");
-        validateValidationLayers(requestedValidationLayers);
-        PointerBuffer validationLayers = stack.mallocPointer(requestedValidationLayers.size());
-        for (String layer : requestedValidationLayers) {
+        validateValidationLayers(REQUESTED_VALIDATION_LAYERS);
+        PointerBuffer validationLayers = stack.mallocPointer(REQUESTED_VALIDATION_LAYERS.size());
+        for (String layer : REQUESTED_VALIDATION_LAYERS) {
             validationLayers.put(stack.UTF8(layer));
         }
         vkInstanceCreateInfo.ppEnabledLayerNames(validationLayers.flip());
