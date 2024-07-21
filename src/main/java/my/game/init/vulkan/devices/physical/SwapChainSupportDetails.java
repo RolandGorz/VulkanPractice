@@ -15,10 +15,14 @@ public class SwapChainSupportDetails {
     private final VkSurfaceCapabilitiesKHR capabilities;
     private final VkSurfaceFormatKHR.Buffer formats;
     private final IntBuffer presentModes;
+    private final VkPhysicalDevice physicalDevice;
+    private final WindowSurface windowSurface;
 
     protected SwapChainSupportDetails(VkPhysicalDevice physicalDevice, WindowSurface windowSurface) {
+        this.physicalDevice = physicalDevice;
+        this.windowSurface = windowSurface;
         capabilities = VkSurfaceCapabilitiesKHR.malloc();
-        getPhysicalDeviceSurfaceCapabilities(physicalDevice, windowSurface);
+        getPhysicalDeviceSurfaceCapabilities(physicalDevice, windowSurface, capabilities);
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             IntBuffer formatsCount = memoryStack.mallocInt(1);
             getFormatsCount(physicalDevice, windowSurface, formatsCount);
@@ -32,6 +36,8 @@ public class SwapChainSupportDetails {
     }
 
     public VkSurfaceCapabilitiesKHR capabilities() {
+        //When the window resizes the height and width can change. Should query the capabilities fresh each time.
+        getPhysicalDeviceSurfaceCapabilities(physicalDevice, windowSurface, capabilities);
         return capabilities;
     }
 
@@ -43,7 +49,7 @@ public class SwapChainSupportDetails {
         return presentModes;
     }
 
-    private void getPhysicalDeviceSurfaceCapabilities(VkPhysicalDevice physicalDevice, WindowSurface windowSurface) {
+    public void getPhysicalDeviceSurfaceCapabilities(VkPhysicalDevice physicalDevice, WindowSurface windowSurface, VkSurfaceCapabilitiesKHR capabilities) {
         int result = KHRSurface.vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
                 physicalDevice,
                 windowSurface.getWindowSurfaceHandle(),

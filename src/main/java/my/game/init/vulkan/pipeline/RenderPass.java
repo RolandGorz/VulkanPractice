@@ -1,7 +1,6 @@
 package my.game.init.vulkan.pipeline;
 
 import my.game.init.vulkan.swapchain.SwapChain;
-import my.game.init.vulkan.swapchain.SwapChainImages;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.KHRSwapchain;
 import org.lwjgl.vulkan.VK13;
@@ -11,6 +10,7 @@ import org.lwjgl.vulkan.VkDevice;
 import org.lwjgl.vulkan.VkRenderPassCreateInfo;
 import org.lwjgl.vulkan.VkSubpassDependency;
 import org.lwjgl.vulkan.VkSubpassDescription;
+import org.lwjgl.vulkan.VkSurfaceFormatKHR;
 
 import java.nio.LongBuffer;
 
@@ -18,7 +18,7 @@ public class RenderPass {
     private final VkDevice device;
     private final long renderPassPointer;
 
-    public RenderPass(VkDevice device, SwapChain swapChain) {
+    public RenderPass(VkDevice device, VkSurfaceFormatKHR surfaceFormat) {
         this.device = device;
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
 
@@ -55,7 +55,12 @@ public class RenderPass {
             VkAttachmentDescription.Buffer colorAttachmentBuffer = VkAttachmentDescription.malloc(1, memoryStack);
             VkAttachmentDescription colorAttachment = VkAttachmentDescription.calloc(memoryStack);
             colorAttachment
-                    .format(swapChain.getSurfaceFormat().format())
+                    /*As of writing this comment we only care about the first swap chain we created when getting the
+                      surface format. We would need to recreate the render pass if for example
+                      "when moving a window from a standard range to a high dynamic range monitor", but for now not
+                      handling that use case.
+                     */
+                    .format(surfaceFormat.format())
                     .samples(VK13.VK_SAMPLE_COUNT_1_BIT)
                     .loadOp(VK13.VK_ATTACHMENT_LOAD_OP_CLEAR)
                     .storeOp(VK13.VK_ATTACHMENT_STORE_OP_STORE)

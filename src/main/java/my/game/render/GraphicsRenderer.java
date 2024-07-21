@@ -3,9 +3,18 @@ package my.game.render;
 import com.google.common.collect.ImmutableList;
 import my.game.init.vulkan.VulkanUtil;
 import my.game.init.vulkan.devices.logical.LogicalDevice;
+import my.game.init.vulkan.devices.physical.PhysicalDeviceInformation;
 import my.game.init.vulkan.drawing.CommandBuffers;
+import my.game.init.vulkan.drawing.CommandPool;
+import my.game.init.vulkan.drawing.FrameBuffers;
+import my.game.init.vulkan.pipeline.GraphicsPipeline;
+import my.game.init.vulkan.pipeline.RenderPass;
 import my.game.init.vulkan.swapchain.SwapChain;
+import my.game.init.vulkan.swapchain.SwapChainImages;
+import my.game.init.window.WindowHandle;
+import my.game.init.window.WindowSurface;
 import org.lwjgl.PointerBuffer;
+import org.lwjgl.glfw.GLFW;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.KHRSwapchain;
@@ -24,17 +33,33 @@ public class GraphicsRenderer {
 
     public static final int MAX_FRAMES_IN_FLIGHT = 2;
     private final LogicalDevice logicalDevice;
-    private final SwapChain swapChain;
     private final CommandBuffers commandBuffers;
+    private final RenderPass renderPass;
+    private final PhysicalDeviceInformation physicalDeviceInformation;
+    private final WindowHandle windowHandle;
+    private final WindowSurface windowSurface;
+    private final GraphicsPipeline graphicsPipeline;
     private final List<LongBuffer> imageAvailableSemaphores;
     private final List<LongBuffer> renderFinishedSemaphores;
     private final List<LongBuffer> inFlightFences;
     private int currentFrame = 0;
+    private SwapChain swapChain;
+    private SwapChainImages swapChainImages;
+    private FrameBuffers frameBuffers;
 
-    public GraphicsRenderer(LogicalDevice logicalDevice, SwapChain swapChain, CommandBuffers commandBuffers) {
+    public GraphicsRenderer(LogicalDevice logicalDevice, CommandPool commandPool,
+                            PhysicalDeviceInformation physicalDeviceInformation,
+                            WindowHandle windowHandle, WindowSurface windowSurface) {
         this.logicalDevice = logicalDevice;
-        this.commandBuffers = commandBuffers;
-        this.swapChain = swapChain;
+        this.physicalDeviceInformation = physicalDeviceInformation;
+        this.windowHandle = windowHandle;
+        this.windowSurface = windowSurface;
+        this.swapChain = createSwapChain(logicalDevice, physicalDeviceInformation, windowHandle, windowSurface);
+        this.swapChainImages = createImageViews(logicalDevice, swapChain);
+        this.renderPass = new RenderPass(logicalDevice.vkDevice(), swapChain.getSurfaceFormat());
+        this.graphicsPipeline = new GraphicsPipeline(logicalDevice.vkDevice(), renderPass);
+        this.commandBuffers = new CommandBuffers(commandPool, renderPass, graphicsPipeline);
+        this.frameBuffers = createFrameBuffers(logicalDevice, renderPass, swapChainImages, swapChain);
         ImmutableList.Builder<LongBuffer> imageAvailableSemaphoresBuilder = ImmutableList.builder();
         ImmutableList.Builder<LongBuffer> renderFinishedSemaphoresBuilder = ImmutableList.builder();
         ImmutableList.Builder<LongBuffer> inFlightFencesBuilder = ImmutableList.builder();
@@ -72,16 +97,42 @@ public class GraphicsRenderer {
         }
     }
 
+    private SwapChain createSwapChain(LogicalDevice logicalDevice, PhysicalDeviceInformation physicalDeviceInformation,
+                                      WindowHandle windowHandle, WindowSurface windowSurface) {
+        return new SwapChain(
+                logicalDevice.vkDevice(),
+                physicalDeviceInformation,
+                windowHandle,
+                windowSurface);
+    }
+
+    private SwapChainImages createImageViews(LogicalDevice logicalDevice, SwapChain swapChain) {
+        return new SwapChainImages(logicalDevice.vkDevice(), swapChain);
+    }
+
+    private FrameBuffers createFrameBuffers(LogicalDevice logicalDevice, RenderPass renderPass,
+                                            SwapChainImages swapChainImages, SwapChain swapChain) {
+        return new FrameBuffers(logicalDevice.vkDevice(), renderPass, swapChainImages, swapChain);
+    }
+
     public void drawFrame() {
         VkDevice device = logicalDevice.vkDevice();
         VK13.vkWaitForFences(device, inFlightFences.get(currentFrame), true, VulkanUtil.UINT64_MAX);
-        VK13.vkResetFences(device, inFlightFences.get(currentFrame));
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             IntBuffer imageIndex = memoryStack.mallocInt(1);
-            KHRSwapchain.vkAcquireNextImageKHR(device, swapChain.getSwapChainPointer(), VulkanUtil.UINT64_MAX,
+            int acquireNextImageResult = KHRSwapchain.vkAcquireNextImageKHR(device, swapChain.getSwapChainPointer(), VulkanUtil.UINT64_MAX,
                     imageAvailableSemaphores.get(currentFrame).get(0), VK13.VK_NULL_HANDLE, imageIndex);
+            if (acquireNextImageResult == KHRSwapchain.VK_ERROR_OUT_OF_DATE_KHR) {
+                recreateSwapChain(memoryStack);
+                return;
+            } else if (acquireNextImageResult != VK13.VK_SUCCESS && acquireNextImageResult != KHRSwapchain.VK_SUBOPTIMAL_KHR) {
+                throw new IllegalStateException(String.format("Failed to acquire swap chain image! Error code: %d", acquireNextImageResult));
+            }
+            // Only reset the fence if we are submitting work otherwise vkWaitForFences will wait forever on a signal
+            // that will never come.
+            VK13.vkResetFences(device, inFlightFences.get(currentFrame));
             VK13.vkResetCommandBuffer(commandBuffers.get(currentFrame).getCommandBuffer(), 0);
-            commandBuffers.get(currentFrame).recordCommandBuffer(imageIndex.get(0));
+            commandBuffers.get(currentFrame).recordCommandBuffer(imageIndex.get(0), swapChain, frameBuffers);
 
             IntBuffer waitStages = memoryStack.mallocInt(1);
             waitStages.put(VK13.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
@@ -116,12 +167,50 @@ public class GraphicsRenderer {
                     .swapchainCount(1)
                     .pImageIndices(imageIndex)
                     .pResults(null);
-            KHRSwapchain.vkQueuePresentKHR(logicalDevice.presentationQueue().getVkQueue(), presentInfo);
+            int queuePresentResult = KHRSwapchain.vkQueuePresentKHR(logicalDevice.presentationQueue().getVkQueue(), presentInfo);
+            if (queuePresentResult == KHRSwapchain.VK_ERROR_OUT_OF_DATE_KHR || queuePresentResult == KHRSwapchain.VK_SUBOPTIMAL_KHR || windowHandle.frameBufferResized()) {
+                recreateSwapChain(memoryStack);
+            } else if (queuePresentResult != VK13.VK_SUCCESS) {
+                throw new IllegalStateException(String.format("Failed to present swap chain image! Error code: %d", queuePresentResult));
+            }
         }
         currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
     }
 
+    private void recreateSwapChain(MemoryStack memoryStack) {
+        IntBuffer width = memoryStack.mallocInt(1);
+        IntBuffer height = memoryStack.mallocInt(1);
+        GLFW.glfwGetFramebufferSize(windowHandle.getWindowHandlePointer(), width, height);
+        while (width.get(0) == 0 || height.get(0) == 0) {
+            GLFW.glfwGetFramebufferSize(windowHandle.getWindowHandlePointer(), width, height);
+            GLFW.glfwWaitEvents();
+        }
+        VK13.vkDeviceWaitIdle(logicalDevice.vkDevice());
+        cleanupSwapChain();
+        /*
+        Note that we don’t recreate the renderpass here for simplicity.
+        In theory it can be possible for the swap chain image format to change during an applications' lifetime,
+        e.g. when moving a window from an standard range to an high dynamic range monitor.
+        This may require the application to recreate the renderpass to make sure the change between dynamic
+        ranges is properly reflected.
+         */
+        //TODO the disadvantage of this approach is that we need to stop all rendering before creating the new swap chain.
+        // It is possible to create a new swap chain while drawing commands on an image from the old swap chain are still in-flight.
+        // You need to pass the previous swap chain to the oldSwapchain field in the VkSwapchainCreateInfoKHR struct and destroy
+        // the old swap chain as soon as you’ve finished using it.
+        swapChain = createSwapChain(logicalDevice, physicalDeviceInformation, windowHandle, windowSurface);
+        swapChainImages = createImageViews(logicalDevice, swapChain);
+        frameBuffers = createFrameBuffers(logicalDevice, renderPass, swapChainImages, swapChain);
+    }
+
+    private void cleanupSwapChain() {
+        frameBuffers.free();
+        swapChainImages.free();
+        swapChain.free();
+    }
+
     public void free() {
+        cleanupSwapChain();
         for (LongBuffer x : inFlightFences) {
             VK13.vkDestroyFence(logicalDevice.vkDevice(), x.get(0), null);
             MemoryUtil.memFree(x);
@@ -134,5 +223,7 @@ public class GraphicsRenderer {
             VK13.vkDestroySemaphore(logicalDevice.vkDevice(), x.get(0), null);
             MemoryUtil.memFree(x);
         }
+        renderPass.free();
+        graphicsPipeline.free();
     }
 }

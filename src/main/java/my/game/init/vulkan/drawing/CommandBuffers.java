@@ -24,15 +24,12 @@ public class CommandBuffers {
 
     public final List<CommandBuffer> commandBuffers;
 
-    private final FrameBuffers frameBuffers;
     private final GraphicsPipeline graphicsPipeline;
-    private final SwapChain swapChain;
     private final RenderPass renderPass;
 
-    public CommandBuffers(CommandPool commandPool, FrameBuffers frameBuffers, RenderPass renderPass, GraphicsPipeline graphicsPipeline, SwapChain swapChain) {
-        this.frameBuffers = frameBuffers;
+    //Command buffers will be automatically freed when their command pool is destroyed, so we don’t need explicit cleanup.
+    public CommandBuffers(CommandPool commandPool, RenderPass renderPass, GraphicsPipeline graphicsPipeline) {
         this.graphicsPipeline = graphicsPipeline;
-        this.swapChain = swapChain;
         this.renderPass = renderPass;
         ImmutableList.Builder<CommandBuffer> commandBuffersBuilder = ImmutableList.builder();
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
@@ -72,9 +69,9 @@ public class CommandBuffers {
             return commandBuffer;
         }
 
-        public void recordCommandBuffer(int imageIndex) {
+        public void recordCommandBuffer(int imageIndex, SwapChain swapChain, FrameBuffers frameBuffers) {
             beginCommandBuffer();
-            beginRenderPass(imageIndex);
+            beginRenderPass(imageIndex, swapChain, frameBuffers);
             VK13.vkCmdBindPipeline(commandBuffer, VK13.VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.getGraphicsPipelinePointer());
             try (MemoryStack memoryStack = MemoryStack.stackPush()) {
                 VkExtent2D swapChainExtent = swapChain
@@ -117,7 +114,7 @@ public class CommandBuffers {
             }
         }
 
-        private void beginRenderPass(int imageIndex) {
+        private void beginRenderPass(int imageIndex, SwapChain swapChain, FrameBuffers frameBuffers) {
             try (MemoryStack memoryStack = MemoryStack.stackPush()) {
                 VkRect2D renderArea = VkRect2D.calloc(memoryStack);
                 renderArea.offset()

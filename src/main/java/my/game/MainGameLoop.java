@@ -8,12 +8,8 @@ import my.game.init.vulkan.devices.physical.PhysicalDeviceRetriever;
 import my.game.init.vulkan.drawing.CommandBuffers;
 import my.game.init.vulkan.drawing.CommandPool;
 import my.game.init.vulkan.devices.logical.LogicalDevice;
-import my.game.init.vulkan.drawing.FrameBuffers;
 import my.game.init.vulkan.pipeline.GraphicsPipeline;
-import my.game.init.vulkan.pipeline.RenderPass;
 import my.game.init.vulkan.pipeline.shaders.ShaderCompiler;
-import my.game.init.vulkan.swapchain.SwapChain;
-import my.game.init.vulkan.swapchain.SwapChainImages;
 import my.game.init.window.WindowHandle;
 import my.game.init.window.WindowSurface;
 import my.game.render.GraphicsRenderer;
@@ -26,11 +22,6 @@ public class MainGameLoop {
     private final LogicalDevice logicalDevice;
     private final PhysicalDeviceRetriever chosenPhysicalDevice;
     private final WindowSurface windowSurface;
-    private final SwapChain swapChain;
-    private final SwapChainImages swapChainImages;
-    private final RenderPass renderPass;
-    private final GraphicsPipeline graphicsPipeline;
-    private final FrameBuffers frameBuffers;
     private final CommandPool commandPool;
     private final GraphicsRenderer graphicsRenderer;
 
@@ -46,18 +37,8 @@ public class MainGameLoop {
         windowSurface = new WindowSurface(vulkanInstance.getHandle(), windowHandle);
         chosenPhysicalDevice = new PhysicalDeviceRetriever(vulkanInstance.getHandle(), windowSurface);
         logicalDevice = ImmutableLogicalDevice.builder().physicalDevice(chosenPhysicalDevice).build();
-        swapChain = new SwapChain(
-                logicalDevice.vkDevice(),
-                chosenPhysicalDevice.physicalDeviceInformation(),
-                windowHandle,
-                windowSurface);
-        swapChainImages = new SwapChainImages(logicalDevice.vkDevice(), swapChain);
-        renderPass = new RenderPass(logicalDevice.vkDevice(), swapChain);
-        graphicsPipeline = new GraphicsPipeline(logicalDevice.vkDevice(), renderPass);
-        frameBuffers = new FrameBuffers(logicalDevice.vkDevice(), renderPass, swapChainImages, swapChain);
         commandPool = new CommandPool(logicalDevice);
-        CommandBuffers commandBuffer = new CommandBuffers(commandPool, frameBuffers, renderPass, graphicsPipeline, swapChain);
-        graphicsRenderer = new GraphicsRenderer(logicalDevice, swapChain, commandBuffer);
+        graphicsRenderer = new GraphicsRenderer(logicalDevice, commandPool, chosenPhysicalDevice.physicalDeviceInformation(), windowHandle, windowSurface);
     }
 
     public void start() {
@@ -73,11 +54,6 @@ public class MainGameLoop {
     private void destroy() {
         graphicsRenderer.free();
         commandPool.free();
-        frameBuffers.free();
-        graphicsPipeline.free();
-        renderPass.free();
-        swapChainImages.free();
-        swapChain.free();
         logicalDevice.free();
         chosenPhysicalDevice.free();
         windowSurface.free();
