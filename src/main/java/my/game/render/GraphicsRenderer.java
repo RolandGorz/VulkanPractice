@@ -177,10 +177,14 @@ public class GraphicsRenderer {
         currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
     }
 
-    private void recreateSwapChain(MemoryStack memoryStack) {
+    public void recreateSwapChain(MemoryStack memoryStack) {
         IntBuffer width = memoryStack.mallocInt(1);
         IntBuffer height = memoryStack.mallocInt(1);
         GLFW.glfwGetFramebufferSize(windowHandle.getWindowHandlePointer(), width, height);
+        recreateSwapChain(width, height);
+    }
+
+    public void recreateSwapChain(IntBuffer width, IntBuffer height) {
         while (width.get(0) == 0 || height.get(0) == 0) {
             GLFW.glfwGetFramebufferSize(windowHandle.getWindowHandlePointer(), width, height);
             GLFW.glfwWaitEvents();

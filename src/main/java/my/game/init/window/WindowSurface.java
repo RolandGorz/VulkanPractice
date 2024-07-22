@@ -16,7 +16,7 @@ public class WindowSurface {
         this.vkInstance = vkInstance;
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             LongBuffer longBuffer = memoryStack.mallocLong(1);
-            int result = GLFWVulkan.glfwCreateWindowSurface(vkInstance, windowHandle.windowHandlePointer, null,
+            int result = GLFWVulkan.glfwCreateWindowSurface(vkInstance, windowHandle.getWindowHandlePointer(), null,
                     longBuffer);
             if (result != VK13.VK_SUCCESS) {
                 throw new IllegalStateException(String.format("Failed to create window surface with error code %d", result));
