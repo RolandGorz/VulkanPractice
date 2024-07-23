@@ -39,7 +39,8 @@ public class WindowHandle {
                 frameBufferResized = true));
         GLFW.glfwSetFramebufferSizeCallback(windowHandlePointer, framebufferSizeCallback);
         GLFWWindowRefreshCallback windowRefreshCallback = GLFWWindowRefreshCallback.create((window) -> {
-            //This should always return and not busy wait like we do when minimized. If the width or height is 0 then we should just return.
+            //This should always return and wait like we do when minimized. If the width or height is 0 then we should just return.
+            //Otherwise we will get stuck waiting for an event that will never come.
             //TODO rendering still stops when not resizing and just holding corner of window / moving window
             try (MemoryStack memoryStack = MemoryStack.stackPush()) {
                 IntBuffer width = memoryStack.mallocInt(1);

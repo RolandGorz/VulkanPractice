@@ -185,7 +185,7 @@ public class GraphicsRenderer {
     }
 
     public void recreateSwapChain(IntBuffer width, IntBuffer height) {
-        while (width.get(0) == 0 || height.get(0) == 0) {
+        while (width.get(0) == 0 && height.get(0) == 0) {
             GLFW.glfwGetFramebufferSize(windowHandle.getWindowHandlePointer(), width, height);
             GLFW.glfwWaitEvents();
         }
