@@ -13,27 +13,6 @@ public class VulkanProject {
 
     public static boolean VULKAN_DEBUG;
 
-    /*Mac issue
-    3.3.3 lwjgl
-        Identifier=libMoltenVK.dylib
-Format=Mach-O thin (arm64)
-CodeDirectory v=20400 size=43722 flags=0x20002(adhoc,linker-signed) hashes=1363+0 location=embedded
-Signature=adhoc
-Info.plist=not bound
-TeamIdentifier=not set
-Sealed Resources=none
-Internal requirements=none
-    3.3.4 lwjgl
-    Identifier=libMoltenVK-555549442dc301f2957d3c769e91db56ff3e95b7
-Format=Mach-O thin (arm64)
-CodeDirectory v=20400 size=57773 flags=0x2(adhoc) hashes=1796+5 location=embedded
-Signature=adhoc
-Info.plist=not bound
-TeamIdentifier=not set
-Sealed Resources=none
-Internal requirements count=0 size=12
-     */
-
     static {
         VULKAN_DEBUG = Boolean.parseBoolean(System.getProperty("myGameVulkanDebug"));
         if (VULKAN_DEBUG) {
