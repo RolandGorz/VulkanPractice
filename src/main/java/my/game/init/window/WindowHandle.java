@@ -5,6 +5,7 @@ import org.lwjgl.glfw.Callbacks;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWFramebufferSizeCallback;
+import org.lwjgl.glfw.GLFWWindowPosCallback;
 import org.lwjgl.glfw.GLFWWindowRefreshCallback;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
@@ -35,13 +36,18 @@ public class WindowHandle {
 
         // Create the window
         windowHandlePointer = GLFW.glfwCreateWindow(800, 600, "Hello World!", MemoryUtil.NULL, MemoryUtil.NULL);
+
+        GLFWWindowPosCallback windowPosCallback = GLFWWindowPosCallback.create(((window, xpos, ypos) -> graphicsRenderer.drawFrame()));
+        GLFW.glfwSetWindowPosCallback(windowHandlePointer, windowPosCallback);
+
         GLFWFramebufferSizeCallback framebufferSizeCallback = GLFWFramebufferSizeCallback.create(((window, width, height) ->
                 frameBufferResized = true));
         GLFW.glfwSetFramebufferSizeCallback(windowHandlePointer, framebufferSizeCallback);
+
         GLFWWindowRefreshCallback windowRefreshCallback = GLFWWindowRefreshCallback.create((window) -> {
-            //This should always return and wait like we do when minimized. If the width or height is 0 then we should just return.
+            //This should always return and not wait like we do when minimized. If the width or height is 0 then we should just return.
             //Otherwise we will get stuck waiting for an event that will never come.
-            //TODO rendering still stops when not resizing and just holding corner of window / moving window
+            //TODO rendering still stops when not resizing and just holding corner of window
             try (MemoryStack memoryStack = MemoryStack.stackPush()) {
                 IntBuffer width = memoryStack.mallocInt(1);
                 IntBuffer height = memoryStack.mallocInt(1);
@@ -49,11 +55,12 @@ public class WindowHandle {
                 if (width.get(0) == 0 || height.get(0) == 0) {
                     return;
                 }
-                graphicsRenderer.recreateSwapChain(width, height);
+                graphicsRenderer.recreateSwapChain();
             }
             graphicsRenderer.drawFrame();
         });
         GLFW.glfwSetWindowRefreshCallback(windowHandlePointer, windowRefreshCallback);
+
         if (windowHandlePointer == MemoryUtil.NULL)
             throw new RuntimeException("Failed to create the GLFW window");
     }
