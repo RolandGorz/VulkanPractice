@@ -185,10 +185,6 @@ public class GraphicsRenderer {
             GLFW.glfwGetFramebufferSize(windowHandle.getWindowHandlePointer(), width, height);
             GLFW.glfwWaitEvents();
         }
-        recreateSwapChain();
-    }
-
-    public void recreateSwapChain() {
         VK13.vkDeviceWaitIdle(logicalDevice.vkDevice());
         cleanupSwapChain();
         /*

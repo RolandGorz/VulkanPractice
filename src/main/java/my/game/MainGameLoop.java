@@ -37,7 +37,6 @@ public class MainGameLoop {
         logicalDevice = ImmutableLogicalDevice.builder().physicalDevice(chosenPhysicalDevice).build();
         commandPool = new CommandPool(logicalDevice);
         graphicsRenderer = new GraphicsRenderer(logicalDevice, commandPool, chosenPhysicalDevice.physicalDeviceInformation(), windowHandle, windowSurface);
-        windowHandle.setGraphicsRenderer(graphicsRenderer);
     }
 
     public void start() {
