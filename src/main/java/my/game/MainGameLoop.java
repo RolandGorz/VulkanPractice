@@ -22,6 +22,8 @@ public class MainGameLoop {
     private final WindowSurface windowSurface;
     private final CommandPool commandPool;
     private final GraphicsRenderer graphicsRenderer;
+    private volatile boolean rendering = true;
+    private volatile boolean finished = false;
 
     public MainGameLoop() {
         ShaderCompiler shaderCompiler = new ShaderCompiler();
@@ -37,16 +39,33 @@ public class MainGameLoop {
         logicalDevice = ImmutableLogicalDevice.builder().physicalDevice(chosenPhysicalDevice).build();
         commandPool = new CommandPool(logicalDevice);
         graphicsRenderer = new GraphicsRenderer(logicalDevice, commandPool, chosenPhysicalDevice.physicalDeviceInformation(), windowHandle, windowSurface);
-        windowHandle.setGraphicsRenderer(graphicsRenderer);
     }
 
     public void start() {
+        Thread thread = new Thread(() -> {
+            while (rendering) {
+                graphicsRenderer.drawFrame();
+            }
+            int result = VK13.vkDeviceWaitIdle(logicalDevice.vkDevice());
+            if (result != VK13.VK_SUCCESS) {
+                throw new IllegalStateException(String.format("Waiting for idle device failed. Error code: %d", result));
+            }
+            finished = true;
+        });
+        thread.start();
         GLFW.glfwShowWindow(windowHandle.getWindowHandlePointer());
         while (!GLFW.glfwWindowShouldClose(windowHandle.getWindowHandlePointer())) {
-            GLFW.glfwPollEvents();
-            graphicsRenderer.drawFrame();
+            GLFW.glfwWaitEvents();
         }
-        VK13.vkDeviceWaitIdle(logicalDevice.vkDevice());
+        rendering = false;
+        try {
+            windowHandle.queue.put(true);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        while(!finished) {
+            Thread.yield();
+        }
         destroy();
     }
 

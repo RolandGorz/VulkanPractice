@@ -118,12 +118,27 @@ public class GraphicsRenderer {
     public void drawFrame() {
         VkDevice device = logicalDevice.vkDevice();
         VK13.vkWaitForFences(device, inFlightFences.get(currentFrame), true, VulkanUtil.UINT64_MAX);
+        Boolean curr = windowHandle.queue.poll();
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
+            if (curr != null) {
+                //Only resize we should recreate swapchain. Dont need to otherwise.
+                while (curr) {
+                    try {
+                        curr = windowHandle.queue.take();
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    if (GLFW.glfwWindowShouldClose(windowHandle.getWindowHandlePointer())) {
+                        return;
+                    }
+                }
+                recreateSwapChain();
+            }
             IntBuffer imageIndex = memoryStack.mallocInt(1);
             int acquireNextImageResult = KHRSwapchain.vkAcquireNextImageKHR(device, swapChain.getSwapChainPointer(), VulkanUtil.UINT64_MAX,
                     imageAvailableSemaphores.get(currentFrame).get(0), VK13.VK_NULL_HANDLE, imageIndex);
             if (acquireNextImageResult == KHRSwapchain.VK_ERROR_OUT_OF_DATE_KHR) {
-                recreateSwapChain(memoryStack);
+                recreateSwapChain();
                 return;
             } else if (acquireNextImageResult != VK13.VK_SUCCESS && acquireNextImageResult != KHRSwapchain.VK_SUBOPTIMAL_KHR) {
                 throw new IllegalStateException(String.format("Failed to acquire swap chain image! Error code: %d", acquireNextImageResult));
@@ -168,28 +183,24 @@ public class GraphicsRenderer {
                     .pImageIndices(imageIndex)
                     .pResults(null);
             int queuePresentResult = KHRSwapchain.vkQueuePresentKHR(logicalDevice.presentationQueue().getVkQueue(), presentInfo);
-            if (queuePresentResult == KHRSwapchain.VK_ERROR_OUT_OF_DATE_KHR || queuePresentResult == KHRSwapchain.VK_SUBOPTIMAL_KHR || windowHandle.frameBufferResized()) {
-                recreateSwapChain(memoryStack);
+            if (queuePresentResult == KHRSwapchain.VK_ERROR_OUT_OF_DATE_KHR || queuePresentResult == KHRSwapchain.VK_SUBOPTIMAL_KHR) {
+                recreateSwapChain();
             } else if (queuePresentResult != VK13.VK_SUCCESS) {
                 throw new IllegalStateException(String.format("Failed to present swap chain image! Error code: %d", queuePresentResult));
+            }
+        } finally {
+            if (curr != null) {
+                windowHandle.finished = true;
             }
         }
         currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
     }
 
-    public void recreateSwapChain(MemoryStack memoryStack) {
-        IntBuffer width = memoryStack.mallocInt(1);
-        IntBuffer height = memoryStack.mallocInt(1);
-        GLFW.glfwGetFramebufferSize(windowHandle.getWindowHandlePointer(), width, height);
-        while (width.get(0) == 0 || height.get(0) == 0) {
-            GLFW.glfwGetFramebufferSize(windowHandle.getWindowHandlePointer(), width, height);
-            GLFW.glfwWaitEvents();
-        }
-        recreateSwapChain();
-    }
-
     public void recreateSwapChain() {
-        VK13.vkDeviceWaitIdle(logicalDevice.vkDevice());
+        int result = VK13.vkDeviceWaitIdle(logicalDevice.vkDevice());
+        if (result != VK13.VK_SUCCESS) {
+            throw new IllegalStateException(String.format("Waiting for idle device failed. Error code: %d", result));
+        }
         cleanupSwapChain();
         /*
         Note that we don’t recreate the renderpass here for simplicity.
