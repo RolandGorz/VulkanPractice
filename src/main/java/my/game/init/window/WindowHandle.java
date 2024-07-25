@@ -1,21 +1,24 @@
 package my.game.init.window;
 
+import my.game.render.GraphicsRenderer;
 import org.lwjgl.glfw.Callbacks;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWFramebufferSizeCallback;
 import org.lwjgl.glfw.GLFWWindowPosCallback;
+import org.lwjgl.glfw.GLFWWindowRefreshCallback;
+import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
-import java.util.concurrent.ArrayBlockingQueue;
+import java.nio.IntBuffer;
 
 public class WindowHandle {
 
     private final long windowHandlePointer;
 
-    public volatile boolean finished = false;
+    private GraphicsRenderer graphicsRenderer;
 
-    public ArrayBlockingQueue<Boolean> queue = new ArrayBlockingQueue<>(1);
+    private Boolean frameBufferResized = false;
 
     public WindowHandle() {
         // Set up an error callback. The default implementation
@@ -35,37 +38,57 @@ public class WindowHandle {
         windowHandlePointer = GLFW.glfwCreateWindow(800, 600, "Hello World!", MemoryUtil.NULL, MemoryUtil.NULL);
 
         GLFWWindowPosCallback windowPosCallback = GLFWWindowPosCallback.create((window, xpos, ypos) -> {
-            try {
-                queue.put(finished);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+            //This should always return and not wait like we do when minimized. If the width or height is 0 then we should just return.
+            //Otherwise we will get stuck waiting for an event that will never come.
+            //TODO rendering still stops when not resizing and just holding corner of window
+            try (MemoryStack memoryStack = MemoryStack.stackPush()) {
+                IntBuffer width = memoryStack.mallocInt(1);
+                IntBuffer height = memoryStack.mallocInt(1);
+                GLFW.glfwGetFramebufferSize(windowHandlePointer, width, height);
+                if (width.get(0) == 0 || height.get(0) == 0) {
+                    return;
+                }
             }
-            while (!finished) {}
-            finished = false;
+            graphicsRenderer.drawFrame();
         });
         GLFW.glfwSetWindowPosCallback(windowHandlePointer, windowPosCallback);
 
-        GLFWFramebufferSizeCallback framebufferSizeCallback = GLFWFramebufferSizeCallback.create((window, width, height) -> {
-            if (width == 0 || height == 0) {
-                try {
-                    queue.put(true);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-                return;
-            }
-            try {
-                queue.put(finished);
-                while (!finished) {}
-                finished = false;
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        });
+        GLFWFramebufferSizeCallback framebufferSizeCallback = GLFWFramebufferSizeCallback.create(((window, width, height) ->
+                frameBufferResized = true));
         GLFW.glfwSetFramebufferSizeCallback(windowHandlePointer, framebufferSizeCallback);
+
+        GLFWWindowRefreshCallback windowRefreshCallback = GLFWWindowRefreshCallback.create((window) -> {
+            //This should always return and not wait like we do when minimized. If the width or height is 0 then we should just return.
+            //Otherwise we will get stuck waiting for an event that will never come.
+            //TODO rendering still stops when not resizing and just holding corner of window
+            try (MemoryStack memoryStack = MemoryStack.stackPush()) {
+                IntBuffer width = memoryStack.mallocInt(1);
+                IntBuffer height = memoryStack.mallocInt(1);
+                GLFW.glfwGetFramebufferSize(windowHandlePointer, width, height);
+                if (width.get(0) == 0 || height.get(0) == 0) {
+                    return;
+                }
+                graphicsRenderer.recreateSwapChain();
+            }
+            graphicsRenderer.drawFrame();
+        });
+        GLFW.glfwSetWindowRefreshCallback(windowHandlePointer, windowRefreshCallback);
 
         if (windowHandlePointer == MemoryUtil.NULL)
             throw new RuntimeException("Failed to create the GLFW window");
+    }
+
+    public void setGraphicsRenderer(GraphicsRenderer graphicsRenderer) {
+        this.graphicsRenderer = graphicsRenderer;
+    }
+
+    //Reset the state after a query. If the resizing stopped then this should be false and if the resizing continues it will be set back to true;
+    public boolean frameBufferResized() {
+        if (frameBufferResized) {
+            frameBufferResized = false;
+            return true;
+        }
+        return false;
     }
 
     public long getWindowHandlePointer() {
