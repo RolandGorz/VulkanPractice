@@ -15,6 +15,7 @@ import org.lwjgl.glfw.GLFW;
 import org.lwjgl.vulkan.VK13;
 
 public class MainGameLoop {
+    private volatile boolean RUNNING = true;
     private final WindowHandle windowHandle;
     private final VulkanInstance vulkanInstance;
     private final LogicalDevice logicalDevice;
@@ -40,16 +41,24 @@ public class MainGameLoop {
     }
 
     public void start() {
-        GLFW.glfwShowWindow(windowHandle.getWindowHandlePointer());
-        while (!GLFW.glfwWindowShouldClose(windowHandle.getWindowHandlePointer())) {
-            GLFW.glfwPollEvents();
-            graphicsRenderer.drawFrame();
+        if (RUNNING) {
+            GLFW.glfwShowWindow(windowHandle.getWindowHandlePointer());
+            while (!GLFW.glfwWindowShouldClose(windowHandle.getWindowHandlePointer()) && RUNNING) {
+                GLFW.glfwPollEvents();
+                graphicsRenderer.drawFrame();
+            }
+            destroy();
+        } else {
+            throw new IllegalStateException("Game loop has already been stopped. Cannot start again");
         }
-        VK13.vkDeviceWaitIdle(logicalDevice.vkDevice());
-        destroy();
+    }
+
+    public void stop() {
+        RUNNING = false;
     }
 
     private void destroy() {
+        VK13.vkDeviceWaitIdle(logicalDevice.vkDevice());
         graphicsRenderer.free();
         commandPool.free();
         logicalDevice.free();

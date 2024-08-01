@@ -3,7 +3,6 @@ package my.game.init.vulkan.pipeline;
 import com.google.common.collect.ImmutableList;
 import my.game.init.vulkan.pipeline.shaders.LoadedShader;
 import my.game.init.vulkan.pipeline.shaders.ShaderModule;
-import my.game.init.vulkan.swapchain.SwapChainImages;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VK13;
 import org.lwjgl.vulkan.VkDevice;
@@ -36,10 +35,10 @@ public class GraphicsPipeline {
     public GraphicsPipeline(final VkDevice device, final RenderPass renderPass) {
         this.device = device;
         LoadedShader loadedVertex = new LoadedShader("shaders/compiled/multi_color_triangle.vert.spv");
-        ShaderModule simpleVertexShader = new ShaderModule(device, loadedVertex);
+        ShaderModule vertexShader = new ShaderModule(device, loadedVertex);
         loadedVertex.free();
         LoadedShader loadedFragment = new LoadedShader("shaders/compiled/multi_color_triangle.frag.spv");
-        ShaderModule simpleFragmentShader = new ShaderModule(device, loadedFragment);
+        ShaderModule fragmentShader = new ShaderModule(device, loadedFragment);
         loadedFragment.free();
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             VkPipelineShaderStageCreateInfo.Buffer shaderStageCreateInfoBuffer = VkPipelineShaderStageCreateInfo.malloc(2, memoryStack);
@@ -47,14 +46,14 @@ public class GraphicsPipeline {
             vertexShaderStageInfo
                     .sType(VK13.VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO)
                     .stage(VK13.VK_SHADER_STAGE_VERTEX_BIT)
-                    .module(simpleVertexShader.getShaderModulePointer())
+                    .module(vertexShader.getShaderModulePointer())
                     .pName(memoryStack.UTF8("main"));
             shaderStageCreateInfoBuffer.put(vertexShaderStageInfo);
             VkPipelineShaderStageCreateInfo fragmentShaderStageInfo = VkPipelineShaderStageCreateInfo.calloc(memoryStack);
             fragmentShaderStageInfo
                     .sType(VK13.VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO)
                     .stage(VK13.VK_SHADER_STAGE_FRAGMENT_BIT)
-                    .module(simpleFragmentShader.getShaderModulePointer())
+                    .module(fragmentShader.getShaderModulePointer())
                     .pName(memoryStack.UTF8("main"));
             shaderStageCreateInfoBuffer.put(fragmentShaderStageInfo);
             shaderStageCreateInfoBuffer.flip();
@@ -169,8 +168,8 @@ public class GraphicsPipeline {
             }
             graphicsPipelinePointer = graphicsPipelinePointerBuffer.get(0);
         } finally {
-            simpleVertexShader.free();
-            simpleFragmentShader.free();
+            vertexShader.free();
+            fragmentShader.free();
         }
     }
 

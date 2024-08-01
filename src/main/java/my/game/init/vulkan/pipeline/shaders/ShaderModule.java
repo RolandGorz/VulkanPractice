@@ -8,12 +8,10 @@ import org.lwjgl.vulkan.VkShaderModuleCreateInfo;
 import java.nio.LongBuffer;
 
 public class ShaderModule {
-    private final LoadedShader loadedShader;
     private final Long shaderModulePointer;
     private final VkDevice device;
 
     public ShaderModule(final VkDevice device, final LoadedShader loadedShader) {
-        this.loadedShader = loadedShader;
         this.device = device;
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             VkShaderModuleCreateInfo shaderModuleCreateInfo = VkShaderModuleCreateInfo.calloc(memoryStack);
@@ -31,10 +29,6 @@ public class ShaderModule {
             }
             shaderModulePointer = shaderModulePointerBuffer.get(0);
         }
-    }
-
-    public LoadedShader getLoadedShader() {
-        return loadedShader;
     }
 
     public Long getShaderModulePointer() {

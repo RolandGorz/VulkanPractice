@@ -1,6 +1,5 @@
 package my.game.init.vulkan.pipeline;
 
-import my.game.init.vulkan.swapchain.SwapChain;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.KHRSwapchain;
 import org.lwjgl.vulkan.VK13;

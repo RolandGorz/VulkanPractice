@@ -36,7 +36,7 @@ public class VulkanInstanceWithDebug extends VulkanInstance {
                     // to free this VkDebugUtilsMessengerCallbackDataEXT since it's a struct created from an existing
                     // memory address that will be freed by whatever created it.
                     VkDebugUtilsMessengerCallbackDataEXT data = VkDebugUtilsMessengerCallbackDataEXT.create(pCallbackData);
-                    System.out.printf("%s pCallBackData.pMessage: %s%n", severity, MemoryUtil.memASCII(data.pMessage()));
+                    System.out.printf("%s pCallBackData.pMessage: %s%n", severity, data.pMessageString());
                     return VK13.VK_FALSE;
                 }
         );

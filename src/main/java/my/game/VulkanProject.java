@@ -13,6 +13,8 @@ public class VulkanProject {
 
     public static boolean VULKAN_DEBUG;
 
+    private final static Thread mainThread = Thread.currentThread();
+
     static {
         VULKAN_DEBUG = Boolean.parseBoolean(System.getProperty("myGameVulkanDebug"));
         if (VULKAN_DEBUG) {
@@ -23,6 +25,17 @@ public class VulkanProject {
 
     public static void main(String[] args) {
         System.out.println("Hello LWJGL " + Version.getVersion() + "!");
-        new MainGameLoop().start();
+        MainGameLoop loop = new MainGameLoop();
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            //Since shutdown hooks can run in any order or in parallel glfw validation could still report
+            // that we did not free the memory even though we eventually do.
+            loop.stop();
+            try {
+                mainThread.join();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }));
+        loop.start();
     }
 }
