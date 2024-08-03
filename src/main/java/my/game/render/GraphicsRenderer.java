@@ -7,6 +7,7 @@ import my.game.init.vulkan.devices.physical.PhysicalDeviceInformation;
 import my.game.init.vulkan.drawing.CommandBuffers;
 import my.game.init.vulkan.drawing.CommandPool;
 import my.game.init.vulkan.drawing.FrameBuffers;
+import my.game.init.vulkan.drawing.VertexBuffer;
 import my.game.init.vulkan.pipeline.GraphicsPipeline;
 import my.game.init.vulkan.pipeline.RenderPass;
 import my.game.init.vulkan.swapchain.SwapChain;
@@ -39,6 +40,7 @@ public class GraphicsRenderer {
     private final WindowHandle windowHandle;
     private final WindowSurface windowSurface;
     private final GraphicsPipeline graphicsPipeline;
+    private final VertexBuffer vertexBuffer;
     private final List<LongBuffer> imageAvailableSemaphores;
     private final List<LongBuffer> renderFinishedSemaphores;
     private final List<LongBuffer> inFlightFences;
@@ -58,6 +60,7 @@ public class GraphicsRenderer {
         this.swapChainImages = createImageViews(logicalDevice, swapChain);
         this.renderPass = new RenderPass(logicalDevice.vkDevice(), swapChain.getSurfaceFormat());
         this.graphicsPipeline = new GraphicsPipeline(logicalDevice.vkDevice(), renderPass);
+        this.vertexBuffer = new VertexBuffer(logicalDevice.vkDevice());
         this.commandBuffers = new CommandBuffers(commandPool, renderPass, graphicsPipeline);
         this.frameBuffers = createFrameBuffers(logicalDevice, renderPass, swapChainImages, swapChain);
         ImmutableList.Builder<LongBuffer> imageAvailableSemaphoresBuilder = ImmutableList.builder();
@@ -132,7 +135,7 @@ public class GraphicsRenderer {
             // that will never come.
             VK13.vkResetFences(device, inFlightFences.get(currentFrame));
             VK13.vkResetCommandBuffer(commandBuffers.get(currentFrame).getCommandBuffer(), 0);
-            commandBuffers.get(currentFrame).recordCommandBuffer(imageIndex.get(0), swapChain, frameBuffers);
+            commandBuffers.get(currentFrame).recordCommandBuffer(imageIndex.get(0), swapChain, frameBuffers, vertexBuffer);
 
             IntBuffer waitStages = memoryStack.mallocInt(1);
             waitStages.put(VK13.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
@@ -211,6 +214,7 @@ public class GraphicsRenderer {
 
     public void free() {
         cleanupSwapChain();
+        vertexBuffer.free();
         for (LongBuffer x : inFlightFences) {
             VK13.vkDestroyFence(logicalDevice.vkDevice(), x.get(0), null);
             MemoryUtil.memFree(x);
@@ -223,7 +227,7 @@ public class GraphicsRenderer {
             VK13.vkDestroySemaphore(logicalDevice.vkDevice(), x.get(0), null);
             MemoryUtil.memFree(x);
         }
-        renderPass.free();
         graphicsPipeline.free();
+        renderPass.free();
     }
 }

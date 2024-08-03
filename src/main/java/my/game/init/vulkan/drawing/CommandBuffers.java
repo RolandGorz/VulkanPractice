@@ -18,6 +18,7 @@ import org.lwjgl.vulkan.VkRect2D;
 import org.lwjgl.vulkan.VkRenderPassBeginInfo;
 import org.lwjgl.vulkan.VkViewport;
 
+import java.nio.LongBuffer;
 import java.util.List;
 
 public class CommandBuffers {
@@ -69,7 +70,7 @@ public class CommandBuffers {
             return commandBuffer;
         }
 
-        public void recordCommandBuffer(int imageIndex, SwapChain swapChain, FrameBuffers frameBuffers) {
+        public void recordCommandBuffer(int imageIndex, SwapChain swapChain, FrameBuffers frameBuffers, VertexBuffer vertexBuffer) {
             beginCommandBuffer();
             beginRenderPass(imageIndex, swapChain, frameBuffers);
             VK13.vkCmdBindPipeline(commandBuffer, VK13.VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.getGraphicsPipelinePointer());
@@ -91,8 +92,15 @@ public class CommandBuffers {
                         .y(0);
                 scissor.extent(swapChainExtent);
                 VK13.vkCmdSetScissor(commandBuffer, 0, scissor);
+                LongBuffer vertices = memoryStack.mallocLong(1);
+                vertices.put(vertexBuffer.getVertexBufferHandle());
+                vertices.flip();
+                LongBuffer offsets = memoryStack.mallocLong(1);
+                offsets.put(0);
+                offsets.flip();
+                VK13.vkCmdBindVertexBuffers(commandBuffer, 0, vertices, offsets);
             }
-            VK13.vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+            VK13.vkCmdDraw(commandBuffer, vertexBuffer.VERTICES.size(), 1, 0, 0);
             VK13.vkCmdEndRenderPass(commandBuffer);
             int result = VK13.vkEndCommandBuffer(commandBuffer);
             if (result != VK13.VK_SUCCESS) {

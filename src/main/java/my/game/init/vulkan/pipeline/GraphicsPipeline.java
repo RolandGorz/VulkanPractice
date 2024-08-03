@@ -1,6 +1,7 @@
 package my.game.init.vulkan.pipeline;
 
 import com.google.common.collect.ImmutableList;
+import my.game.init.vulkan.drawing.Vertex;
 import my.game.init.vulkan.pipeline.shaders.LoadedShader;
 import my.game.init.vulkan.pipeline.shaders.ShaderModule;
 import org.lwjgl.system.MemoryStack;
@@ -17,6 +18,8 @@ import org.lwjgl.vulkan.VkPipelineRasterizationStateCreateInfo;
 import org.lwjgl.vulkan.VkPipelineShaderStageCreateInfo;
 import org.lwjgl.vulkan.VkPipelineVertexInputStateCreateInfo;
 import org.lwjgl.vulkan.VkPipelineViewportStateCreateInfo;
+import org.lwjgl.vulkan.VkVertexInputAttributeDescription;
+import org.lwjgl.vulkan.VkVertexInputBindingDescription;
 
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
@@ -68,11 +71,31 @@ public class GraphicsPipeline {
                     .sType(VK13.VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO)
                     .pDynamicStates(pDynamicStates);
 
+            //TODO refactor graphics pipeline. Too much in one place. Also attribute and binding description rewrite immediately
+
+            VkVertexInputBindingDescription.Buffer bindingDescriptions = VkVertexInputBindingDescription.calloc(1, memoryStack);
+            bindingDescriptions.get(0)
+                    .binding(0)
+                    .stride(Vertex.SIZE)
+                    .inputRate(VK13.VK_VERTEX_INPUT_RATE_VERTEX);
+
+            VkVertexInputAttributeDescription.Buffer attributeDescriptions = VkVertexInputAttributeDescription.calloc(2, memoryStack);
+            attributeDescriptions.get(0)
+                    .binding(0)
+                    .location(0)
+                    .format(VK13.VK_FORMAT_R32G32_SFLOAT)
+                    .offset(Vertex.POSITION_OFFSET);
+            attributeDescriptions.get(1)
+                    .binding(0)
+                    .location(1)
+                    .format(VK13.VK_FORMAT_R32G32B32_SFLOAT)
+                    .offset(Vertex.COLOR_OFFSET);
+
             VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo = VkPipelineVertexInputStateCreateInfo.calloc(memoryStack);
             vertexInputStateCreateInfo
                     .sType(VK13.VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO)
-                    .pVertexBindingDescriptions(null)
-                    .pVertexAttributeDescriptions(null);
+                    .pVertexBindingDescriptions(bindingDescriptions)
+                    .pVertexAttributeDescriptions(attributeDescriptions);
 
             VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo = VkPipelineInputAssemblyStateCreateInfo.calloc(memoryStack);
             inputAssemblyStateCreateInfo
