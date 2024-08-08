@@ -77,8 +77,8 @@ public class VertexBuffer {
             ByteBuffer byteBuffer = data.getByteBuffer(bufferSize);
             for (int i = 0; i < VERTICES.size(); ++i) {
                 Vertex curr = VERTICES.get(i);
-                Vector2fWithSize currPos = curr.getPos();
-                Vector3fWithSize currColor = curr.getColor();
+                Vector2fWithSize currPos = curr.pos();
+                Vector3fWithSize currColor = curr.color();
                 currPos.get(i * curr.getSize(), byteBuffer);
                 currColor.get(i * curr.getSize() + currPos.getSize(), byteBuffer);
             }
