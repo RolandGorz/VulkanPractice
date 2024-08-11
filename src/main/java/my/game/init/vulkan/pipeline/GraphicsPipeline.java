@@ -1,9 +1,9 @@
 package my.game.init.vulkan.pipeline;
 
 import com.google.common.collect.ImmutableList;
-import my.game.init.vulkan.struct.Vertex;
 import my.game.init.vulkan.pipeline.shaders.LoadedShader;
 import my.game.init.vulkan.pipeline.shaders.ShaderModule;
+import my.game.init.vulkan.struct.Vertex;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VK13;
 import org.lwjgl.vulkan.VkDevice;

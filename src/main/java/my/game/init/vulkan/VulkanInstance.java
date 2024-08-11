@@ -19,14 +19,13 @@ import java.util.Set;
 
 public class VulkanInstance {
 
-    protected VkInstance vkInstance;
     //If this exists we add it because VK_KHR_portability_subset will require it if we use that
     private final ImmutableSet<String> OPTIONAL_EXTENSIONS = ImmutableSet.of(
             KHRGetPhysicalDeviceProperties2.VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME
     );
+    protected VkInstance vkInstance;
 
-    VulkanInstance() {
-    }
+    VulkanInstance() {}
 
     protected VkInstanceCreateInfo createCreateInfo(final MemoryStack memoryStack) {
         //Must use calloc when not initializing every value of a struct. Otherwise, garbage is at those values

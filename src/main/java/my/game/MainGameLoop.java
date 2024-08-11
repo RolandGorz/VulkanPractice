@@ -3,10 +3,10 @@ package my.game;
 import my.game.init.vulkan.VulkanInstance;
 import my.game.init.vulkan.VulkanInstanceWithDebug;
 import my.game.init.vulkan.VulkanInstanceWithoutDebug;
+import my.game.init.vulkan.command.CommandPool;
 import my.game.init.vulkan.devices.logical.ImmutableLogicalDevice;
 import my.game.init.vulkan.devices.logical.LogicalDevice;
 import my.game.init.vulkan.devices.physical.PhysicalDeviceRetriever;
-import my.game.init.vulkan.command.CommandPool;
 import my.game.init.vulkan.pipeline.shaders.ShaderCompiler;
 import my.game.init.window.WindowHandle;
 import my.game.init.window.WindowSurface;
@@ -15,7 +15,6 @@ import org.lwjgl.glfw.GLFW;
 import org.lwjgl.vulkan.VK13;
 
 public class MainGameLoop {
-    private volatile boolean RUNNING = true;
     private final WindowHandle windowHandle;
     private final VulkanInstance vulkanInstance;
     private final LogicalDevice logicalDevice;
@@ -24,6 +23,7 @@ public class MainGameLoop {
     private final CommandPool graphicsCommandPool;
     private final CommandPool transferCommandPool;
     private final GraphicsRenderer graphicsRenderer;
+    private volatile boolean RUNNING = true;
 
     public MainGameLoop() {
         ShaderCompiler shaderCompiler = new ShaderCompiler();

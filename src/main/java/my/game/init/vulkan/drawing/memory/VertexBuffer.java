@@ -2,13 +2,14 @@ package my.game.init.vulkan.drawing.memory;
 
 import my.game.init.vulkan.command.CommandPool;
 import my.game.init.vulkan.devices.logical.LogicalDevice;
-import my.game.init.vulkan.struct.Vertex;
 import my.game.init.vulkan.math.Vector2fWithSize;
 import my.game.init.vulkan.math.Vector3fWithSize;
+import my.game.init.vulkan.struct.Vertex;
 import org.lwjgl.vulkan.VK13;
+
 import java.util.List;
 
-public class VertexBuffer extends StagingBufferUser{
+public class VertexBuffer extends StagingBufferUser {
 
     public VertexBuffer(LogicalDevice logicalDevice, List<Vertex> vertices, CommandPool commandPool) {
         super(vertices, logicalDevice, VK13.VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK13.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,

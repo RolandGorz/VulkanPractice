@@ -4,9 +4,9 @@ import com.google.common.collect.ImmutableList;
 import my.game.init.vulkan.VulkanUtil;
 import my.game.init.vulkan.command.CommandBuffer;
 import my.game.init.vulkan.command.CommandBufferFactory;
+import my.game.init.vulkan.command.CommandPool;
 import my.game.init.vulkan.devices.logical.LogicalDevice;
 import my.game.init.vulkan.devices.physical.PhysicalDeviceInformation;
-import my.game.init.vulkan.command.CommandPool;
 import my.game.init.vulkan.drawing.FrameBuffers;
 import my.game.init.vulkan.drawing.memory.IndexBuffer;
 import my.game.init.vulkan.drawing.memory.VertexBuffer;
@@ -168,7 +168,7 @@ public class GraphicsRenderer {
             graphicsCommandBuffers.get(currentFrame)
                     .runCommand(0,
                             (vkCommandBuffer) ->
-                            recordCommandBuffer(imageIndex.get(0), swapChain, frameBuffers, vertexBuffer, indexBuffer, vkCommandBuffer));
+                                    recordCommandBuffer(imageIndex.get(0), swapChain, frameBuffers, vertexBuffer, indexBuffer, vkCommandBuffer));
 
             IntBuffer waitStages = memoryStack.mallocInt(1);
             waitStages.put(VK13.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
@@ -242,7 +242,7 @@ public class GraphicsRenderer {
             offsets.put(0);
             offsets.flip();
             VK13.vkCmdBindVertexBuffers(vkCommandBuffer, 0, vertices, offsets);
-            VK13.vkCmdBindIndexBuffer(vkCommandBuffer,indexBuffer.getDestinationBuffer().getVulkanBufferHandle(), 0, VK13.VK_INDEX_TYPE_UINT16);
+            VK13.vkCmdBindIndexBuffer(vkCommandBuffer, indexBuffer.getDestinationBuffer().getVulkanBufferHandle(), 0, VK13.VK_INDEX_TYPE_UINT16);
         }
         VK13.vkCmdDrawIndexed(vkCommandBuffer, indexBuffer.getStructEntriesCount(), 1, 0, 0, 0);
         VK13.vkCmdEndRenderPass(vkCommandBuffer);

@@ -11,9 +11,8 @@ Basically I should free anything I create once the function that I call in vulka
  */
 public class VulkanProject {
 
-    public static boolean VULKAN_DEBUG;
-
     private final static Thread mainThread = Thread.currentThread();
+    public static boolean VULKAN_DEBUG;
 
     static {
         VULKAN_DEBUG = Boolean.parseBoolean(System.getProperty("myGameVulkanDebug"));
