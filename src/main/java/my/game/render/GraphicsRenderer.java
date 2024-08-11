@@ -73,9 +73,12 @@ public class GraphicsRenderer {
         this.renderPass = new RenderPass(logicalDevice.vkDevice(), swapChain.getSurfaceFormat());
         this.graphicsPipeline = new GraphicsPipeline(logicalDevice.vkDevice(), renderPass);
         List<Vertex> vertexList = List.of(
-                new Vertex(new Vector2fWithSize(0.0f, -0.5f), new Vector3fWithSize(1.0f, 0.0f, 0.0f)),
-                new Vertex(new Vector2fWithSize(0.5f, 0.5f), new Vector3fWithSize(0.0f, 1.0f, 0.0f)),
-                new Vertex(new Vector2fWithSize(-0.5f, 0.5f), new Vector3fWithSize(0.0f, 0.0f, 1.0f))
+                new Vertex(new Vector2fWithSize(-0.5f, -0.5f), new Vector3fWithSize(1.0f, 0.0f, 0.0f)),
+                new Vertex(new Vector2fWithSize(0.5f, -0.5f), new Vector3fWithSize(0.0f, 1.0f, 0.0f)),
+                new Vertex(new Vector2fWithSize(0.5f, 0.5f), new Vector3fWithSize(0.0f, 0.0f, 1.0f)),
+                new Vertex(new Vector2fWithSize(0.5f, 0.5f), new Vector3fWithSize(0.0f, 0.0f, 1.0f)),
+                new Vertex(new Vector2fWithSize(-0.5f, 0.5f), new Vector3fWithSize(1.0f, 1.0f, 1.0f)),
+                new Vertex(new Vector2fWithSize(-0.5f, -0.5f), new Vector3fWithSize(1.0f, 0.0f, 0.0f))
         );
         this.vertexBuffer = new VertexBuffer(logicalDevice, vertexList, transferCommandPool);
         this.graphicsCommandBuffers = CommandBufferFactory.createCommandBuffers(graphicsCommandPool, MAX_FRAMES_IN_FLIGHT);
