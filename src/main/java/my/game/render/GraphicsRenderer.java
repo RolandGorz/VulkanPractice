@@ -310,6 +310,7 @@ public class GraphicsRenderer {
 
     public void free() {
         cleanupSwapChain();
+        indexBuffer.free();
         vertexBuffer.free();
         for (LongBuffer x : inFlightFences) {
             VK13.vkDestroyFence(logicalDevice.vkDevice(), x.get(0), null);
