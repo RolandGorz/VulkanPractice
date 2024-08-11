@@ -1,8 +1,5 @@
-package my.game.init.vulkan.drawing;
+package my.game.init.vulkan.drawing.memory;
 
-import my.game.init.vulkan.math.Vector2fWithSize;
-import my.game.init.vulkan.math.Vector3fWithSize;
-import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VK13;
 import org.lwjgl.vulkan.VkBufferCreateInfo;
@@ -11,83 +8,67 @@ import org.lwjgl.vulkan.VkMemoryAllocateInfo;
 import org.lwjgl.vulkan.VkMemoryRequirements;
 import org.lwjgl.vulkan.VkPhysicalDeviceMemoryProperties;
 
-import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
-import java.util.List;
 
-public class VertexBuffer {
-
-    private final long vertexBufferHandle;
-
-    private final long allocatedMemoryHandle;
-
+public class VulkanBuffer {
+    protected final long allocatedMemoryHandle;
+    protected final int bufferSize;
+    private final long vulkanBufferHandle;
     private final VkDevice device;
 
-    public List<Vertex> VERTICES = List.of(
-            new Vertex(new Vector2fWithSize(0.0f, -0.5f), new Vector3fWithSize(1.0f, 0.0f, 0.0f)),
-            new Vertex(new Vector2fWithSize(0.5f, 0.5f), new Vector3fWithSize(0.0f, 1.0f, 0.0f)),
-            new Vertex(new Vector2fWithSize(-0.5f, 0.5f), new Vector3fWithSize(0.0f, 0.0f, 1.0f))
-    );
-
-    public VertexBuffer(VkDevice device) {
+    public VulkanBuffer(final int bufferSize, final VkDevice device, final int bufferUsageFlags, final int memoryPropertyFlags) {
         this.device = device;
-        int bufferSize = 0;
-        for (Vertex v : VERTICES) {
-            bufferSize += v.getSize();
-        }
+        this.bufferSize = bufferSize;
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             VkBufferCreateInfo bufferCreateInfo = VkBufferCreateInfo.calloc(memoryStack);
             bufferCreateInfo
                     .sType(VK13.VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO)
                     .size(bufferSize)
-                    .usage(VK13.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
+                    .usage(bufferUsageFlags)
                     .sharingMode(VK13.VK_SHARING_MODE_EXCLUSIVE);
             LongBuffer bufferHandle = memoryStack.mallocLong(1);
             int result = VK13.vkCreateBuffer(device, bufferCreateInfo, null, bufferHandle);
             if (result != VK13.VK_SUCCESS) {
                 throw new IllegalStateException(String.format("Failed to create vertex buffer. Error code: %d", result));
             }
-            vertexBufferHandle = bufferHandle.get(0);
+            vulkanBufferHandle = bufferHandle.get(0);
 
             VkMemoryRequirements memoryRequirements = VkMemoryRequirements.calloc(memoryStack);
-            VK13.vkGetBufferMemoryRequirements(device, vertexBufferHandle, memoryRequirements);
+            VK13.vkGetBufferMemoryRequirements(device, vulkanBufferHandle, memoryRequirements);
 
             VkMemoryAllocateInfo memoryAllocateInfo = VkMemoryAllocateInfo.calloc(memoryStack);
             memoryAllocateInfo
                     .sType(VK13.VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO)
                     .allocationSize(memoryRequirements.size())
                     .memoryTypeIndex(findMemoryType(memoryRequirements.memoryTypeBits(),
-                            VK13.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK13.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                            memoryPropertyFlags,
                             memoryStack));
             LongBuffer allocatedMemoryHandleBuffer = memoryStack.mallocLong(1);
+            //TODO It should be noted that in a real world application, you’re not supposed to actually call vkAllocateMemory
+            // for every individual buffer. The maximum number of simultaneous memory allocations is limited by the maxMemoryAllocationCount
+            // physical device limit, which may be as low as 4096 even on high end hardware like an NVIDIA GTX 1080.
+            // The right way to allocate memory for a large number of objects at the same time is to create a custom allocator
+            // that splits up a single allocation among many different objects by using the offset parameters that we’ve seen in many functions.
+            // You can either implement such an allocator yourself, or use the VulkanMemoryAllocator library provided by the GPUOpen
+            // initiative.
             int result2 = VK13.vkAllocateMemory(device, memoryAllocateInfo, null, allocatedMemoryHandleBuffer);
             if (result2 != VK13.VK_SUCCESS) {
                 throw new IllegalStateException(String.format("Failed to allocate memory for buffer. Error code: %d", result2));
             }
             allocatedMemoryHandle = allocatedMemoryHandleBuffer.get(0);
-            int result3 = VK13.vkBindBufferMemory(device, vertexBufferHandle, allocatedMemoryHandle, 0);
+            int result3 = VK13.vkBindBufferMemory(device, vulkanBufferHandle, allocatedMemoryHandle, 0);
             if (result3 != VK13.VK_SUCCESS) {
                 throw new IllegalStateException(String.format("Failed to bind memory to buffer. Error code: %d", result3));
             }
-            PointerBuffer data = memoryStack.callocPointer(1);
-            int result4 = VK13.vkMapMemory(device, allocatedMemoryHandle, 0, bufferSize, 0, data);
-            if (result4 != VK13.VK_SUCCESS) {
-                throw new IllegalStateException(String.format("Failed to map memory. Error code: %d", result4));
-            }
-            ByteBuffer byteBuffer = data.getByteBuffer(bufferSize);
-            for (int i = 0; i < VERTICES.size(); ++i) {
-                Vertex curr = VERTICES.get(i);
-                Vector2fWithSize currPos = curr.pos();
-                Vector3fWithSize currColor = curr.color();
-                currPos.get(i * curr.getSize(), byteBuffer);
-                currColor.get(i * curr.getSize() + currPos.getSize(), byteBuffer);
-            }
-            VK13.vkUnmapMemory(device, allocatedMemoryHandle);
         }
     }
 
-    public long getVertexBufferHandle() {
-        return vertexBufferHandle;
+    public long getVulkanBufferHandle() {
+        return vulkanBufferHandle;
+    }
+
+    public int getBufferSize() {
+        return bufferSize;
     }
 
     private int findMemoryType(int typeFilter, int memoryPropertyFlags, MemoryStack memoryStack) {
@@ -103,7 +84,7 @@ public class VertexBuffer {
     }
 
     public void free() {
-        VK13.vkDestroyBuffer(device, vertexBufferHandle, null);
+        VK13.vkDestroyBuffer(device, vulkanBufferHandle, null);
         VK13.vkFreeMemory(device, allocatedMemoryHandle, null);
     }
 }

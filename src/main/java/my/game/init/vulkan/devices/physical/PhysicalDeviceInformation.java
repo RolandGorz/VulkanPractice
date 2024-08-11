@@ -29,6 +29,13 @@ public abstract class PhysicalDeviceInformation implements Comparable<PhysicalDe
         return -1;
     }
 
+    @Value.Default
+    public int transferQueueIndex() {
+        //any queue family with VK_QUEUE_GRAPHICS_BIT or VK_QUEUE_COMPUTE_BIT capabilities already implicitly support VK_QUEUE_TRANSFER_BIT operations
+        //This means that if we don't define a dedicated transferQueue we should use the graphics queue as a fallback.
+        return graphicsQueueIndex();
+    }
+
     public abstract WindowSurface windowSurface();
 
     @Value.Derived
@@ -88,7 +95,7 @@ public abstract class PhysicalDeviceInformation implements Comparable<PhysicalDe
     @Value.Derived
     public Set<Integer> uniqueQueueIndexes() {
         if (isValid()) {
-            return ImmutableSet.of(graphicsQueueIndex(), presentationQueueIndex());
+            return ImmutableSet.of(graphicsQueueIndex(), presentationQueueIndex(), transferQueueIndex());
         } else {
             return Collections.emptySet();
         }

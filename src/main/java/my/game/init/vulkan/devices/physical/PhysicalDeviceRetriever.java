@@ -112,15 +112,23 @@ public class PhysicalDeviceRetriever {
         return builder.build();
     }
 
-    public void getFamilyIndexes(VkPhysicalDevice physicalDevice, WindowSurface windowSurface, ImmutablePhysicalDeviceInformation.Builder builder) {
+    private void getFamilyIndexes(VkPhysicalDevice physicalDevice, WindowSurface windowSurface, ImmutablePhysicalDeviceInformation.Builder builder) {
         try (MemoryStack stack = MemoryStack.stackPush()) {
             IntBuffer queueFamilyCount = stack.mallocInt(1);
             VK13.vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, queueFamilyCount, null);
             VkQueueFamilyProperties.Buffer queueFamilyProperties = VkQueueFamilyProperties.malloc(queueFamilyCount.get(0), stack);
             VK13.vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, queueFamilyCount, queueFamilyProperties);
+            boolean foundSharedPresentationGraphicsQueue = false;
+            boolean foundDedicatedTransferQueue = false;
             for (int i = 0; i < queueFamilyProperties.capacity(); ++i) {
-                if (queueSupportsGraphics(queueFamilyProperties, i, builder)
-                        && queueSupportsPresentation(stack, physicalDevice, i, windowSurface, builder)) {
+                if (!foundSharedPresentationGraphicsQueue) {
+                    foundSharedPresentationGraphicsQueue = queueSupportsGraphics(queueFamilyProperties, i, builder)
+                            && queueSupportsPresentation(stack, physicalDevice, i, windowSurface, builder);
+                }
+                if (!foundDedicatedTransferQueue) {
+                    foundDedicatedTransferQueue = queueIsDedicatedForTransfer(queueFamilyProperties, i, builder);
+                }
+                if (foundSharedPresentationGraphicsQueue && foundDedicatedTransferQueue) {
                     break;
                 }
             }
@@ -143,6 +151,15 @@ public class PhysicalDeviceRetriever {
         }
         if (presentationSupported.get(0) == VK13.VK_TRUE) {
             builder.presentationQueueIndex(index);
+            return true;
+        }
+        return false;
+    }
+
+    private boolean queueIsDedicatedForTransfer(VkQueueFamilyProperties.Buffer queueFamilyProperties, int index, ImmutablePhysicalDeviceInformation.Builder builder) {
+        if (((queueFamilyProperties.get(index).queueFlags() & VK13.VK_QUEUE_GRAPHICS_BIT) != VK13.VK_QUEUE_GRAPHICS_BIT) &&
+                ((queueFamilyProperties.get(index).queueFlags() & VK13.VK_QUEUE_TRANSFER_BIT) == VK13.VK_QUEUE_TRANSFER_BIT)) {
+            builder.transferQueueIndex(index);
             return true;
         }
         return false;

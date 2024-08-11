@@ -2,6 +2,7 @@ package my.game.init.vulkan.devices.logical;
 
 import my.game.init.vulkan.devices.logical.queue.GraphicsQueue;
 import my.game.init.vulkan.devices.logical.queue.PresentationQueue;
+import my.game.init.vulkan.devices.logical.queue.TransferVulkanQueue;
 import my.game.init.vulkan.devices.physical.PhysicalDeviceRetriever;
 import org.immutables.value.Value;
 import org.lwjgl.PointerBuffer;
@@ -73,6 +74,11 @@ public abstract class LogicalDevice {
     @Value.Derived
     public PresentationQueue presentationQueue() {
         return new PresentationQueue(physicalDevice().physicalDeviceInformation().presentationQueueIndex(), vkDevice());
+    }
+
+    @Value.Derived
+    public TransferVulkanQueue transferVulkanQueue() {
+        return new TransferVulkanQueue(physicalDevice().physicalDeviceInformation().transferQueueIndex(), vkDevice());
     }
 
     public void free() {

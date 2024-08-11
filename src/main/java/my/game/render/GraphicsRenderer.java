@@ -2,14 +2,18 @@ package my.game.render;
 
 import com.google.common.collect.ImmutableList;
 import my.game.init.vulkan.VulkanUtil;
+import my.game.init.vulkan.command.CommandBuffer;
+import my.game.init.vulkan.command.CommandBufferFactory;
 import my.game.init.vulkan.devices.logical.LogicalDevice;
 import my.game.init.vulkan.devices.physical.PhysicalDeviceInformation;
-import my.game.init.vulkan.drawing.CommandBuffers;
-import my.game.init.vulkan.drawing.CommandPool;
+import my.game.init.vulkan.command.CommandPool;
 import my.game.init.vulkan.drawing.FrameBuffers;
-import my.game.init.vulkan.drawing.VertexBuffer;
+import my.game.init.vulkan.drawing.memory.VertexBuffer;
+import my.game.init.vulkan.math.Vector2fWithSize;
+import my.game.init.vulkan.math.Vector3fWithSize;
 import my.game.init.vulkan.pipeline.GraphicsPipeline;
 import my.game.init.vulkan.pipeline.RenderPass;
+import my.game.init.vulkan.struct.Vertex;
 import my.game.init.vulkan.swapchain.SwapChain;
 import my.game.init.vulkan.swapchain.SwapChainImages;
 import my.game.init.window.WindowHandle;
@@ -20,11 +24,18 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.KHRSwapchain;
 import org.lwjgl.vulkan.VK13;
+import org.lwjgl.vulkan.VkClearColorValue;
+import org.lwjgl.vulkan.VkClearValue;
+import org.lwjgl.vulkan.VkCommandBuffer;
 import org.lwjgl.vulkan.VkDevice;
+import org.lwjgl.vulkan.VkExtent2D;
 import org.lwjgl.vulkan.VkFenceCreateInfo;
 import org.lwjgl.vulkan.VkPresentInfoKHR;
+import org.lwjgl.vulkan.VkRect2D;
+import org.lwjgl.vulkan.VkRenderPassBeginInfo;
 import org.lwjgl.vulkan.VkSemaphoreCreateInfo;
 import org.lwjgl.vulkan.VkSubmitInfo;
+import org.lwjgl.vulkan.VkViewport;
 
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
@@ -34,7 +45,7 @@ public class GraphicsRenderer {
 
     public static final int MAX_FRAMES_IN_FLIGHT = 2;
     private final LogicalDevice logicalDevice;
-    private final CommandBuffers commandBuffers;
+    private final List<CommandBuffer> graphicsCommandBuffers;
     private final RenderPass renderPass;
     private final PhysicalDeviceInformation physicalDeviceInformation;
     private final WindowHandle windowHandle;
@@ -49,7 +60,8 @@ public class GraphicsRenderer {
     private SwapChainImages swapChainImages;
     private FrameBuffers frameBuffers;
 
-    public GraphicsRenderer(LogicalDevice logicalDevice, CommandPool commandPool,
+    public GraphicsRenderer(LogicalDevice logicalDevice, CommandPool graphicsCommandPool,
+                            CommandPool transferCommandPool,
                             PhysicalDeviceInformation physicalDeviceInformation,
                             WindowHandle windowHandle, WindowSurface windowSurface) {
         this.logicalDevice = logicalDevice;
@@ -60,8 +72,13 @@ public class GraphicsRenderer {
         this.swapChainImages = createImageViews(logicalDevice, swapChain);
         this.renderPass = new RenderPass(logicalDevice.vkDevice(), swapChain.getSurfaceFormat());
         this.graphicsPipeline = new GraphicsPipeline(logicalDevice.vkDevice(), renderPass);
-        this.vertexBuffer = new VertexBuffer(logicalDevice.vkDevice());
-        this.commandBuffers = new CommandBuffers(commandPool, renderPass, graphicsPipeline);
+        List<Vertex> vertexList = List.of(
+                new Vertex(new Vector2fWithSize(0.0f, -0.5f), new Vector3fWithSize(1.0f, 0.0f, 0.0f)),
+                new Vertex(new Vector2fWithSize(0.5f, 0.5f), new Vector3fWithSize(0.0f, 1.0f, 0.0f)),
+                new Vertex(new Vector2fWithSize(-0.5f, 0.5f), new Vector3fWithSize(0.0f, 0.0f, 1.0f))
+        );
+        this.vertexBuffer = new VertexBuffer(logicalDevice, vertexList, transferCommandPool);
+        this.graphicsCommandBuffers = CommandBufferFactory.createCommandBuffers(graphicsCommandPool, MAX_FRAMES_IN_FLIGHT);
         this.frameBuffers = createFrameBuffers(logicalDevice, renderPass, swapChainImages, swapChain);
         ImmutableList.Builder<LongBuffer> imageAvailableSemaphoresBuilder = ImmutableList.builder();
         ImmutableList.Builder<LongBuffer> renderFinishedSemaphoresBuilder = ImmutableList.builder();
@@ -134,15 +151,18 @@ public class GraphicsRenderer {
             // Only reset the fence if we are submitting work otherwise vkWaitForFences will wait forever on a signal
             // that will never come.
             VK13.vkResetFences(device, inFlightFences.get(currentFrame));
-            VK13.vkResetCommandBuffer(commandBuffers.get(currentFrame).getCommandBuffer(), 0);
-            commandBuffers.get(currentFrame).recordCommandBuffer(imageIndex.get(0), swapChain, frameBuffers, vertexBuffer);
+            VK13.vkResetCommandBuffer(graphicsCommandBuffers.get(currentFrame).getVkCommandBuffer(), 0);
+            graphicsCommandBuffers.get(currentFrame)
+                    .runCommand(0,
+                            (vkCommandBuffer) ->
+                            recordCommandBuffer(imageIndex.get(0), swapChain, frameBuffers, vertexBuffer, vkCommandBuffer));
 
             IntBuffer waitStages = memoryStack.mallocInt(1);
             waitStages.put(VK13.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
             waitStages.flip();
 
             PointerBuffer commandBuffersPointer = memoryStack.mallocPointer(1);
-            commandBuffersPointer.put(commandBuffers.get(currentFrame).getCommandBuffer());
+            commandBuffersPointer.put(graphicsCommandBuffers.get(currentFrame).getVkCommandBuffer());
             commandBuffersPointer.flip();
 
             VkSubmitInfo vkSubmitInfo = VkSubmitInfo.calloc(memoryStack);
@@ -178,6 +198,67 @@ public class GraphicsRenderer {
             }
         }
         currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+    }
+
+    public void recordCommandBuffer(int imageIndex, SwapChain swapChain, FrameBuffers frameBuffers, VertexBuffer vertexBuffer, VkCommandBuffer vkCommandBuffer) {
+        beginRenderPass(imageIndex, swapChain, frameBuffers, vkCommandBuffer);
+        VK13.vkCmdBindPipeline(vkCommandBuffer, VK13.VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.getGraphicsPipelinePointer());
+        try (MemoryStack memoryStack = MemoryStack.stackPush()) {
+            VkExtent2D swapChainExtent = swapChain
+                    .getSwapChainExtent();
+            VkViewport.Buffer viewport = VkViewport.calloc(1, memoryStack);
+            viewport
+                    .x(0)
+                    .y(0)
+                    .width(swapChainExtent.width())
+                    .height(swapChainExtent.height())
+                    .minDepth(0)
+                    .maxDepth(1);
+            VK13.vkCmdSetViewport(vkCommandBuffer, 0, viewport);
+            VkRect2D.Buffer scissor = VkRect2D.calloc(1, memoryStack);
+            scissor.offset()
+                    .x(0)
+                    .y(0);
+            scissor.extent(swapChainExtent);
+            VK13.vkCmdSetScissor(vkCommandBuffer, 0, scissor);
+            LongBuffer vertices = memoryStack.mallocLong(1);
+            vertices.put(vertexBuffer.getBuffer().getVulkanBufferHandle());
+            vertices.flip();
+            LongBuffer offsets = memoryStack.mallocLong(1);
+            offsets.put(0);
+            offsets.flip();
+            VK13.vkCmdBindVertexBuffers(vkCommandBuffer, 0, vertices, offsets);
+        }
+        VK13.vkCmdDraw(vkCommandBuffer, vertexBuffer.getBuffer().getBufferSize(), 1, 0, 0);
+        VK13.vkCmdEndRenderPass(vkCommandBuffer);
+    }
+
+    private void beginRenderPass(int imageIndex, SwapChain swapChain, FrameBuffers frameBuffers, VkCommandBuffer vkCommandBuffer) {
+        try (MemoryStack memoryStack = MemoryStack.stackPush()) {
+            VkRect2D renderArea = VkRect2D.calloc(memoryStack);
+            renderArea.offset()
+                    .x(0)
+                    .y(0);
+            renderArea.extent(swapChain.getSwapChainExtent());
+
+            VkClearColorValue clearColorValue = VkClearColorValue.calloc(memoryStack);
+            clearColorValue
+                    .float32(0, 0.0f)
+                    .float32(1, 0.0f)
+                    .float32(2, 0.0f)
+                    .float32(3, 1.0f);
+            VkClearValue.Buffer clearValue = VkClearValue.calloc(1, memoryStack);
+            clearValue
+                    .color(clearColorValue);
+            VkRenderPassBeginInfo renderPassBeginInfo = VkRenderPassBeginInfo.calloc(memoryStack);
+            renderPassBeginInfo
+                    .sType(VK13.VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO)
+                    .renderPass(renderPass.getRenderPassPointer())
+                    .framebuffer(frameBuffers.getSwapChainFrameBuffers().get(imageIndex))
+                    .renderArea(renderArea)
+                    .pClearValues(clearValue);
+            VK13.vkCmdBeginRenderPass(vkCommandBuffer, renderPassBeginInfo, VK13.VK_SUBPASS_CONTENTS_INLINE);
+        }
     }
 
     public void recreateSwapChain(MemoryStack memoryStack) {

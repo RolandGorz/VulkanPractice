@@ -6,7 +6,7 @@ import my.game.init.vulkan.VulkanInstanceWithoutDebug;
 import my.game.init.vulkan.devices.logical.ImmutableLogicalDevice;
 import my.game.init.vulkan.devices.logical.LogicalDevice;
 import my.game.init.vulkan.devices.physical.PhysicalDeviceRetriever;
-import my.game.init.vulkan.drawing.CommandPool;
+import my.game.init.vulkan.command.CommandPool;
 import my.game.init.vulkan.pipeline.shaders.ShaderCompiler;
 import my.game.init.window.WindowHandle;
 import my.game.init.window.WindowSurface;
@@ -21,7 +21,8 @@ public class MainGameLoop {
     private final LogicalDevice logicalDevice;
     private final PhysicalDeviceRetriever chosenPhysicalDevice;
     private final WindowSurface windowSurface;
-    private final CommandPool commandPool;
+    private final CommandPool graphicsCommandPool;
+    private final CommandPool transferCommandPool;
     private final GraphicsRenderer graphicsRenderer;
 
     public MainGameLoop() {
@@ -36,8 +37,9 @@ public class MainGameLoop {
         windowSurface = new WindowSurface(vulkanInstance.getHandle(), windowHandle);
         chosenPhysicalDevice = new PhysicalDeviceRetriever(vulkanInstance.getHandle(), windowSurface);
         logicalDevice = ImmutableLogicalDevice.builder().physicalDevice(chosenPhysicalDevice).build();
-        commandPool = new CommandPool(logicalDevice);
-        graphicsRenderer = new GraphicsRenderer(logicalDevice, commandPool, chosenPhysicalDevice.physicalDeviceInformation(), windowHandle, windowSurface);
+        graphicsCommandPool = new CommandPool(logicalDevice.vkDevice(), logicalDevice.graphicsQueue());
+        transferCommandPool = new CommandPool(logicalDevice.vkDevice(), logicalDevice.transferVulkanQueue());
+        graphicsRenderer = new GraphicsRenderer(logicalDevice, graphicsCommandPool, transferCommandPool, chosenPhysicalDevice.physicalDeviceInformation(), windowHandle, windowSurface);
     }
 
     public void start() {
@@ -60,7 +62,8 @@ public class MainGameLoop {
     private void destroy() {
         VK13.vkDeviceWaitIdle(logicalDevice.vkDevice());
         graphicsRenderer.free();
-        commandPool.free();
+        transferCommandPool.free();
+        graphicsCommandPool.free();
         logicalDevice.free();
         chosenPhysicalDevice.free();
         windowSurface.free();
