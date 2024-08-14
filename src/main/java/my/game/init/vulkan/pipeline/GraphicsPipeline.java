@@ -1,6 +1,7 @@
 package my.game.init.vulkan.pipeline;
 
 import com.google.common.collect.ImmutableList;
+import my.game.init.vulkan.drawing.transformation.DescriptorSetLayout;
 import my.game.init.vulkan.pipeline.shaders.LoadedShader;
 import my.game.init.vulkan.pipeline.shaders.ShaderModule;
 import my.game.init.vulkan.struct.Vertex;
@@ -35,12 +36,12 @@ public class GraphicsPipeline {
             VK13.VK_DYNAMIC_STATE_SCISSOR
     );
 
-    public GraphicsPipeline(final VkDevice device, final RenderPass renderPass) {
+    public GraphicsPipeline(final VkDevice device, final RenderPass renderPass, final DescriptorSetLayout descriptorSetLayout) {
         this.device = device;
-        LoadedShader loadedVertex = new LoadedShader("shaders/compiled/multi_color_triangle.vert.spv");
+        LoadedShader loadedVertex = new LoadedShader("shaders/compiled/basic.vert.spv");
         ShaderModule vertexShader = new ShaderModule(device, loadedVertex);
         loadedVertex.free();
-        LoadedShader loadedFragment = new LoadedShader("shaders/compiled/multi_color_triangle.frag.spv");
+        LoadedShader loadedFragment = new LoadedShader("shaders/compiled/basic.frag.spv");
         ShaderModule fragmentShader = new ShaderModule(device, loadedFragment);
         loadedFragment.free();
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
@@ -117,7 +118,7 @@ public class GraphicsPipeline {
                     .polygonMode(VK13.VK_POLYGON_MODE_FILL)
                     .lineWidth(1.0f)
                     .cullMode(VK13.VK_CULL_MODE_BACK_BIT)
-                    .frontFace(VK13.VK_FRONT_FACE_CLOCKWISE)
+                    .frontFace(VK13.VK_FRONT_FACE_COUNTER_CLOCKWISE)
                     .depthBiasEnable(false)
                     .depthBiasConstantFactor(0.0f)
                     .depthBiasClamp(0.0f)
@@ -155,9 +156,13 @@ public class GraphicsPipeline {
 
             LongBuffer pPipelineLayout = memoryStack.mallocLong(1);
             VkPipelineLayoutCreateInfo pipelineLayoutInfo = VkPipelineLayoutCreateInfo.calloc(memoryStack);
+            LongBuffer layouts = memoryStack.mallocLong(1);
+            layouts.put(descriptorSetLayout.getHandle());
+            layouts.flip();
             pipelineLayoutInfo
                     .sType(VK13.VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO)
-                    .pSetLayouts(null)
+                    .pSetLayouts(layouts)
+                    .setLayoutCount(layouts.capacity())
                     .pPushConstantRanges(null);
             int result = VK13.vkCreatePipelineLayout(device, pipelineLayoutInfo, null, pPipelineLayout);
             if (result != VK13.VK_SUCCESS) {
@@ -198,6 +203,10 @@ public class GraphicsPipeline {
 
     public Long getGraphicsPipelinePointer() {
         return graphicsPipelinePointer;
+    }
+
+    public Long getPipelineLayoutPointer() {
+        return pipelineLayoutPointer;
     }
 
     public void free() {

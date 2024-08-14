@@ -1,4 +1,4 @@
-package my.game.init.vulkan.drawing.memory;
+package my.game.init.vulkan.drawing.memory.buffer;
 
 import my.game.init.vulkan.command.CommandBuffer;
 import my.game.init.vulkan.command.CommandBufferFactory;
@@ -12,7 +12,6 @@ import org.lwjgl.vulkan.VK13;
 import org.lwjgl.vulkan.VkBufferCopy;
 import org.lwjgl.vulkan.VkSubmitInfo;
 
-import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
 
@@ -22,7 +21,7 @@ public class StagingBufferUser {
     private final int structEntriesCount;
 
     protected StagingBufferUser(final List<? extends Struct> structList, final LogicalDevice logicalDevice,
-                                final int destinationBufferUsageFlags, CommandPool commandPool, MemoryMapActon memoryMapActon) {
+                                final int destinationBufferUsageFlags, CommandPool commandPool, VulkanBuffer.MemoryMapActon memoryMapActon) {
         int size = 0;
         for (Struct struct : structList) {
             size += struct.getSize();
@@ -34,14 +33,7 @@ public class StagingBufferUser {
                 destinationBufferUsageFlags,
                 VK13.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
-            PointerBuffer stagingData = memoryStack.callocPointer(1);
-            int result4 = VK13.vkMapMemory(logicalDevice.vkDevice(), stagingBuffer.allocatedMemoryHandle, 0, size, 0, stagingData);
-            if (result4 != VK13.VK_SUCCESS) {
-                throw new IllegalStateException(String.format("Failed to map memory. Error code: %d", result4));
-            }
-            ByteBuffer stagingDataByteBuffer = stagingData.getByteBuffer(size);
-            memoryMapActon.mapMemory(stagingDataByteBuffer);
-            VK13.vkUnmapMemory(logicalDevice.vkDevice(), stagingBuffer.allocatedMemoryHandle);
+            stagingBuffer.mapMemoryWithAction(memoryStack, memoryMapActon);
             copyBuffer(commandPool, memoryStack, logicalDevice.transferVulkanQueue());
             stagingBuffer.free();
         }
@@ -77,6 +69,8 @@ public class StagingBufferUser {
         CommandBufferFactory.freeCommandBuffers(Collections.singletonList(commandBuffer), memoryStack);
     }
 
+    //The number of vertices in what we are trying to draw basically. When using an index buffer it's the number of indexes
+    // and when using a vertex buffer it's the number vertices.
     public int getStructEntriesCount() {
         return structEntriesCount;
     }
@@ -87,9 +81,5 @@ public class StagingBufferUser {
 
     public void free() {
         destinationBuffer.free();
-    }
-
-    protected interface MemoryMapActon {
-        void mapMemory(ByteBuffer stagingDataByteBuffer);
     }
 }

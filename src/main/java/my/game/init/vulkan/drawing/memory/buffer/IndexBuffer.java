@@ -1,4 +1,4 @@
-package my.game.init.vulkan.drawing.memory;
+package my.game.init.vulkan.drawing.memory.buffer;
 
 import my.game.init.vulkan.command.CommandPool;
 import my.game.init.vulkan.devices.logical.LogicalDevice;

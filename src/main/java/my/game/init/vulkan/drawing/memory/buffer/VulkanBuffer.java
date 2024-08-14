@@ -1,6 +1,8 @@
-package my.game.init.vulkan.drawing.memory;
+package my.game.init.vulkan.drawing.memory.buffer;
 
+import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.VK13;
 import org.lwjgl.vulkan.VkBufferCreateInfo;
 import org.lwjgl.vulkan.VkDevice;
@@ -8,6 +10,7 @@ import org.lwjgl.vulkan.VkMemoryAllocateInfo;
 import org.lwjgl.vulkan.VkMemoryRequirements;
 import org.lwjgl.vulkan.VkPhysicalDeviceMemoryProperties;
 
+import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 
 public class VulkanBuffer {
@@ -67,10 +70,6 @@ public class VulkanBuffer {
         return vulkanBufferHandle;
     }
 
-    public int getBufferSize() {
-        return bufferSize;
-    }
-
     private int findMemoryType(int typeFilter, int memoryPropertyFlags, MemoryStack memoryStack) {
         VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties = VkPhysicalDeviceMemoryProperties.calloc(memoryStack);
         VK13.vkGetPhysicalDeviceMemoryProperties(device.getPhysicalDevice(), physicalDeviceMemoryProperties);
@@ -83,8 +82,33 @@ public class VulkanBuffer {
         throw new IllegalStateException(String.format("Failed to find memory type that supports typeFilter: %d and memoryPropertyFlags: %d", typeFilter, memoryPropertyFlags));
     }
 
+    protected void mapMemoryWithAction(MemoryStack memoryStack, MemoryMapActon memoryMapActon) {
+        PointerBuffer data = memoryStack.callocPointer(1);
+        int result = VK13.vkMapMemory(device, allocatedMemoryHandle, 0, bufferSize, 0, data);
+        if (result != VK13.VK_SUCCESS) {
+            throw new IllegalStateException(String.format("Failed to map memory. Error code: %d", result));
+        }
+        ByteBuffer dataByteBuffer = data.getByteBuffer(bufferSize);
+        memoryMapActon.mapMemory(dataByteBuffer);
+        VK13.vkUnmapMemory(device, allocatedMemoryHandle);
+    }
+
+    //TODO make this so it can only be called once. Possibly split VulkanBuffer between staging and persistent
+    protected PointerBuffer persistentMemoryMap() {
+        PointerBuffer persistentMappedMemory = MemoryUtil.memAllocPointer(1);
+        int result = VK13.vkMapMemory(device, allocatedMemoryHandle, 0, bufferSize, 0, persistentMappedMemory);
+        if (result != VK13.VK_SUCCESS) {
+            throw new IllegalStateException(String.format("Failed to map memory. Error code: %d", result));
+        }
+        return persistentMappedMemory;
+    }
+
     public void free() {
         VK13.vkDestroyBuffer(device, vulkanBufferHandle, null);
         VK13.vkFreeMemory(device, allocatedMemoryHandle, null);
+    }
+
+    protected interface MemoryMapActon {
+        void mapMemory(ByteBuffer stagingDataByteBuffer);
     }
 }

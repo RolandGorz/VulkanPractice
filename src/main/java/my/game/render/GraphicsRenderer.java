@@ -8,8 +8,12 @@ import my.game.init.vulkan.command.CommandPool;
 import my.game.init.vulkan.devices.logical.LogicalDevice;
 import my.game.init.vulkan.devices.physical.PhysicalDeviceInformation;
 import my.game.init.vulkan.drawing.FrameBuffers;
-import my.game.init.vulkan.drawing.memory.IndexBuffer;
-import my.game.init.vulkan.drawing.memory.VertexBuffer;
+import my.game.init.vulkan.drawing.memory.DescriptorPool;
+import my.game.init.vulkan.drawing.memory.DescriptorSets;
+import my.game.init.vulkan.drawing.memory.buffer.IndexBuffer;
+import my.game.init.vulkan.drawing.memory.buffer.UniformBuffer;
+import my.game.init.vulkan.drawing.memory.buffer.VertexBuffer;
+import my.game.init.vulkan.drawing.transformation.DescriptorSetLayout;
 import my.game.init.vulkan.math.Vector2fWithSize;
 import my.game.init.vulkan.math.Vector3fWithSize;
 import my.game.init.vulkan.pipeline.GraphicsPipeline;
@@ -41,6 +45,7 @@ import org.lwjgl.vulkan.VkViewport;
 
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
+import java.util.ArrayList;
 import java.util.List;
 
 public class GraphicsRenderer {
@@ -58,6 +63,10 @@ public class GraphicsRenderer {
     private final List<LongBuffer> imageAvailableSemaphores;
     private final List<LongBuffer> renderFinishedSemaphores;
     private final List<LongBuffer> inFlightFences;
+    private final DescriptorSetLayout descriptorSetLayout;
+    private final List<UniformBuffer> uniformBuffers;
+    private final DescriptorPool descriptorPool;
+    private final DescriptorSets descriptorSets;
     private int currentFrame = 0;
     private SwapChain swapChain;
     private SwapChainImages swapChainImages;
@@ -74,7 +83,8 @@ public class GraphicsRenderer {
         this.swapChain = createSwapChain(logicalDevice, physicalDeviceInformation, windowHandle, windowSurface);
         this.swapChainImages = createImageViews(logicalDevice, swapChain);
         this.renderPass = new RenderPass(logicalDevice.vkDevice(), swapChain.getSurfaceFormat());
-        this.graphicsPipeline = new GraphicsPipeline(logicalDevice.vkDevice(), renderPass);
+        this.descriptorSetLayout = new DescriptorSetLayout(logicalDevice.vkDevice());
+        this.graphicsPipeline = new GraphicsPipeline(logicalDevice.vkDevice(), renderPass, descriptorSetLayout);
         List<Vertex> vertexList = List.of(
                 new Vertex(new Vector2fWithSize(-0.5f, -0.5f), new Vector3fWithSize(1.0f, 0.0f, 0.0f)),
                 new Vertex(new Vector2fWithSize(0.5f, -0.5f), new Vector3fWithSize(0.0f, 1.0f, 0.0f)),
@@ -91,6 +101,12 @@ public class GraphicsRenderer {
         );
         this.vertexBuffer = new VertexBuffer(logicalDevice, vertexList, transferCommandPool);
         this.indexBuffer = new IndexBuffer(logicalDevice, indexes, transferCommandPool);
+        this.uniformBuffers = new ArrayList<>();
+        for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
+            uniformBuffers.add(new UniformBuffer(logicalDevice.vkDevice()));
+        }
+        descriptorPool = new DescriptorPool(logicalDevice.vkDevice());
+        descriptorSets = new DescriptorSets(logicalDevice.vkDevice(), descriptorPool, descriptorSetLayout, uniformBuffers);
         this.graphicsCommandBuffers = CommandBufferFactory.createCommandBuffers(graphicsCommandPool, MAX_FRAMES_IN_FLIGHT);
         this.frameBuffers = createFrameBuffers(logicalDevice, renderPass, swapChainImages, swapChain);
         ImmutableList.Builder<LongBuffer> imageAvailableSemaphoresBuilder = ImmutableList.builder();
@@ -151,6 +167,7 @@ public class GraphicsRenderer {
     public void drawFrame() {
         VkDevice device = logicalDevice.vkDevice();
         VK13.vkWaitForFences(device, inFlightFences.get(currentFrame), true, VulkanUtil.UINT64_MAX);
+        uniformBuffers.get(currentFrame).update(swapChain.getSwapChainExtent());
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             IntBuffer imageIndex = memoryStack.mallocInt(1);
             int acquireNextImageResult = KHRSwapchain.vkAcquireNextImageKHR(device, swapChain.getSwapChainPointer(), VulkanUtil.UINT64_MAX,
@@ -243,6 +260,10 @@ public class GraphicsRenderer {
             offsets.flip();
             VK13.vkCmdBindVertexBuffers(vkCommandBuffer, 0, vertices, offsets);
             VK13.vkCmdBindIndexBuffer(vkCommandBuffer, indexBuffer.getDestinationBuffer().getVulkanBufferHandle(), 0, VK13.VK_INDEX_TYPE_UINT16);
+            LongBuffer currDescriptorSetBuffer = memoryStack.mallocLong(1);
+            currDescriptorSetBuffer.put(descriptorSets.getDescriptorSetHandles().get(currentFrame));
+            currDescriptorSetBuffer.flip();
+            VK13.vkCmdBindDescriptorSets(vkCommandBuffer, VK13.VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.getPipelineLayoutPointer(), 0, currDescriptorSetBuffer, null);
         }
         VK13.vkCmdDrawIndexed(vkCommandBuffer, indexBuffer.getStructEntriesCount(), 1, 0, 0, 0);
         VK13.vkCmdEndRenderPass(vkCommandBuffer);
@@ -310,6 +331,10 @@ public class GraphicsRenderer {
 
     public void free() {
         cleanupSwapChain();
+        descriptorPool.free();
+        for (UniformBuffer u : uniformBuffers) {
+            u.free();
+        }
         indexBuffer.free();
         vertexBuffer.free();
         for (LongBuffer x : inFlightFences) {
@@ -325,6 +350,7 @@ public class GraphicsRenderer {
             MemoryUtil.memFree(x);
         }
         graphicsPipeline.free();
+        descriptorSetLayout.free();
         renderPass.free();
     }
 }

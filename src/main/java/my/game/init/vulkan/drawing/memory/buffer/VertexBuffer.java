@@ -1,4 +1,4 @@
-package my.game.init.vulkan.drawing.memory;
+package my.game.init.vulkan.drawing.memory.buffer;
 
 import my.game.init.vulkan.command.CommandPool;
 import my.game.init.vulkan.devices.logical.LogicalDevice;
@@ -8,6 +8,9 @@ import my.game.init.vulkan.struct.Vertex;
 import org.lwjgl.vulkan.VK13;
 
 import java.util.List;
+
+import static my.game.init.vulkan.struct.Vertex.COLOR_OFFSET;
+import static my.game.init.vulkan.struct.Vertex.POSITION_OFFSET;
 
 public class VertexBuffer extends StagingBufferUser {
 
@@ -19,8 +22,8 @@ public class VertexBuffer extends StagingBufferUser {
                         Vertex curr = vertices.get(i);
                         Vector2fWithSize currPos = curr.pos();
                         Vector3fWithSize currColor = curr.color();
-                        currPos.get(i * curr.getSize(), stagingDataByteBuffer);
-                        currColor.get(i * curr.getSize() + currPos.getSize(), stagingDataByteBuffer);
+                        currPos.get(i * curr.getSize() + POSITION_OFFSET, stagingDataByteBuffer);
+                        currColor.get(i * curr.getSize() + COLOR_OFFSET, stagingDataByteBuffer);
                     }
                 });
     }

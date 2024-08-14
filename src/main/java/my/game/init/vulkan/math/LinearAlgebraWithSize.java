@@ -1,5 +1,5 @@
 package my.game.init.vulkan.math;
 
-public interface VectorWithSize {
+public interface LinearAlgebraWithSize {
     int getSize();
 }
