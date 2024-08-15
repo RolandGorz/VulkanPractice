@@ -118,7 +118,7 @@ public class GraphicsPipeline {
                     .polygonMode(VK13.VK_POLYGON_MODE_FILL)
                     .lineWidth(1.0f)
                     .cullMode(VK13.VK_CULL_MODE_BACK_BIT)
-                    .frontFace(VK13.VK_FRONT_FACE_COUNTER_CLOCKWISE)
+                    .frontFace(VK13.VK_FRONT_FACE_CLOCKWISE)
                     .depthBiasEnable(false)
                     .depthBiasConstantFactor(0.0f)
                     .depthBiasClamp(0.0f)
@@ -166,7 +166,7 @@ public class GraphicsPipeline {
                     .pPushConstantRanges(null);
             int result = VK13.vkCreatePipelineLayout(device, pipelineLayoutInfo, null, pPipelineLayout);
             if (result != VK13.VK_SUCCESS) {
-                throw new IllegalStateException(String.format("Failed to create pipeline layout. Error code", result));
+                throw new IllegalStateException(String.format("Failed to create pipeline layout. Error code: %d", result));
             }
             pipelineLayoutPointer = pPipelineLayout.get(0);
             VkGraphicsPipelineCreateInfo.Buffer graphicsPipelineCreateInfoBuffer = VkGraphicsPipelineCreateInfo.malloc(1, memoryStack);

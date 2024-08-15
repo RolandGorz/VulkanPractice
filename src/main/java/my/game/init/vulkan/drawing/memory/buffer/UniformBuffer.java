@@ -16,7 +16,7 @@ public class UniformBuffer {
     private final VulkanBuffer vulkanBuffer;
     private static final int BUFFER_SIZE = UniformBufferObject.SIZE;
     public UniformBuffer(VkDevice device) {
-        this.uniformBufferObject = new UniformBufferObject(new Matrix4f(), new Matrix4f(), new Matrix4f());
+        this.uniformBufferObject = new UniformBufferObject(new Matrix4f());
         vulkanBuffer = new VulkanBuffer(BUFFER_SIZE, device, VK13.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                 VK13.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK13.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
         uniformBufferMapped = vulkanBuffer.persistentMemoryMap();
@@ -25,8 +25,6 @@ public class UniformBuffer {
     private void memCpy() {
         ByteBuffer uniformBufferMappedByteBuffer = uniformBufferMapped.getByteBuffer(BUFFER_SIZE);
         uniformBufferObject.model().get(UniformBufferObject.MODEL_OFFSET, uniformBufferMappedByteBuffer);
-        uniformBufferObject.view().get(UniformBufferObject.VIEW_OFFSET, uniformBufferMappedByteBuffer);
-        uniformBufferObject.proj().get(UniformBufferObject.PROJECTION_OFFSET, uniformBufferMappedByteBuffer);
     }
 
     public VulkanBuffer getVulkanBuffer() {
@@ -37,16 +35,7 @@ public class UniformBuffer {
     // A more efficient way to pass a small buffer of data to shaders are push constants.
     public void update(VkExtent2D swapChainExtent) {
         uniformBufferObject.model().identity();
-        uniformBufferObject.view().identity();
-        uniformBufferObject.proj().identity();
         uniformBufferObject.model().rotate((float) (GLFW.glfwGetTime() * Math.toRadians(90)), 0.0f, 0.0f, 1.0f);
-        uniformBufferObject.view().lookAt(
-                2.0f, 2.0f, 2.0f,
-                0.0f, 0.0f, 0.0f,
-                0.0f, 0.0f, 1.0f);
-        uniformBufferObject.proj().perspective((float) Math.toRadians(45),
-                (float)swapChainExtent.width() / (float)swapChainExtent.height(), 0.1f, 10.0f);
-        uniformBufferObject.proj().m11(uniformBufferObject.proj().m11() * -1);
         memCpy();
         uniformBufferMapped.rewind();
     }
