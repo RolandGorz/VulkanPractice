@@ -36,6 +36,9 @@ public class UniformBuffer {
     public void update(VkExtent2D swapChainExtent) {
         uniformBufferObject.model().identity();
         uniformBufferObject.model().rotate((float) (GLFW.glfwGetTime() * Math.toRadians(90)), 0.0f, 0.0f, 1.0f);
+        //Set flag to true if using perspective since vulkan is zero to one for ndc z range instead of -1 to 1 like opengl
+        //uniformBufferObject.proj().perspective((float) Math.toRadians(45),
+        //        (float)swapChainExtent.width() / (float)swapChainExtent.height(), 0.1f, 10.0f, true);
         memCpy();
         uniformBufferMapped.rewind();
     }
