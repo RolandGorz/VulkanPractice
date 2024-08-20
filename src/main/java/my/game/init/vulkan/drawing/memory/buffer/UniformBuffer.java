@@ -35,7 +35,7 @@ public class UniformBuffer {
     // A more efficient way to pass a small buffer of data to shaders are push constants.
     public void update(VkExtent2D swapChainExtent) {
         uniformBufferObject.model().identity();
-        //uniformBufferObject.model().rotate((float) (GLFW.glfwGetTime() * Math.toRadians(90)), 0.0f, 0.0f, 1.0f);
+        uniformBufferObject.model().rotate((float) (GLFW.glfwGetTime() * Math.toRadians(90)), 0.0f, 0.0f, 1.0f);
 
         //Set flag to true if using perspective since vulkan is zero to one for ndc z range instead of -1 to 1 like opengl
         //uniformBufferObject.proj().perspective((float) Math.toRadians(45),
