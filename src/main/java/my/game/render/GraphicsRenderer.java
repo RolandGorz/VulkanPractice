@@ -18,7 +18,6 @@ import my.game.init.vulkan.math.Vector2fWithSize;
 import my.game.init.vulkan.math.Vector3fWithSize;
 import my.game.init.vulkan.pipeline.GraphicsPipeline;
 import my.game.init.vulkan.pipeline.RenderPass;
-import my.game.init.vulkan.struct.Index;
 import my.game.init.vulkan.struct.Vertex;
 import my.game.init.vulkan.swapchain.SwapChain;
 import my.game.init.vulkan.swapchain.SwapChainImages;
@@ -59,7 +58,7 @@ public class GraphicsRenderer {
     private final WindowSurface windowSurface;
     private final GraphicsPipeline graphicsPipeline;
     private final VertexBuffer vertexBuffer;
-    private final IndexBuffer indexBuffer;
+    //private final IndexBuffer indexBuffer;
     private final List<LongBuffer> imageAvailableSemaphores;
     private final List<LongBuffer> renderFinishedSemaphores;
     private final List<LongBuffer> inFlightFences;
@@ -85,22 +84,26 @@ public class GraphicsRenderer {
         this.renderPass = new RenderPass(logicalDevice.vkDevice(), swapChain.getSurfaceFormat());
         this.descriptorSetLayout = new DescriptorSetLayout(logicalDevice.vkDevice());
         this.graphicsPipeline = new GraphicsPipeline(logicalDevice.vkDevice(), renderPass, descriptorSetLayout);
-        List<Vertex> vertexList = List.of(
-                new Vertex(new Vector2fWithSize(-0.5f, -0.5f), new Vector3fWithSize(1.0f, 0.0f, 0.0f)),
-                new Vertex(new Vector2fWithSize(0.5f, -0.5f), new Vector3fWithSize(0.0f, 1.0f, 0.0f)),
-                new Vertex(new Vector2fWithSize(0.5f, 0.5f), new Vector3fWithSize(0.0f, 0.0f, 1.0f)),
-                new Vertex(new Vector2fWithSize(-0.5f, 0.5f), new Vector3fWithSize(1.0f, 1.0f, 1.0f))
-        );
-        List<Index> indexes = List.of(
-                new Index((short) 0),
-                new Index((short) 1),
-                new Index((short) 2),
-                new Index((short) 2),
-                new Index((short) 3),
-                new Index((short) 0)
-        );
+
+        Vertex top = new Vertex(new Vector2fWithSize(0.0f, -1.0f), new Vector3fWithSize(0.0f, 0.0f, 1.0f));
+        Vertex bottomRight = new Vertex(new Vector2fWithSize(1.0f, 1.0f), new Vector3fWithSize(0.0f, 0.0f, 1.0f));
+        Vertex bottomLeft = new Vertex(new Vector2fWithSize(-1.0f, 1.0f), new Vector3fWithSize(0.0f, 0.0f, 1.0f));
+        List<Vertex> vertexList = new ArrayList<>();
+        vertexList.add(top);
+        vertexList.add(bottomRight);
+        vertexList.add(bottomLeft);
+        sierpinskiTriangle(vertexList, top, bottomRight, bottomLeft, 7);
+
+//        List<Index> indexes = List.of(
+//                new Index((short) 0),
+//                new Index((short) 1),
+//                new Index((short) 2),
+//                new Index((short) 3),
+//                new Index((short) 4),
+//                new Index((short) 5)
+//        );
         this.vertexBuffer = new VertexBuffer(logicalDevice, vertexList, transferCommandPool);
-        this.indexBuffer = new IndexBuffer(logicalDevice, indexes, transferCommandPool);
+        //this.indexBuffer = new IndexBuffer(logicalDevice, indexes, transferCommandPool);
         this.uniformBuffers = new ArrayList<>();
         for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
             uniformBuffers.add(new UniformBuffer(logicalDevice.vkDevice()));
@@ -146,6 +149,27 @@ public class GraphicsRenderer {
         }
     }
 
+    private void sierpinskiTriangle(final List<Vertex> vertices, final Vertex top, final Vertex bottomRight, final Vertex bottomLeft, final int depth) {
+        if (depth == 0) {
+            return;
+        }
+        Vertex bottom = new Vertex(new Vector2fWithSize(), new Vector3fWithSize());
+        Vertex topLeft = new Vertex(new Vector2fWithSize(), new Vector3fWithSize());
+        Vertex topRight = new Vertex(new Vector2fWithSize(), new Vector3fWithSize());
+        bottom.pos().add(bottomRight.pos()).add(bottomLeft.pos()).div(2);
+        bottom.color().set(0.5f, 0.0f, 0.0f);
+        topLeft.pos().add(bottomLeft.pos()).add(top.pos()).div(2);
+        topLeft.color().set(0.5f, 0.0f, 0.0f);
+        topRight.pos().add(bottomRight.pos()).add(top.pos()).div(2);
+        topRight.color().set(0.5f, 0.0f, 0.0f);
+        vertices.add(bottom);
+        vertices.add(topLeft);
+        vertices.add(topRight);
+        sierpinskiTriangle(vertices, top, topRight, topLeft, depth - 1);
+        sierpinskiTriangle(vertices, topLeft, bottom, bottomLeft, depth - 1);
+        sierpinskiTriangle(vertices, topRight, bottomRight, bottom, depth - 1);
+    }
+
     private SwapChain createSwapChain(LogicalDevice logicalDevice, PhysicalDeviceInformation physicalDeviceInformation,
                                       WindowHandle windowHandle, WindowSurface windowSurface) {
         return new SwapChain(
@@ -185,7 +209,8 @@ public class GraphicsRenderer {
             graphicsCommandBuffers.get(currentFrame)
                     .runCommand(0,
                             (vkCommandBuffer) ->
-                                    recordCommandBuffer(imageIndex.get(0), swapChain, frameBuffers, vertexBuffer, indexBuffer, vkCommandBuffer));
+                                    //recordCommandBuffer(imageIndex.get(0), swapChain, frameBuffers, vertexBuffer, indexBuffer, vkCommandBuffer));
+                                    recordCommandBuffer(imageIndex.get(0), swapChain, frameBuffers, vertexBuffer, null, vkCommandBuffer));
 
             IntBuffer waitStages = memoryStack.mallocInt(1);
             waitStages.put(VK13.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
@@ -259,13 +284,14 @@ public class GraphicsRenderer {
             offsets.put(0);
             offsets.flip();
             VK13.vkCmdBindVertexBuffers(vkCommandBuffer, 0, vertices, offsets);
-            VK13.vkCmdBindIndexBuffer(vkCommandBuffer, indexBuffer.getDestinationBuffer().getVulkanBufferHandle(), 0, VK13.VK_INDEX_TYPE_UINT16);
+            //VK13.vkCmdBindIndexBuffer(vkCommandBuffer, indexBuffer.getDestinationBuffer().getVulkanBufferHandle(), 0, VK13.VK_INDEX_TYPE_UINT16);
             LongBuffer currDescriptorSetBuffer = memoryStack.mallocLong(1);
             currDescriptorSetBuffer.put(descriptorSets.getDescriptorSetHandles().get(currentFrame));
             currDescriptorSetBuffer.flip();
             VK13.vkCmdBindDescriptorSets(vkCommandBuffer, VK13.VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.getPipelineLayoutPointer(), 0, currDescriptorSetBuffer, null);
         }
-        VK13.vkCmdDrawIndexed(vkCommandBuffer, indexBuffer.getStructEntriesCount(), 1, 0, 0, 0);
+        //VK13.vkCmdDrawIndexed(vkCommandBuffer, indexBuffer.getStructEntriesCount(), 1, 0, 0, 0);
+        VK13.vkCmdDraw(vkCommandBuffer, vertexBuffer.getStructEntriesCount(), 1, 0, 0);
         VK13.vkCmdEndRenderPass(vkCommandBuffer);
     }
 
@@ -335,7 +361,7 @@ public class GraphicsRenderer {
         for (UniformBuffer u : uniformBuffers) {
             u.free();
         }
-        indexBuffer.free();
+        //indexBuffer.free();
         vertexBuffer.free();
         for (LongBuffer x : inFlightFences) {
             VK13.vkDestroyFence(logicalDevice.vkDevice(), x.get(0), null);
