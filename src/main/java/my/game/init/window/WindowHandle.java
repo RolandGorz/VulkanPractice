@@ -29,6 +29,7 @@ public class WindowHandle {
         // Create the window
         windowHandlePointer = GLFW.glfwCreateWindow(800, 600, "Hello World!", MemoryUtil.NULL, MemoryUtil.NULL);
 
+        //Look at glfw source code for how each os involves FramebufferSizeCallback. We can maybe get smooth scaling after all
         GLFWFramebufferSizeCallback framebufferSizeCallback = GLFWFramebufferSizeCallback.create(((window, width, height) ->
                 frameBufferResized = true));
 
