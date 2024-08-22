@@ -7,7 +7,7 @@ import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.system.Platform;
 import org.lwjgl.vulkan.EXTDebugUtils;
 import org.lwjgl.vulkan.KHRPortabilityEnumeration;
-import org.lwjgl.vulkan.VK13;
+import org.lwjgl.vulkan.VK10;
 import org.lwjgl.vulkan.VkDebugUtilsMessengerCallbackDataEXT;
 import org.lwjgl.vulkan.VkDebugUtilsMessengerCallbackEXT;
 import org.lwjgl.vulkan.VkDebugUtilsMessengerCreateInfoEXT;
@@ -37,7 +37,7 @@ public class VulkanInstanceWithDebug extends VulkanInstance {
                     // memory address that will be freed by whatever created it.
                     VkDebugUtilsMessengerCallbackDataEXT data = VkDebugUtilsMessengerCallbackDataEXT.create(pCallbackData);
                     System.out.printf("%s pCallBackData.pMessage: %s%n", severity, data.pMessageString());
-                    return VK13.VK_FALSE;
+                    return VK10.VK_FALSE;
                 }
         );
         debugUtilsMessengerCreateInfo = VkDebugUtilsMessengerCreateInfoEXT.calloc();
@@ -120,7 +120,7 @@ public class VulkanInstanceWithDebug extends VulkanInstance {
             LongBuffer longBuffer = memoryStack.callocLong(1);
             int result = EXTDebugUtils.vkCreateDebugUtilsMessengerEXT(vkInstance,
                     debugUtilsMessengerCreateInfo, null, longBuffer);
-            if (result != VK13.VK_SUCCESS) {
+            if (result != VK10.VK_SUCCESS) {
                 throw new RuntimeException(String.format("creating debug utils messenger failed error code %d", result));
             }
             pDebugUtilsMessengerEXT = longBuffer.get();
@@ -138,16 +138,16 @@ public class VulkanInstanceWithDebug extends VulkanInstance {
     private void validateValidationLayers(List<String> requestedValidationLayers) {
         try (MemoryStack stack = MemoryStack.stackPush()) {
             IntBuffer layerCount = stack.mallocInt(1); // int*
-            int result = VK13.vkEnumerateInstanceLayerProperties(layerCount, null);
-            if (result == VK13.VK_SUCCESS) {
+            int result = VK10.vkEnumerateInstanceLayerProperties(layerCount, null);
+            if (result == VK10.VK_SUCCESS) {
                 System.out.println("vkEnumerateInstanceLayerProperties returned success");
             } else {
                 System.out.printf("vkEnumerateInstanceLayerProperties returned failure code %d%n", result);
             }
             System.out.printf("%d available layers%n", layerCount.get(0));
             VkLayerProperties.Buffer vkLayerPropertiesBuffer = VkLayerProperties.malloc(layerCount.get(0), stack);
-            int result2 = VK13.vkEnumerateInstanceLayerProperties(layerCount, vkLayerPropertiesBuffer);
-            if (result2 == VK13.VK_SUCCESS) {
+            int result2 = VK10.vkEnumerateInstanceLayerProperties(layerCount, vkLayerPropertiesBuffer);
+            if (result2 == VK10.VK_SUCCESS) {
                 System.out.println("vkEnumerateInstanceLayerProperties returned success");
             } else {
                 System.out.println("vkEnumerateInstanceLayerProperties returned failure");

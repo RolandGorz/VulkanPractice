@@ -8,7 +8,7 @@ import my.game.init.vulkan.devices.logical.queue.TransferVulkanQueue;
 import my.game.init.vulkan.struct.Struct;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.vulkan.VK13;
+import org.lwjgl.vulkan.VK10;
 import org.lwjgl.vulkan.VkBufferCopy;
 import org.lwjgl.vulkan.VkSubmitInfo;
 
@@ -27,11 +27,11 @@ public class StagingBufferUser {
             size += struct.getSize();
         }
         structEntriesCount = structList.size();
-        stagingBuffer = new VulkanBuffer(size, logicalDevice.vkDevice(), VK13.VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                VK13.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK13.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        stagingBuffer = new VulkanBuffer(size, logicalDevice.vkDevice(), VK10.VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                VK10.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK10.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
         destinationBuffer = new VulkanBuffer(size, logicalDevice.vkDevice(),
                 destinationBufferUsageFlags,
-                VK13.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+                VK10.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             stagingBuffer.mapMemoryWithAction(memoryStack, memoryMapActon);
             copyBuffer(commandPool, memoryStack, logicalDevice.transferVulkanQueue());
@@ -44,28 +44,28 @@ public class StagingBufferUser {
     // You should use the VK_COMMAND_POOL_CREATE_TRANSIENT_BIT flag during command pool generation in that case.
     private void copyBuffer(CommandPool commandPool, MemoryStack memoryStack, TransferVulkanQueue transferVulkanQueue) {
         CommandBuffer commandBuffer = CommandBufferFactory.createCommandBuffers(commandPool, 1).getFirst();
-        commandBuffer.runCommand(VK13.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+        commandBuffer.runCommand(VK10.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
                 (vkCommandBuffer) -> {
                     VkBufferCopy.Buffer vkBufferCopy = VkBufferCopy.calloc(1, memoryStack);
                     vkBufferCopy
                             .srcOffset(0)
                             .dstOffset(0)
                             .size(stagingBuffer.bufferSize);
-                    VK13.vkCmdCopyBuffer(commandBuffer.getVkCommandBuffer(), stagingBuffer.getVulkanBufferHandle(), destinationBuffer.getVulkanBufferHandle(), vkBufferCopy);
+                    VK10.vkCmdCopyBuffer(vkCommandBuffer, stagingBuffer.getVulkanBufferHandle(), destinationBuffer.getVulkanBufferHandle(), vkBufferCopy);
                 });
         PointerBuffer commandBuffersPointer = memoryStack.mallocPointer(1);
         commandBuffersPointer.put(commandBuffer.getVkCommandBuffer());
         commandBuffersPointer.flip();
         VkSubmitInfo vkSubmitInfo = VkSubmitInfo.calloc(memoryStack);
         vkSubmitInfo
-                .sType(VK13.VK_STRUCTURE_TYPE_SUBMIT_INFO)
+                .sType(VK10.VK_STRUCTURE_TYPE_SUBMIT_INFO)
                 .pCommandBuffers(commandBuffersPointer);
 
-        int result = VK13.vkQueueSubmit(transferVulkanQueue.getVkQueue(), vkSubmitInfo, VK13.VK_NULL_HANDLE);
-        if (result != VK13.VK_SUCCESS) {
+        int result = VK10.vkQueueSubmit(transferVulkanQueue.getVkQueue(), vkSubmitInfo, VK10.VK_NULL_HANDLE);
+        if (result != VK10.VK_SUCCESS) {
             throw new IllegalStateException(String.format("Failed to submit draw command buffer. Error code: %d", result));
         }
-        VK13.vkQueueWaitIdle(transferVulkanQueue.getVkQueue());
+        VK10.vkQueueWaitIdle(transferVulkanQueue.getVkQueue());
         CommandBufferFactory.freeCommandBuffers(Collections.singletonList(commandBuffer), memoryStack);
     }
 

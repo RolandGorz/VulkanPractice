@@ -3,7 +3,7 @@ package my.game.init.vulkan.drawing.memory.buffer;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
-import org.lwjgl.vulkan.VK13;
+import org.lwjgl.vulkan.VK10;
 import org.lwjgl.vulkan.VkBufferCreateInfo;
 import org.lwjgl.vulkan.VkDevice;
 import org.lwjgl.vulkan.VkMemoryAllocateInfo;
@@ -25,23 +25,23 @@ public class VulkanBuffer {
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             VkBufferCreateInfo bufferCreateInfo = VkBufferCreateInfo.calloc(memoryStack);
             bufferCreateInfo
-                    .sType(VK13.VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO)
+                    .sType(VK10.VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO)
                     .size(bufferSize)
                     .usage(bufferUsageFlags)
-                    .sharingMode(VK13.VK_SHARING_MODE_EXCLUSIVE);
+                    .sharingMode(VK10.VK_SHARING_MODE_EXCLUSIVE);
             LongBuffer bufferHandle = memoryStack.mallocLong(1);
-            int result = VK13.vkCreateBuffer(device, bufferCreateInfo, null, bufferHandle);
-            if (result != VK13.VK_SUCCESS) {
+            int result = VK10.vkCreateBuffer(device, bufferCreateInfo, null, bufferHandle);
+            if (result != VK10.VK_SUCCESS) {
                 throw new IllegalStateException(String.format("Failed to create vertex buffer. Error code: %d", result));
             }
             vulkanBufferHandle = bufferHandle.get(0);
 
             VkMemoryRequirements memoryRequirements = VkMemoryRequirements.calloc(memoryStack);
-            VK13.vkGetBufferMemoryRequirements(device, vulkanBufferHandle, memoryRequirements);
+            VK10.vkGetBufferMemoryRequirements(device, vulkanBufferHandle, memoryRequirements);
 
             VkMemoryAllocateInfo memoryAllocateInfo = VkMemoryAllocateInfo.calloc(memoryStack);
             memoryAllocateInfo
-                    .sType(VK13.VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO)
+                    .sType(VK10.VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO)
                     .allocationSize(memoryRequirements.size())
                     .memoryTypeIndex(findMemoryType(memoryRequirements.memoryTypeBits(),
                             memoryPropertyFlags,
@@ -54,13 +54,13 @@ public class VulkanBuffer {
             // that splits up a single allocation among many different objects by using the offset parameters that we’ve seen in many functions.
             // You can either implement such an allocator yourself, or use the VulkanMemoryAllocator library provided by the GPUOpen
             // initiative.
-            int result2 = VK13.vkAllocateMemory(device, memoryAllocateInfo, null, allocatedMemoryHandleBuffer);
-            if (result2 != VK13.VK_SUCCESS) {
+            int result2 = VK10.vkAllocateMemory(device, memoryAllocateInfo, null, allocatedMemoryHandleBuffer);
+            if (result2 != VK10.VK_SUCCESS) {
                 throw new IllegalStateException(String.format("Failed to allocate memory for buffer. Error code: %d", result2));
             }
             allocatedMemoryHandle = allocatedMemoryHandleBuffer.get(0);
-            int result3 = VK13.vkBindBufferMemory(device, vulkanBufferHandle, allocatedMemoryHandle, 0);
-            if (result3 != VK13.VK_SUCCESS) {
+            int result3 = VK10.vkBindBufferMemory(device, vulkanBufferHandle, allocatedMemoryHandle, 0);
+            if (result3 != VK10.VK_SUCCESS) {
                 throw new IllegalStateException(String.format("Failed to bind memory to buffer. Error code: %d", result3));
             }
         }
@@ -72,7 +72,7 @@ public class VulkanBuffer {
 
     private int findMemoryType(int typeFilter, int memoryPropertyFlags, MemoryStack memoryStack) {
         VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties = VkPhysicalDeviceMemoryProperties.calloc(memoryStack);
-        VK13.vkGetPhysicalDeviceMemoryProperties(device.getPhysicalDevice(), physicalDeviceMemoryProperties);
+        VK10.vkGetPhysicalDeviceMemoryProperties(device.getPhysicalDevice(), physicalDeviceMemoryProperties);
         for (int i = 0; i < physicalDeviceMemoryProperties.memoryTypeCount(); i++) {
             if ((typeFilter & (1 << i)) != 0 &&
                     (physicalDeviceMemoryProperties.memoryTypes(i).propertyFlags() & memoryPropertyFlags) == memoryPropertyFlags) {
@@ -84,28 +84,28 @@ public class VulkanBuffer {
 
     protected void mapMemoryWithAction(MemoryStack memoryStack, MemoryMapActon memoryMapActon) {
         PointerBuffer data = memoryStack.callocPointer(1);
-        int result = VK13.vkMapMemory(device, allocatedMemoryHandle, 0, bufferSize, 0, data);
-        if (result != VK13.VK_SUCCESS) {
+        int result = VK10.vkMapMemory(device, allocatedMemoryHandle, 0, bufferSize, 0, data);
+        if (result != VK10.VK_SUCCESS) {
             throw new IllegalStateException(String.format("Failed to map memory. Error code: %d", result));
         }
         ByteBuffer dataByteBuffer = data.getByteBuffer(bufferSize);
         memoryMapActon.mapMemory(dataByteBuffer);
-        VK13.vkUnmapMemory(device, allocatedMemoryHandle);
+        VK10.vkUnmapMemory(device, allocatedMemoryHandle);
     }
 
     //TODO make this so it can only be called once. Possibly split VulkanBuffer between staging and persistent
     protected PointerBuffer persistentMemoryMap() {
         PointerBuffer persistentMappedMemory = MemoryUtil.memAllocPointer(1);
-        int result = VK13.vkMapMemory(device, allocatedMemoryHandle, 0, bufferSize, 0, persistentMappedMemory);
-        if (result != VK13.VK_SUCCESS) {
+        int result = VK10.vkMapMemory(device, allocatedMemoryHandle, 0, bufferSize, 0, persistentMappedMemory);
+        if (result != VK10.VK_SUCCESS) {
             throw new IllegalStateException(String.format("Failed to map memory. Error code: %d", result));
         }
         return persistentMappedMemory;
     }
 
     public void free() {
-        VK13.vkDestroyBuffer(device, vulkanBufferHandle, null);
-        VK13.vkFreeMemory(device, allocatedMemoryHandle, null);
+        VK10.vkDestroyBuffer(device, vulkanBufferHandle, null);
+        VK10.vkFreeMemory(device, allocatedMemoryHandle, null);
     }
 
     protected interface MemoryMapActon {

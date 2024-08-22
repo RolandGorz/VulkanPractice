@@ -1,7 +1,7 @@
 package my.game.init.vulkan.drawing.transformation;
 
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.vulkan.VK13;
+import org.lwjgl.vulkan.VK10;
 import org.lwjgl.vulkan.VkDescriptorSetLayoutBinding;
 import org.lwjgl.vulkan.VkDescriptorSetLayoutCreateInfo;
 import org.lwjgl.vulkan.VkDevice;
@@ -19,19 +19,19 @@ public class DescriptorSetLayout {
             VkDescriptorSetLayoutBinding.Buffer uniformBufferObjectLayoutBinding = VkDescriptorSetLayoutBinding.calloc(1, memoryStack);
             uniformBufferObjectLayoutBinding.get(0)
                     .binding(0)
-                    .descriptorType(VK13.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
+                    .descriptorType(VK10.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
                     .descriptorCount(1)
-                    .stageFlags(VK13.VK_SHADER_STAGE_VERTEX_BIT)
+                    .stageFlags(VK10.VK_SHADER_STAGE_VERTEX_BIT)
                     .pImmutableSamplers(null);
 
             VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = VkDescriptorSetLayoutCreateInfo.calloc(memoryStack);
             descriptorSetLayoutCreateInfo
-                    .sType(VK13.VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO)
+                    .sType(VK10.VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO)
                     .pBindings(uniformBufferObjectLayoutBinding);
 
             LongBuffer descriptorSetLayoutBuffer = memoryStack.mallocLong(1);
-            int result = VK13.vkCreateDescriptorSetLayout(device, descriptorSetLayoutCreateInfo, null, descriptorSetLayoutBuffer);
-            if (result != VK13.VK_SUCCESS) {
+            int result = VK10.vkCreateDescriptorSetLayout(device, descriptorSetLayoutCreateInfo, null, descriptorSetLayoutBuffer);
+            if (result != VK10.VK_SUCCESS) {
                 throw new IllegalStateException(String.format("Failed to create descriptor set layout. Error code: %d", result));
             }
             handle = descriptorSetLayoutBuffer.get(0);
@@ -43,6 +43,6 @@ public class DescriptorSetLayout {
     }
 
     public void free() {
-        VK13.vkDestroyDescriptorSetLayout(device, handle, null);
+        VK10.vkDestroyDescriptorSetLayout(device, handle, null);
     }
 }

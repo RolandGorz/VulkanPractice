@@ -4,7 +4,7 @@ import com.google.common.collect.ImmutableList;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.KHRSwapchain;
-import org.lwjgl.vulkan.VK13;
+import org.lwjgl.vulkan.VK10;
 import org.lwjgl.vulkan.VkComponentMapping;
 import org.lwjgl.vulkan.VkDevice;
 import org.lwjgl.vulkan.VkImageSubresourceRange;
@@ -30,12 +30,12 @@ public class SwapChainImages {
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             IntBuffer imageCount = memoryStack.mallocInt(1);
             int result = KHRSwapchain.vkGetSwapchainImagesKHR(device, swapChainPointer, imageCount, null);
-            if (result != VK13.VK_SUCCESS) {
+            if (result != VK10.VK_SUCCESS) {
                 throw new IllegalStateException(String.format("Failed to get count of swap chain images. Error code: %d", result));
             }
             LongBuffer imagePointers = memoryStack.mallocLong(imageCount.get(0));
             int result2 = KHRSwapchain.vkGetSwapchainImagesKHR(device, swapChainPointer, imageCount, imagePointers);
-            if (result2 != VK13.VK_SUCCESS) {
+            if (result2 != VK10.VK_SUCCESS) {
                 throw new IllegalStateException(String.format("Failed to get swap chain images. Error code: %d", result2));
             }
             ImmutableList.Builder<Long> builder = ImmutableList.builder();
@@ -50,13 +50,13 @@ public class SwapChainImages {
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             VkComponentMapping vkComponentMapping = VkComponentMapping.calloc(memoryStack);
             vkComponentMapping
-                    .r(VK13.VK_COMPONENT_SWIZZLE_IDENTITY)
-                    .g(VK13.VK_COMPONENT_SWIZZLE_IDENTITY)
-                    .b(VK13.VK_COMPONENT_SWIZZLE_IDENTITY)
-                    .a(VK13.VK_COMPONENT_SWIZZLE_IDENTITY);
+                    .r(VK10.VK_COMPONENT_SWIZZLE_IDENTITY)
+                    .g(VK10.VK_COMPONENT_SWIZZLE_IDENTITY)
+                    .b(VK10.VK_COMPONENT_SWIZZLE_IDENTITY)
+                    .a(VK10.VK_COMPONENT_SWIZZLE_IDENTITY);
             VkImageSubresourceRange vkImageSubresourceRange = VkImageSubresourceRange.calloc(memoryStack);
             vkImageSubresourceRange
-                    .aspectMask(VK13.VK_IMAGE_ASPECT_COLOR_BIT)
+                    .aspectMask(VK10.VK_IMAGE_ASPECT_COLOR_BIT)
                     .baseMipLevel(0)
                     .levelCount(1)
                     .baseArrayLayer(0)
@@ -66,14 +66,14 @@ public class SwapChainImages {
                 LongBuffer imageViewPointer = MemoryUtil.memAllocLong(1);
                 VkImageViewCreateInfo vkImageViewCreateInfo = VkImageViewCreateInfo.calloc(memoryStack);
                 vkImageViewCreateInfo
-                        .sType(VK13.VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO)
+                        .sType(VK10.VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO)
                         .image(swapChainImagePointers.get(i))
-                        .viewType(VK13.VK_IMAGE_VIEW_TYPE_2D)
+                        .viewType(VK10.VK_IMAGE_VIEW_TYPE_2D)
                         .format(swapChain.getSurfaceFormat().format())
                         .components(vkComponentMapping)
                         .subresourceRange(vkImageSubresourceRange);
-                int result = VK13.vkCreateImageView(device, vkImageViewCreateInfo, null, imageViewPointer);
-                if (result != VK13.VK_SUCCESS) {
+                int result = VK10.vkCreateImageView(device, vkImageViewCreateInfo, null, imageViewPointer);
+                if (result != VK10.VK_SUCCESS) {
                     throw new IllegalStateException(String.format("Failed to create image for swap chain image in position %d of the list of swap chain images. Error code %d",
                             i, result));
                 }
@@ -89,7 +89,7 @@ public class SwapChainImages {
 
     public void free() {
         for (LongBuffer x : swapChainImageViewPointers) {
-            VK13.vkDestroyImageView(device, x.get(0), null);
+            VK10.vkDestroyImageView(device, x.get(0), null);
             MemoryUtil.memFree(x);
         }
     }

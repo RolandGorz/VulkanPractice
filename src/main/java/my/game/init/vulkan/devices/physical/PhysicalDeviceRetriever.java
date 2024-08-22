@@ -6,7 +6,7 @@ import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.KHRSurface;
 import org.lwjgl.vulkan.KHRSwapchain;
-import org.lwjgl.vulkan.VK13;
+import org.lwjgl.vulkan.VK10;
 import org.lwjgl.vulkan.VkInstance;
 import org.lwjgl.vulkan.VkPhysicalDevice;
 import org.lwjgl.vulkan.VkPhysicalDeviceFeatures;
@@ -60,16 +60,16 @@ public class PhysicalDeviceRetriever {
         List<VkPhysicalDevice> vkPhysicalDeviceList = new ArrayList<>();
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             IntBuffer deviceCount = memoryStack.mallocInt(1);
-            int result = VK13.vkEnumeratePhysicalDevices(vkInstance, deviceCount, null);
-            if (result == VK13.VK_SUCCESS) {
+            int result = VK10.vkEnumeratePhysicalDevices(vkInstance, deviceCount, null);
+            if (result == VK10.VK_SUCCESS) {
                 System.out.println("vkEnumeratePhysicalDevices returned success");
             } else {
                 System.out.printf("vkEnumeratePhysicalDevices returned failure code %d%n", result);
             }
             System.out.printf("%d physical devices%n", deviceCount.get(0));
             PointerBuffer devicesPointer = memoryStack.mallocPointer(deviceCount.get(0));
-            int result2 = VK13.vkEnumeratePhysicalDevices(vkInstance, deviceCount, devicesPointer);
-            if (result2 == VK13.VK_SUCCESS) {
+            int result2 = VK10.vkEnumeratePhysicalDevices(vkInstance, deviceCount, devicesPointer);
+            if (result2 == VK10.VK_SUCCESS) {
                 System.out.println("vkEnumeratePhysicalDevices returned success");
             } else {
                 System.out.printf("vkEnumeratePhysicalDevices returned failure code %d%n", result2);
@@ -93,12 +93,12 @@ public class PhysicalDeviceRetriever {
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             VkPhysicalDeviceProperties vkPhysicalDeviceProperties = VkPhysicalDeviceProperties.malloc(memoryStack);
             VkPhysicalDeviceFeatures vkPhysicalDeviceFeatures = VkPhysicalDeviceFeatures.malloc(memoryStack);
-            VK13.vkGetPhysicalDeviceProperties(vkPhysicalDevice, vkPhysicalDeviceProperties);
-            VK13.vkGetPhysicalDeviceFeatures(vkPhysicalDevice, vkPhysicalDeviceFeatures);
+            VK10.vkGetPhysicalDeviceProperties(vkPhysicalDevice, vkPhysicalDeviceProperties);
+            VK10.vkGetPhysicalDeviceFeatures(vkPhysicalDevice, vkPhysicalDeviceFeatures);
             System.out.printf("physical device \"%s\" geometry shader availability: %b%n",
                     vkPhysicalDeviceProperties.deviceNameString(), vkPhysicalDeviceFeatures.geometryShader());
             // Discrete GPUs have a significant performance advantage
-            if (vkPhysicalDeviceProperties.deviceType() == VK13.VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
+            if (vkPhysicalDeviceProperties.deviceType() == VK10.VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
                 score += 1000;
             }
             // Maximum possible size of textures affects graphics quality
@@ -115,9 +115,9 @@ public class PhysicalDeviceRetriever {
     private void getFamilyIndexes(VkPhysicalDevice physicalDevice, WindowSurface windowSurface, ImmutablePhysicalDeviceInformation.Builder builder) {
         try (MemoryStack stack = MemoryStack.stackPush()) {
             IntBuffer queueFamilyCount = stack.mallocInt(1);
-            VK13.vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, queueFamilyCount, null);
+            VK10.vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, queueFamilyCount, null);
             VkQueueFamilyProperties.Buffer queueFamilyProperties = VkQueueFamilyProperties.malloc(queueFamilyCount.get(0), stack);
-            VK13.vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, queueFamilyCount, queueFamilyProperties);
+            VK10.vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, queueFamilyCount, queueFamilyProperties);
             boolean foundSharedPresentationGraphicsQueue = false;
             boolean foundDedicatedTransferQueue = false;
             for (int i = 0; i < queueFamilyProperties.capacity(); ++i) {
@@ -136,7 +136,7 @@ public class PhysicalDeviceRetriever {
     }
 
     private boolean queueSupportsGraphics(VkQueueFamilyProperties.Buffer queueFamilyProperties, int index, ImmutablePhysicalDeviceInformation.Builder builder) {
-        if ((queueFamilyProperties.get(index).queueFlags() & VK13.VK_QUEUE_GRAPHICS_BIT) == VK13.VK_QUEUE_GRAPHICS_BIT) {
+        if ((queueFamilyProperties.get(index).queueFlags() & VK10.VK_QUEUE_GRAPHICS_BIT) == VK10.VK_QUEUE_GRAPHICS_BIT) {
             builder.graphicsQueueIndex(index);
             return true;
         }
@@ -146,10 +146,10 @@ public class PhysicalDeviceRetriever {
     private boolean queueSupportsPresentation(MemoryStack stack, VkPhysicalDevice physicalDevice, int index, WindowSurface windowSurface, ImmutablePhysicalDeviceInformation.Builder builder) {
         IntBuffer presentationSupported = stack.mallocInt(1);
         int result = KHRSurface.vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, index, windowSurface.getWindowSurfaceHandle(), presentationSupported);
-        if (result != VK13.VK_SUCCESS) {
+        if (result != VK10.VK_SUCCESS) {
             throw new IllegalStateException(String.format("Error occurred when trying to determine Physical Device Surface Support. Error code : %d", result));
         }
-        if (presentationSupported.get(0) == VK13.VK_TRUE) {
+        if (presentationSupported.get(0) == VK10.VK_TRUE) {
             builder.presentationQueueIndex(index);
             return true;
         }
@@ -157,8 +157,8 @@ public class PhysicalDeviceRetriever {
     }
 
     private boolean queueIsDedicatedForTransfer(VkQueueFamilyProperties.Buffer queueFamilyProperties, int index, ImmutablePhysicalDeviceInformation.Builder builder) {
-        if (((queueFamilyProperties.get(index).queueFlags() & VK13.VK_QUEUE_GRAPHICS_BIT) != VK13.VK_QUEUE_GRAPHICS_BIT) &&
-                ((queueFamilyProperties.get(index).queueFlags() & VK13.VK_QUEUE_TRANSFER_BIT) == VK13.VK_QUEUE_TRANSFER_BIT)) {
+        if (((queueFamilyProperties.get(index).queueFlags() & VK10.VK_QUEUE_GRAPHICS_BIT) != VK10.VK_QUEUE_GRAPHICS_BIT) &&
+                ((queueFamilyProperties.get(index).queueFlags() & VK10.VK_QUEUE_TRANSFER_BIT) == VK10.VK_QUEUE_TRANSFER_BIT)) {
             builder.transferQueueIndex(index);
             return true;
         }

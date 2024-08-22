@@ -1,7 +1,7 @@
 package my.game.init.vulkan.pipeline.shaders;
 
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.vulkan.VK13;
+import org.lwjgl.vulkan.VK10;
 import org.lwjgl.vulkan.VkDevice;
 import org.lwjgl.vulkan.VkShaderModuleCreateInfo;
 
@@ -16,15 +16,15 @@ public class ShaderModule {
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             VkShaderModuleCreateInfo shaderModuleCreateInfo = VkShaderModuleCreateInfo.calloc(memoryStack);
             shaderModuleCreateInfo
-                    .sType(VK13.VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO)
+                    .sType(VK10.VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO)
                     .pCode(loadedShader.getShaderCode());
             LongBuffer shaderModulePointerBuffer = memoryStack.mallocLong(1);
-            int result = VK13.vkCreateShaderModule(
+            int result = VK10.vkCreateShaderModule(
                     device,
                     shaderModuleCreateInfo,
                     null,
                     shaderModulePointerBuffer);
-            if (result != VK13.VK_SUCCESS) {
+            if (result != VK10.VK_SUCCESS) {
                 throw new IllegalStateException(String.format("Failed to create shader for %s. Error code %d", loadedShader.getFileName(), result));
             }
             shaderModulePointer = shaderModulePointerBuffer.get(0);
@@ -36,6 +36,6 @@ public class ShaderModule {
     }
 
     public void free() {
-        VK13.vkDestroyShaderModule(device, shaderModulePointer, null);
+        VK10.vkDestroyShaderModule(device, shaderModulePointer, null);
     }
 }

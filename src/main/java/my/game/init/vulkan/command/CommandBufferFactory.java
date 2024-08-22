@@ -3,7 +3,7 @@ package my.game.init.vulkan.command;
 import com.google.common.collect.ImmutableList;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.vulkan.VK13;
+import org.lwjgl.vulkan.VK10;
 import org.lwjgl.vulkan.VkCommandBuffer;
 import org.lwjgl.vulkan.VkCommandBufferAllocateInfo;
 import org.lwjgl.vulkan.VkDevice;
@@ -23,14 +23,14 @@ public class CommandBufferFactory {
             ImmutableList.Builder<CommandBuffer> commandBuffersBuilder = ImmutableList.builder();
             VkCommandBufferAllocateInfo commandBufferAllocateInfo = VkCommandBufferAllocateInfo.calloc(memoryStack);
             commandBufferAllocateInfo
-                    .sType(VK13.VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO)
+                    .sType(VK10.VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO)
                     .commandPool(commandPool.getCommandPoolHandle())
-                    .level(VK13.VK_COMMAND_BUFFER_LEVEL_PRIMARY)
+                    .level(VK10.VK_COMMAND_BUFFER_LEVEL_PRIMARY)
                     .commandBufferCount(commandBufferCount);
             PointerBuffer commandBuffersPointerBuffer = memoryStack.mallocPointer(commandBufferCount);
-            int result = VK13.vkAllocateCommandBuffers(commandPool.getVkDevice(),
+            int result = VK10.vkAllocateCommandBuffers(commandPool.getVkDevice(),
                     commandBufferAllocateInfo, commandBuffersPointerBuffer);
-            if (result != VK13.VK_SUCCESS) {
+            if (result != VK10.VK_SUCCESS) {
                 throw new IllegalStateException(String.format("Failed to create command buffer. Error code: %d", result));
             }
             for (int i = 0; i < commandBuffersPointerBuffer.capacity(); ++i) {
@@ -71,7 +71,7 @@ public class CommandBufferFactory {
                     pointerBuffer.put(vkCommandBuffer);
                 }
                 pointerBuffer.flip();
-                VK13.vkFreeCommandBuffers(deviceBucket.getKey(), commandPoolBucket.getKey(), pointerBuffer);
+                VK10.vkFreeCommandBuffers(deviceBucket.getKey(), commandPoolBucket.getKey(), pointerBuffer);
             }
         }
     }

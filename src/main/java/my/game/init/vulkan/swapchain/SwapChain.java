@@ -9,7 +9,7 @@ import org.lwjgl.glfw.GLFW;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.KHRSurface;
 import org.lwjgl.vulkan.KHRSwapchain;
-import org.lwjgl.vulkan.VK13;
+import org.lwjgl.vulkan.VK10;
 import org.lwjgl.vulkan.VkDevice;
 import org.lwjgl.vulkan.VkExtent2D;
 import org.lwjgl.vulkan.VkSurfaceCapabilitiesKHR;
@@ -50,7 +50,7 @@ public class SwapChain {
                     .imageColorSpace(surfaceFormat.colorSpace())
                     .imageExtent(swapChainExtent)
                     .imageArrayLayers(1)
-                    .imageUsage(VK13.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+                    .imageUsage(VK10.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
             if (physicalDeviceInformation.uniqueQueueIndexes().size() > 1) {
                 IntBuffer queueFamilyIndexesPointer = memoryStack.mallocInt(physicalDeviceInformation.uniqueQueueIndexes().size());
                 for (Integer x : physicalDeviceInformation.uniqueQueueIndexes()) {
@@ -58,11 +58,11 @@ public class SwapChain {
                 }
                 queueFamilyIndexesPointer.flip();
                 vkSwapchainCreateInfoKHR
-                        .imageSharingMode(VK13.VK_SHARING_MODE_CONCURRENT)
+                        .imageSharingMode(VK10.VK_SHARING_MODE_CONCURRENT)
                         .pQueueFamilyIndices(queueFamilyIndexesPointer);
             } else {
                 vkSwapchainCreateInfoKHR
-                        .imageSharingMode(VK13.VK_SHARING_MODE_EXCLUSIVE)
+                        .imageSharingMode(VK10.VK_SHARING_MODE_EXCLUSIVE)
                         .pQueueFamilyIndices(null);
             }
             vkSwapchainCreateInfoKHR
@@ -70,14 +70,14 @@ public class SwapChain {
                     .compositeAlpha(KHRSurface.VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR)
                     .presentMode(presentMode)
                     .clipped(true)
-                    .oldSwapchain(VK13.VK_NULL_HANDLE);
+                    .oldSwapchain(VK10.VK_NULL_HANDLE);
             LongBuffer swapChainPointerBuffer = memoryStack.mallocLong(1);
             int result = KHRSwapchain.vkCreateSwapchainKHR(
                     device,
                     vkSwapchainCreateInfoKHR,
                     null,
                     swapChainPointerBuffer);
-            if (result != VK13.VK_SUCCESS) {
+            if (result != VK10.VK_SUCCESS) {
                 throw new IllegalStateException(String.format("Failed to create swap chain. Error code: %d", result));
             }
             return swapChainPointerBuffer.get(0);
@@ -99,7 +99,7 @@ public class SwapChain {
     private VkSurfaceFormatKHR chooseSwapSurfaceFormat(VkSurfaceFormatKHR.Buffer formats) {
         for (int i = 0; i < formats.capacity(); ++i) {
             VkSurfaceFormatKHR curr = formats.get(i);
-            if (curr.format() == VK13.VK_FORMAT_B8G8R8A8_SRGB && curr.colorSpace() == KHRSurface.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+            if (curr.format() == VK10.VK_FORMAT_B8G8R8A8_SRGB && curr.colorSpace() == KHRSurface.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
                 return curr;
             }
         }

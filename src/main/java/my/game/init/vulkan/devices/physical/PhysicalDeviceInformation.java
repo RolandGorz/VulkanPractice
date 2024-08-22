@@ -4,7 +4,7 @@ import com.google.common.collect.ImmutableSet;
 import my.game.init.window.WindowSurface;
 import org.immutables.value.Value;
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.vulkan.VK13;
+import org.lwjgl.vulkan.VK10;
 import org.lwjgl.vulkan.VkExtensionProperties;
 import org.lwjgl.vulkan.VkPhysicalDevice;
 
@@ -43,14 +43,14 @@ public abstract class PhysicalDeviceInformation implements Comparable<PhysicalDe
         ImmutableSet.Builder<String> supportedExtensions = ImmutableSet.builder();
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             IntBuffer deviceExtensionPropertiesCount = memoryStack.mallocInt(1);
-            int result = VK13.vkEnumerateDeviceExtensionProperties(physicalDevice(), (String) null, deviceExtensionPropertiesCount, null);
-            if (result != VK13.VK_SUCCESS) {
+            int result = VK10.vkEnumerateDeviceExtensionProperties(physicalDevice(), (String) null, deviceExtensionPropertiesCount, null);
+            if (result != VK10.VK_SUCCESS) {
                 throw new IllegalStateException(String.format("Failed to enumerate device extension properties. Error code: %d5", result));
             }
             System.out.printf("Found %d device extension properties%n", deviceExtensionPropertiesCount.get(0));
             VkExtensionProperties.Buffer vkExtensionProperties = VkExtensionProperties.malloc(deviceExtensionPropertiesCount.get(0), memoryStack);
-            int result2 = VK13.vkEnumerateDeviceExtensionProperties(physicalDevice(), (String) null, deviceExtensionPropertiesCount, vkExtensionProperties);
-            if (result2 != VK13.VK_SUCCESS) {
+            int result2 = VK10.vkEnumerateDeviceExtensionProperties(physicalDevice(), (String) null, deviceExtensionPropertiesCount, vkExtensionProperties);
+            if (result2 != VK10.VK_SUCCESS) {
                 throw new IllegalStateException(String.format("Failed to enumerate device extension properties. Error code: %d5", result2));
             }
             for (int i = 0; i < vkExtensionProperties.capacity(); ++i) {

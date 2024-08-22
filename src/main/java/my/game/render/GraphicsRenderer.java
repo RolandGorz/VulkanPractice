@@ -29,7 +29,7 @@ import org.lwjgl.glfw.GLFW;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.KHRSwapchain;
-import org.lwjgl.vulkan.VK13;
+import org.lwjgl.vulkan.VK10;
 import org.lwjgl.vulkan.VkClearColorValue;
 import org.lwjgl.vulkan.VkClearValue;
 import org.lwjgl.vulkan.VkCommandBuffer;
@@ -117,25 +117,25 @@ public class GraphicsRenderer {
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             VkSemaphoreCreateInfo semaphoreCreateInfo = VkSemaphoreCreateInfo.calloc(memoryStack);
             semaphoreCreateInfo
-                    .sType(VK13.VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO);
+                    .sType(VK10.VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO);
             VkFenceCreateInfo fenceCreateInfo = VkFenceCreateInfo.calloc(memoryStack);
             fenceCreateInfo
-                    .sType(VK13.VK_STRUCTURE_TYPE_FENCE_CREATE_INFO)
-                    .flags(VK13.VK_FENCE_CREATE_SIGNALED_BIT);
+                    .sType(VK10.VK_STRUCTURE_TYPE_FENCE_CREATE_INFO)
+                    .flags(VK10.VK_FENCE_CREATE_SIGNALED_BIT);
             for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
                 LongBuffer imageAvailableSemaphore = MemoryUtil.memAllocLong(1);
-                int result = VK13.vkCreateSemaphore(logicalDevice.vkDevice(), semaphoreCreateInfo, null, imageAvailableSemaphore);
-                if (result != VK13.VK_SUCCESS) {
+                int result = VK10.vkCreateSemaphore(logicalDevice.vkDevice(), semaphoreCreateInfo, null, imageAvailableSemaphore);
+                if (result != VK10.VK_SUCCESS) {
                     throw new IllegalStateException(String.format("Failed to create semaphore. Error code: %d", result));
                 }
                 LongBuffer renderFinishedSemaphore = MemoryUtil.memAllocLong(1);
-                int result2 = VK13.vkCreateSemaphore(logicalDevice.vkDevice(), semaphoreCreateInfo, null, renderFinishedSemaphore);
-                if (result2 != VK13.VK_SUCCESS) {
+                int result2 = VK10.vkCreateSemaphore(logicalDevice.vkDevice(), semaphoreCreateInfo, null, renderFinishedSemaphore);
+                if (result2 != VK10.VK_SUCCESS) {
                     throw new IllegalStateException(String.format("Failed to create semaphore. Error code: %d", result2));
                 }
                 LongBuffer inFlightFence = MemoryUtil.memAllocLong(1);
-                int result3 = VK13.vkCreateFence(logicalDevice.vkDevice(), fenceCreateInfo, null, inFlightFence);
-                if (result3 != VK13.VK_SUCCESS) {
+                int result3 = VK10.vkCreateFence(logicalDevice.vkDevice(), fenceCreateInfo, null, inFlightFence);
+                if (result3 != VK10.VK_SUCCESS) {
                     throw new IllegalStateException(String.format("Failed to create fence. Error code: %d", result3));
                 }
                 imageAvailableSemaphoresBuilder.add(imageAvailableSemaphore);
@@ -168,29 +168,29 @@ public class GraphicsRenderer {
 
     public void drawFrame() {
         VkDevice device = logicalDevice.vkDevice();
-        VK13.vkWaitForFences(device, inFlightFences.get(currentFrame), true, VulkanUtil.UINT64_MAX);
+        VK10.vkWaitForFences(device, inFlightFences.get(currentFrame), true, VulkanUtil.UINT64_MAX);
         uniformBuffers.get(currentFrame).update(swapChain.getSwapChainExtent());
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             IntBuffer imageIndex = memoryStack.mallocInt(1);
             int acquireNextImageResult = KHRSwapchain.vkAcquireNextImageKHR(device, swapChain.getSwapChainPointer(), VulkanUtil.UINT64_MAX,
-                    imageAvailableSemaphores.get(currentFrame).get(0), VK13.VK_NULL_HANDLE, imageIndex);
+                    imageAvailableSemaphores.get(currentFrame).get(0), VK10.VK_NULL_HANDLE, imageIndex);
             if (acquireNextImageResult == KHRSwapchain.VK_ERROR_OUT_OF_DATE_KHR) {
                 recreateSwapChain(memoryStack);
                 return;
-            } else if (acquireNextImageResult != VK13.VK_SUCCESS && acquireNextImageResult != KHRSwapchain.VK_SUBOPTIMAL_KHR) {
+            } else if (acquireNextImageResult != VK10.VK_SUCCESS && acquireNextImageResult != KHRSwapchain.VK_SUBOPTIMAL_KHR) {
                 throw new IllegalStateException(String.format("Failed to acquire swap chain image! Error code: %d", acquireNextImageResult));
             }
             // Only reset the fence if we are submitting work otherwise vkWaitForFences will wait forever on a signal
             // that will never come.
-            VK13.vkResetFences(device, inFlightFences.get(currentFrame));
-            VK13.vkResetCommandBuffer(graphicsCommandBuffers.get(currentFrame).getVkCommandBuffer(), 0);
+            VK10.vkResetFences(device, inFlightFences.get(currentFrame));
+            VK10.vkResetCommandBuffer(graphicsCommandBuffers.get(currentFrame).getVkCommandBuffer(), 0);
             graphicsCommandBuffers.get(currentFrame)
                     .runCommand(0,
                             (vkCommandBuffer) ->
                                     recordCommandBuffer(imageIndex.get(0), swapChain, frameBuffers, vertexBuffer, indexBuffer, vkCommandBuffer));
 
             IntBuffer waitStages = memoryStack.mallocInt(1);
-            waitStages.put(VK13.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+            waitStages.put(VK10.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
             waitStages.flip();
 
             PointerBuffer commandBuffersPointer = memoryStack.mallocPointer(1);
@@ -199,15 +199,15 @@ public class GraphicsRenderer {
 
             VkSubmitInfo vkSubmitInfo = VkSubmitInfo.calloc(memoryStack);
             vkSubmitInfo
-                    .sType(VK13.VK_STRUCTURE_TYPE_SUBMIT_INFO)
+                    .sType(VK10.VK_STRUCTURE_TYPE_SUBMIT_INFO)
                     .pWaitSemaphores(imageAvailableSemaphores.get(currentFrame))
                     .waitSemaphoreCount(1)
                     .pWaitDstStageMask(waitStages)
                     .pCommandBuffers(commandBuffersPointer)
                     .pSignalSemaphores(renderFinishedSemaphores.get(currentFrame));
 
-            int result = VK13.vkQueueSubmit(logicalDevice.graphicsQueue().getVkQueue(), vkSubmitInfo, inFlightFences.get(currentFrame).get(0));
-            if (result != VK13.VK_SUCCESS) {
+            int result = VK10.vkQueueSubmit(logicalDevice.graphicsQueue().getVkQueue(), vkSubmitInfo, inFlightFences.get(currentFrame).get(0));
+            if (result != VK10.VK_SUCCESS) {
                 throw new IllegalStateException(String.format("Failed to submit draw command buffer. Error code: %d", result));
             }
 
@@ -225,7 +225,7 @@ public class GraphicsRenderer {
             int queuePresentResult = KHRSwapchain.vkQueuePresentKHR(logicalDevice.presentationQueue().getVkQueue(), presentInfo);
             if (queuePresentResult == KHRSwapchain.VK_ERROR_OUT_OF_DATE_KHR || queuePresentResult == KHRSwapchain.VK_SUBOPTIMAL_KHR || windowHandle.frameBufferResized()) {
                 recreateSwapChain(memoryStack);
-            } else if (queuePresentResult != VK13.VK_SUCCESS) {
+            } else if (queuePresentResult != VK10.VK_SUCCESS) {
                 throw new IllegalStateException(String.format("Failed to present swap chain image! Error code: %d", queuePresentResult));
             }
         }
@@ -235,7 +235,7 @@ public class GraphicsRenderer {
     public void recordCommandBuffer(int imageIndex, SwapChain swapChain, FrameBuffers frameBuffers, VertexBuffer vertexBuffer,
                                     IndexBuffer indexBuffer, VkCommandBuffer vkCommandBuffer) {
         beginRenderPass(imageIndex, swapChain, frameBuffers, vkCommandBuffer);
-        VK13.vkCmdBindPipeline(vkCommandBuffer, VK13.VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.getGraphicsPipelinePointer());
+        VK10.vkCmdBindPipeline(vkCommandBuffer, VK10.VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.getGraphicsPipelinePointer());
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             VkExtent2D swapChainExtent = swapChain
                     .getSwapChainExtent();
@@ -247,28 +247,28 @@ public class GraphicsRenderer {
                     .height(swapChainExtent.height())
                     .minDepth(0)
                     .maxDepth(1);
-            VK13.vkCmdSetViewport(vkCommandBuffer, 0, viewport);
+            VK10.vkCmdSetViewport(vkCommandBuffer, 0, viewport);
             VkRect2D.Buffer scissor = VkRect2D.calloc(1, memoryStack);
             scissor.offset()
                     .x(0)
                     .y(0);
             scissor.extent(swapChainExtent);
-            VK13.vkCmdSetScissor(vkCommandBuffer, 0, scissor);
+            VK10.vkCmdSetScissor(vkCommandBuffer, 0, scissor);
             LongBuffer vertices = memoryStack.mallocLong(1);
             vertices.put(vertexBuffer.getDestinationBuffer().getVulkanBufferHandle());
             vertices.flip();
             LongBuffer offsets = memoryStack.mallocLong(1);
             offsets.put(0);
             offsets.flip();
-            VK13.vkCmdBindVertexBuffers(vkCommandBuffer, 0, vertices, offsets);
-            VK13.vkCmdBindIndexBuffer(vkCommandBuffer, indexBuffer.getDestinationBuffer().getVulkanBufferHandle(), 0, VK13.VK_INDEX_TYPE_UINT16);
+            VK10.vkCmdBindVertexBuffers(vkCommandBuffer, 0, vertices, offsets);
+            VK10.vkCmdBindIndexBuffer(vkCommandBuffer, indexBuffer.getDestinationBuffer().getVulkanBufferHandle(), 0, VK10.VK_INDEX_TYPE_UINT16);
             LongBuffer currDescriptorSetBuffer = memoryStack.mallocLong(1);
             currDescriptorSetBuffer.put(descriptorSets.getDescriptorSetHandles().get(currentFrame));
             currDescriptorSetBuffer.flip();
-            VK13.vkCmdBindDescriptorSets(vkCommandBuffer, VK13.VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.getPipelineLayoutPointer(), 0, currDescriptorSetBuffer, null);
+            VK10.vkCmdBindDescriptorSets(vkCommandBuffer, VK10.VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.getPipelineLayoutPointer(), 0, currDescriptorSetBuffer, null);
         }
-        VK13.vkCmdDrawIndexed(vkCommandBuffer, indexBuffer.getStructEntriesCount(), 1, 0, 0, 0);
-        VK13.vkCmdEndRenderPass(vkCommandBuffer);
+        VK10.vkCmdDrawIndexed(vkCommandBuffer, indexBuffer.getStructEntriesCount(), 1, 0, 0, 0);
+        VK10.vkCmdEndRenderPass(vkCommandBuffer);
     }
 
     private void beginRenderPass(int imageIndex, SwapChain swapChain, FrameBuffers frameBuffers, VkCommandBuffer vkCommandBuffer) {
@@ -290,12 +290,12 @@ public class GraphicsRenderer {
                     .color(clearColorValue);
             VkRenderPassBeginInfo renderPassBeginInfo = VkRenderPassBeginInfo.calloc(memoryStack);
             renderPassBeginInfo
-                    .sType(VK13.VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO)
+                    .sType(VK10.VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO)
                     .renderPass(renderPass.getRenderPassPointer())
                     .framebuffer(frameBuffers.getSwapChainFrameBuffers().get(imageIndex))
                     .renderArea(renderArea)
                     .pClearValues(clearValue);
-            VK13.vkCmdBeginRenderPass(vkCommandBuffer, renderPassBeginInfo, VK13.VK_SUBPASS_CONTENTS_INLINE);
+            VK10.vkCmdBeginRenderPass(vkCommandBuffer, renderPassBeginInfo, VK10.VK_SUBPASS_CONTENTS_INLINE);
         }
     }
 
@@ -307,7 +307,7 @@ public class GraphicsRenderer {
             GLFW.glfwGetFramebufferSize(windowHandle.getWindowHandlePointer(), width, height);
             GLFW.glfwWaitEvents();
         }
-        VK13.vkDeviceWaitIdle(logicalDevice.vkDevice());
+        VK10.vkDeviceWaitIdle(logicalDevice.vkDevice());
         cleanupSwapChain();
         /*
         Note that we don’t recreate the renderpass here for simplicity.
@@ -340,15 +340,15 @@ public class GraphicsRenderer {
         indexBuffer.free();
         vertexBuffer.free();
         for (LongBuffer x : inFlightFences) {
-            VK13.vkDestroyFence(logicalDevice.vkDevice(), x.get(0), null);
+            VK10.vkDestroyFence(logicalDevice.vkDevice(), x.get(0), null);
             MemoryUtil.memFree(x);
         }
         for (LongBuffer x : renderFinishedSemaphores) {
-            VK13.vkDestroySemaphore(logicalDevice.vkDevice(), x.get(0), null);
+            VK10.vkDestroySemaphore(logicalDevice.vkDevice(), x.get(0), null);
             MemoryUtil.memFree(x);
         }
         for (LongBuffer x : imageAvailableSemaphores) {
-            VK13.vkDestroySemaphore(logicalDevice.vkDevice(), x.get(0), null);
+            VK10.vkDestroySemaphore(logicalDevice.vkDevice(), x.get(0), null);
             MemoryUtil.memFree(x);
         }
         graphicsPipeline.free();

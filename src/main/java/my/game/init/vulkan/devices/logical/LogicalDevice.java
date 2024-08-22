@@ -7,7 +7,7 @@ import my.game.init.vulkan.devices.physical.PhysicalDeviceRetriever;
 import org.immutables.value.Value;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.vulkan.VK13;
+import org.lwjgl.vulkan.VK10;
 import org.lwjgl.vulkan.VkDevice;
 import org.lwjgl.vulkan.VkDeviceCreateInfo;
 import org.lwjgl.vulkan.VkDeviceQueueCreateInfo;
@@ -34,7 +34,7 @@ public abstract class LogicalDevice {
             VkDeviceQueueCreateInfo.Buffer vkDeviceQueueCreateInfos = VkDeviceQueueCreateInfo.calloc(uniqueIndexes.size(), memoryStack);
             for (Integer index : uniqueIndexes) {
                 VkDeviceQueueCreateInfo.Buffer info = VkDeviceQueueCreateInfo.calloc(1, memoryStack);
-                info.sType(VK13.VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO)
+                info.sType(VK10.VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO)
                         .queueFamilyIndex(index)
                         .pQueuePriorities(queuePriorities);
                 vkDeviceQueueCreateInfos.put(info);
@@ -53,13 +53,13 @@ public abstract class LogicalDevice {
             VkPhysicalDeviceFeatures vkPhysicalDeviceFeatures = VkPhysicalDeviceFeatures.calloc(memoryStack);
             VkDeviceCreateInfo vkDeviceCreateInfo = VkDeviceCreateInfo.calloc(memoryStack);
             vkDeviceCreateInfo
-                    .sType(VK13.VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO)
+                    .sType(VK10.VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO)
                     .pQueueCreateInfos(vkDeviceQueueCreateInfos)
                     .pEnabledFeatures(vkPhysicalDeviceFeatures)
                     .ppEnabledExtensionNames(requiredDeviceExtensions);
             PointerBuffer logicalDevice = memoryStack.mallocPointer(1);
-            int result = VK13.vkCreateDevice(physicalDevice().physicalDeviceInformation().physicalDevice(), vkDeviceCreateInfo, null, logicalDevice);
-            if (result != VK13.VK_SUCCESS) {
+            int result = VK10.vkCreateDevice(physicalDevice().physicalDeviceInformation().physicalDevice(), vkDeviceCreateInfo, null, logicalDevice);
+            if (result != VK10.VK_SUCCESS) {
                 throw new RuntimeException(String.format("Failed to create device. Error code: %s", result));
             }
             return new VkDevice(logicalDevice.get(), physicalDevice().physicalDeviceInformation().physicalDevice(), vkDeviceCreateInfo);
@@ -82,6 +82,6 @@ public abstract class LogicalDevice {
     }
 
     public void free() {
-        VK13.vkDestroyDevice(vkDevice(), null);
+        VK10.vkDestroyDevice(vkDevice(), null);
     }
 }

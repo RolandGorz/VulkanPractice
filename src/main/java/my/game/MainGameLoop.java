@@ -12,7 +12,7 @@ import my.game.init.window.WindowHandle;
 import my.game.init.window.WindowSurface;
 import my.game.render.GraphicsRenderer;
 import org.lwjgl.glfw.GLFW;
-import org.lwjgl.vulkan.VK13;
+import org.lwjgl.vulkan.VK10;
 
 public class MainGameLoop {
     private final WindowHandle windowHandle;
@@ -60,7 +60,7 @@ public class MainGameLoop {
     }
 
     private void destroy() {
-        VK13.vkDeviceWaitIdle(logicalDevice.vkDevice());
+        VK10.vkDeviceWaitIdle(logicalDevice.vkDevice());
         graphicsRenderer.free();
         transferCommandPool.free();
         graphicsCommandPool.free();

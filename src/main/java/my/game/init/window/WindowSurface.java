@@ -3,7 +3,7 @@ package my.game.init.window;
 import org.lwjgl.glfw.GLFWVulkan;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.KHRSurface;
-import org.lwjgl.vulkan.VK13;
+import org.lwjgl.vulkan.VK10;
 import org.lwjgl.vulkan.VkInstance;
 
 import java.nio.LongBuffer;
@@ -18,7 +18,7 @@ public class WindowSurface {
             LongBuffer longBuffer = memoryStack.mallocLong(1);
             int result = GLFWVulkan.glfwCreateWindowSurface(vkInstance, windowHandle.getWindowHandlePointer(), null,
                     longBuffer);
-            if (result != VK13.VK_SUCCESS) {
+            if (result != VK10.VK_SUCCESS) {
                 throw new IllegalStateException(String.format("Failed to create window surface with error code %d", result));
             }
             windowSurfaceHandle = longBuffer.get(0);

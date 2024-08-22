@@ -2,7 +2,7 @@ package my.game.init.vulkan.devices.logical.queue;
 
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.vulkan.VK13;
+import org.lwjgl.vulkan.VK10;
 import org.lwjgl.vulkan.VkDevice;
 import org.lwjgl.vulkan.VkQueue;
 
@@ -15,7 +15,7 @@ public abstract class VulkanQueue {
         this.queueIndex = queueIndex;
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             PointerBuffer vulkanQueue = memoryStack.mallocPointer(1);
-            VK13.vkGetDeviceQueue(vkDevice,
+            VK10.vkGetDeviceQueue(vkDevice,
                     queueIndex, 0, vulkanQueue);
             vkQueue = new VkQueue(vulkanQueue.get(0), vkDevice);
         }

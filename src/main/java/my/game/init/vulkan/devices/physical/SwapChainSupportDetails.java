@@ -4,7 +4,7 @@ import my.game.init.window.WindowSurface;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.KHRSurface;
-import org.lwjgl.vulkan.VK13;
+import org.lwjgl.vulkan.VK10;
 import org.lwjgl.vulkan.VkPhysicalDevice;
 import org.lwjgl.vulkan.VkSurfaceCapabilitiesKHR;
 import org.lwjgl.vulkan.VkSurfaceFormatKHR;
@@ -54,7 +54,7 @@ public class SwapChainSupportDetails {
                 physicalDevice,
                 windowSurface.getWindowSurfaceHandle(),
                 capabilities);
-        if (result != VK13.VK_SUCCESS) {
+        if (result != VK10.VK_SUCCESS) {
             throw new IllegalStateException(String.format("Failed to get physical device surface capabilities. Error code: %d", result));
         }
     }
@@ -65,7 +65,7 @@ public class SwapChainSupportDetails {
                 windowSurface.getWindowSurfaceHandle(),
                 formatsCount,
                 null);
-        if (result != VK13.VK_SUCCESS) {
+        if (result != VK10.VK_SUCCESS) {
             throw new IllegalStateException(String.format("Failed to get physical device surface formats count. Error code: %d", result));
         }
     }
@@ -79,7 +79,7 @@ public class SwapChainSupportDetails {
                 windowSurface.getWindowSurfaceHandle(),
                 formatsCount,
                 formatsBuffer);
-        if (result != VK13.VK_SUCCESS) {
+        if (result != VK10.VK_SUCCESS) {
             throw new IllegalStateException(String.format("Failed to get physical device surface formats. Error code: %d", result));
         }
     }
@@ -90,7 +90,7 @@ public class SwapChainSupportDetails {
                 windowSurface.getWindowSurfaceHandle(),
                 presentModesCount,
                 null);
-        if (result != VK13.VK_SUCCESS) {
+        if (result != VK10.VK_SUCCESS) {
             throw new IllegalStateException(String.format("Failed to get physical device surface present modes count. Error code: %d", result));
         }
     }
@@ -101,7 +101,7 @@ public class SwapChainSupportDetails {
                 windowSurface.getWindowSurfaceHandle(),
                 presentModesCount,
                 presentModes);
-        if (result != VK13.VK_SUCCESS) {
+        if (result != VK10.VK_SUCCESS) {
             throw new IllegalStateException(String.format("Failed to get physical device surface present modes. Error code: %d", result));
         }
     }

@@ -4,7 +4,7 @@ import my.game.init.vulkan.struct.UniformBufferObject;
 import org.joml.Matrix4f;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.GLFW;
-import org.lwjgl.vulkan.VK13;
+import org.lwjgl.vulkan.VK10;
 import org.lwjgl.vulkan.VkDevice;
 import org.lwjgl.vulkan.VkExtent2D;
 
@@ -17,8 +17,8 @@ public class UniformBuffer {
     private static final int BUFFER_SIZE = UniformBufferObject.SIZE;
     public UniformBuffer(VkDevice device) {
         this.uniformBufferObject = new UniformBufferObject(new Matrix4f());
-        vulkanBuffer = new VulkanBuffer(BUFFER_SIZE, device, VK13.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                VK13.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK13.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        vulkanBuffer = new VulkanBuffer(BUFFER_SIZE, device, VK10.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                VK10.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK10.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
         uniformBufferMapped = vulkanBuffer.persistentMemoryMap();
     }
 

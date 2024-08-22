@@ -6,7 +6,7 @@ import org.lwjgl.glfw.GLFWVulkan;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.KHRGetPhysicalDeviceProperties2;
-import org.lwjgl.vulkan.VK13;
+import org.lwjgl.vulkan.VK10;
 import org.lwjgl.vulkan.VkApplicationInfo;
 import org.lwjgl.vulkan.VkExtensionProperties;
 import org.lwjgl.vulkan.VkInstance;
@@ -32,15 +32,15 @@ public class VulkanInstance {
         //and can result in a crash
         VkApplicationInfo appInfo = VkApplicationInfo.calloc(memoryStack);
 
-        appInfo.sType(VK13.VK_STRUCTURE_TYPE_APPLICATION_INFO)
+        appInfo.sType(VK10.VK_STRUCTURE_TYPE_APPLICATION_INFO)
                 .pApplicationName(MemoryStack.stackASCII("Hello Triangle"))
-                .applicationVersion(VK13.VK_MAKE_VERSION(1, 0, 0))
+                .applicationVersion(VK10.VK_MAKE_VERSION(1, 0, 0))
                 .pEngineName(MemoryStack.stackASCII("No Engine"))
-                .engineVersion(VK13.VK_MAKE_VERSION(1, 0, 0))
-                .apiVersion(VK13.VK_API_VERSION_1_0);
+                .engineVersion(VK10.VK_MAKE_VERSION(1, 0, 0))
+                .apiVersion(VK10.VK_API_VERSION_1_0);
 
         VkInstanceCreateInfo vkInstanceCreateInfo = VkInstanceCreateInfo.calloc(memoryStack);
-        vkInstanceCreateInfo.sType(VK13.VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO)
+        vkInstanceCreateInfo.sType(VK10.VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO)
                 .pApplicationInfo(appInfo)
                 .ppEnabledExtensionNames(getExtensions(memoryStack));
 
@@ -49,8 +49,8 @@ public class VulkanInstance {
 
     protected void createVulkanInstance(final MemoryStack memoryStack, final VkInstanceCreateInfo vkInstanceCreateInfo) {
         PointerBuffer vulkanInstancePointer = memoryStack.mallocPointer(1);
-        int result = VK13.vkCreateInstance(vkInstanceCreateInfo, null, vulkanInstancePointer);
-        if (result != VK13.VK_SUCCESS) {
+        int result = VK10.vkCreateInstance(vkInstanceCreateInfo, null, vulkanInstancePointer);
+        if (result != VK10.VK_SUCCESS) {
             throw new RuntimeException(String.format("creating vulkan instance failed error code %d", result));
         }
         vkInstance = new VkInstance(vulkanInstancePointer.get(0), vkInstanceCreateInfo);
@@ -61,7 +61,7 @@ public class VulkanInstance {
     }
 
     public void free() {
-        VK13.vkDestroyInstance(vkInstance, null);
+        VK10.vkDestroyInstance(vkInstance, null);
     }
 
     private PointerBuffer getExtensions(MemoryStack memoryStack) {
@@ -69,16 +69,16 @@ public class VulkanInstance {
         //Extending the stack to prevent running out of memory
         try (MemoryStack stack = MemoryStack.stackPush()) {
             IntBuffer extensionCount = stack.mallocInt(1); // int*
-            int result = VK13.vkEnumerateInstanceExtensionProperties((ByteBuffer) null, extensionCount, null);
-            if (result == VK13.VK_SUCCESS) {
+            int result = VK10.vkEnumerateInstanceExtensionProperties((ByteBuffer) null, extensionCount, null);
+            if (result == VK10.VK_SUCCESS) {
                 System.out.println("vkEnumerateInstanceExtensionProperties returned success");
             } else {
                 System.out.printf("vkEnumerateInstanceExtensionProperties returned failure code %d%n", result);
             }
             System.out.printf("%d extensions supported%n", extensionCount.get(0));
             VkExtensionProperties.Buffer vkExtensionPropertiesBuffer = VkExtensionProperties.malloc(extensionCount.get(0), stack);
-            int result2 = VK13.vkEnumerateInstanceExtensionProperties((ByteBuffer) null, extensionCount, vkExtensionPropertiesBuffer);
-            if (result2 == VK13.VK_SUCCESS) {
+            int result2 = VK10.vkEnumerateInstanceExtensionProperties((ByteBuffer) null, extensionCount, vkExtensionPropertiesBuffer);
+            if (result2 == VK10.VK_SUCCESS) {
                 System.out.println("vkEnumerateInstanceExtensionProperties returned success");
             } else {
                 System.out.printf("vkEnumerateInstanceExtensionProperties returned failure code %d%n", result2);

@@ -5,7 +5,7 @@ import my.game.init.vulkan.pipeline.RenderPass;
 import my.game.init.vulkan.swapchain.SwapChain;
 import my.game.init.vulkan.swapchain.SwapChainImages;
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.vulkan.VK13;
+import org.lwjgl.vulkan.VK10;
 import org.lwjgl.vulkan.VkDevice;
 import org.lwjgl.vulkan.VkFramebufferCreateInfo;
 
@@ -25,17 +25,17 @@ public class FrameBuffers {
             for (int i = 0; i < swapChainImages.getSwapChainImageViewPointers().size(); ++i) {
                 VkFramebufferCreateInfo framebufferCreateInfo = VkFramebufferCreateInfo.calloc(memoryStack);
                 framebufferCreateInfo
-                        .sType(VK13.VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO)
+                        .sType(VK10.VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO)
                         .renderPass(renderPass.getRenderPassPointer())
                         .pAttachments(swapChainImages.getSwapChainImageViewPointers().get(i))
                         .width(swapChain.getSwapChainExtent().width())
                         .height(swapChain.getSwapChainExtent().height())
                         .layers(1);
-                int result = VK13.vkCreateFramebuffer(device,
+                int result = VK10.vkCreateFramebuffer(device,
                         framebufferCreateInfo,
                         null,
                         swapChainFrameBuffersBuffer);
-                if (result != VK13.VK_SUCCESS) {
+                if (result != VK10.VK_SUCCESS) {
                     throw new IllegalStateException(String.format("Failed to create framebuffer. Error code %d", result));
                 }
                 swapChainFrameBuffersBuilder.add(swapChainFrameBuffersBuffer.get(0));
@@ -50,7 +50,7 @@ public class FrameBuffers {
 
     public void free() {
         for (Long x : swapChainFrameBuffers) {
-            VK13.vkDestroyFramebuffer(
+            VK10.vkDestroyFramebuffer(
                     device,
                     x, null);
         }

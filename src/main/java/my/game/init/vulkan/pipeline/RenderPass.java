@@ -2,7 +2,7 @@ package my.game.init.vulkan.pipeline;
 
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.KHRSwapchain;
-import org.lwjgl.vulkan.VK13;
+import org.lwjgl.vulkan.VK10;
 import org.lwjgl.vulkan.VkAttachmentDescription;
 import org.lwjgl.vulkan.VkAttachmentReference;
 import org.lwjgl.vulkan.VkDevice;
@@ -25,14 +25,14 @@ public class RenderPass {
             VkAttachmentReference colorAttachmentRef = VkAttachmentReference.calloc(memoryStack);
             colorAttachmentRef
                     .attachment(0)
-                    .layout(VK13.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+                    .layout(VK10.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
             colorAttachmentRefBuffer.put(colorAttachmentRef);
             colorAttachmentRefBuffer.flip();
 
             VkSubpassDescription.Buffer subpassDescriptionBuffer = VkSubpassDescription.malloc(1, memoryStack);
             VkSubpassDescription subpassDescription = VkSubpassDescription.calloc(memoryStack);
             subpassDescription
-                    .pipelineBindPoint(VK13.VK_PIPELINE_BIND_POINT_GRAPHICS)
+                    .pipelineBindPoint(VK10.VK_PIPELINE_BIND_POINT_GRAPHICS)
                     .pColorAttachments(colorAttachmentRefBuffer)
                     /*
                     Quote from Spasi author of lwjgl:
@@ -60,38 +60,38 @@ public class RenderPass {
                       handling that use case.
                      */
                     .format(surfaceFormat.format())
-                    .samples(VK13.VK_SAMPLE_COUNT_1_BIT)
-                    .loadOp(VK13.VK_ATTACHMENT_LOAD_OP_CLEAR)
-                    .storeOp(VK13.VK_ATTACHMENT_STORE_OP_STORE)
-                    .stencilLoadOp(VK13.VK_ATTACHMENT_LOAD_OP_DONT_CARE)
-                    .stencilStoreOp(VK13.VK_ATTACHMENT_STORE_OP_DONT_CARE)
-                    .initialLayout(VK13.VK_IMAGE_LAYOUT_UNDEFINED)
+                    .samples(VK10.VK_SAMPLE_COUNT_1_BIT)
+                    .loadOp(VK10.VK_ATTACHMENT_LOAD_OP_CLEAR)
+                    .storeOp(VK10.VK_ATTACHMENT_STORE_OP_STORE)
+                    .stencilLoadOp(VK10.VK_ATTACHMENT_LOAD_OP_DONT_CARE)
+                    .stencilStoreOp(VK10.VK_ATTACHMENT_STORE_OP_DONT_CARE)
+                    .initialLayout(VK10.VK_IMAGE_LAYOUT_UNDEFINED)
                     .finalLayout(KHRSwapchain.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
             colorAttachmentBuffer.put(colorAttachment);
             colorAttachmentBuffer.flip();
 
             VkSubpassDependency.Buffer subpassDependency = VkSubpassDependency.calloc(1, memoryStack);
             subpassDependency
-                    .srcSubpass(VK13.VK_SUBPASS_EXTERNAL)
+                    .srcSubpass(VK10.VK_SUBPASS_EXTERNAL)
                     .dstSubpass(0)
-                    .srcStageMask(VK13.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
+                    .srcStageMask(VK10.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
                     .srcAccessMask(0)
-                    .dstStageMask(VK13.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
-                    .dstAccessMask(VK13.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
+                    .dstStageMask(VK10.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
+                    .dstAccessMask(VK10.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
 
             VkRenderPassCreateInfo renderPassCreateInfo = VkRenderPassCreateInfo.calloc(memoryStack);
             renderPassCreateInfo
-                    .sType(VK13.VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO)
+                    .sType(VK10.VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO)
                     .pAttachments(colorAttachmentBuffer)
                     .pSubpasses(subpassDescriptionBuffer)
                     .pDependencies(subpassDependency);
             LongBuffer renderPassPointerBuffer = memoryStack.mallocLong(1);
-            int result = VK13.vkCreateRenderPass(
+            int result = VK10.vkCreateRenderPass(
                     device,
                     renderPassCreateInfo,
                     null,
                     renderPassPointerBuffer);
-            if (result != VK13.VK_SUCCESS) {
+            if (result != VK10.VK_SUCCESS) {
                 throw new IllegalStateException(String.format("Failed to create render pass. Error code: %d", result));
             }
             renderPassPointer = renderPassPointerBuffer.get(0);
@@ -103,7 +103,7 @@ public class RenderPass {
     }
 
     public void free() {
-        VK13.vkDestroyRenderPass(device,
+        VK10.vkDestroyRenderPass(device,
                 renderPassPointer,
                 null);
     }
