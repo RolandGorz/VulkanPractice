@@ -22,6 +22,6 @@ public record UniformBufferObject(Matrix4f model) implements Struct {
 
     @Override
     public int getSize() {
-        return 0;
+        return SIZE;
     }
 }
