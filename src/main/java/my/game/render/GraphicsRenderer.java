@@ -57,7 +57,7 @@ public class GraphicsRenderer {
     private final PhysicalDeviceInformation physicalDeviceInformation;
     private final WindowHandle windowHandle;
     private final WindowSurface windowSurface;
-    private final GraphicsPipeline graphicsPipeline;
+    private GraphicsPipeline graphicsPipeline;
     private final VertexBuffer vertexBuffer;
     private final IndexBuffer indexBuffer;
     private final List<LongBuffer> imageAvailableSemaphores;
@@ -312,6 +312,7 @@ public class GraphicsRenderer {
                 windowSurface,
                 swapChain.getSwapChainPointer());
         renderPass = renderPass.validateSwapChain(swapChain);
+        graphicsPipeline = graphicsPipeline.validateRenderPass(logicalDevice.vkDevice(), renderPass, descriptorSetLayout);
         swapChainImages = createImageViews(logicalDevice, swapChain);
         frameBuffers = createFrameBuffers(logicalDevice, renderPass, swapChainImages, swapChain);
     }

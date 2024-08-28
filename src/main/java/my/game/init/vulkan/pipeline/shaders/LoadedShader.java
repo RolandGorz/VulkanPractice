@@ -20,7 +20,6 @@ public class LoadedShader {
             throw new IllegalStateException(String.format("Could not find shader resource %s", fileName));
         }
         File f = new File(shaderResource.getFile());
-        System.out.printf("%s shader code size %d\n", f.getName(), f.length());
         try (FileInputStream fileInputStream = new FileInputStream(f)) {
             byte[] code = fileInputStream.readAllBytes();
             ByteBuffer byteBufferCode = MemoryUtil.memAlloc(code.length);

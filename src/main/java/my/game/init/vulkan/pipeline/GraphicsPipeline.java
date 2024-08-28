@@ -5,6 +5,7 @@ import my.game.init.vulkan.drawing.transformation.DescriptorSetLayout;
 import my.game.init.vulkan.pipeline.shaders.LoadedShader;
 import my.game.init.vulkan.pipeline.shaders.ShaderModule;
 import my.game.init.vulkan.struct.Vertex;
+import my.game.render.GraphicsRenderer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VK10;
 import org.lwjgl.vulkan.VkDevice;
@@ -30,6 +31,7 @@ public class GraphicsPipeline {
     private final VkDevice device;
     private final Long pipelineLayoutPointer;
     private final Long graphicsPipelinePointer;
+    private final RenderPass renderPass;
 
     List<Integer> dynamicStates = ImmutableList.of(
             VK10.VK_DYNAMIC_STATE_VIEWPORT,
@@ -38,6 +40,7 @@ public class GraphicsPipeline {
 
     public GraphicsPipeline(final VkDevice device, final RenderPass renderPass, final DescriptorSetLayout descriptorSetLayout) {
         this.device = device;
+        this.renderPass = renderPass;
         LoadedShader loadedVertex = new LoadedShader("shaders/compiled/basic.vert.spv");
         ShaderModule vertexShader = new ShaderModule(device, loadedVertex);
         loadedVertex.free();
@@ -199,6 +202,14 @@ public class GraphicsPipeline {
             vertexShader.free();
             fragmentShader.free();
         }
+    }
+
+    public GraphicsPipeline validateRenderPass(final VkDevice device, final RenderPass renderPass, final DescriptorSetLayout descriptorSetLayout) {
+        if (renderPass != this.renderPass) {
+            free();
+            return new GraphicsPipeline(device, renderPass, descriptorSetLayout);
+        }
+        return this;
     }
 
     public Long getGraphicsPipelinePointer() {

@@ -10,7 +10,6 @@ import org.lwjgl.vulkan.VkDevice;
 import org.lwjgl.vulkan.VkRenderPassCreateInfo;
 import org.lwjgl.vulkan.VkSubpassDependency;
 import org.lwjgl.vulkan.VkSubpassDescription;
-import org.lwjgl.vulkan.VkSurfaceFormatKHR;
 
 import java.nio.LongBuffer;
 
@@ -102,7 +101,7 @@ public class RenderPass {
     }
 
     public RenderPass validateSwapChain(SwapChain newSwapChain) {
-        if (swapChain.getSurfaceFormat().format() != newSwapChain.getSurfaceFormat().format()) {
+        if (swapChain.getSurfaceFormat().format() == newSwapChain.getSurfaceFormat().format()) {
             free();
             return new RenderPass(device, newSwapChain);
         } else {
