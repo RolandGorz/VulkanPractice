@@ -1,5 +1,6 @@
 package my.game.init.vulkan.pipeline;
 
+import my.game.init.vulkan.swapchain.SwapChain;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.KHRSwapchain;
 import org.lwjgl.vulkan.VK10;
@@ -15,10 +16,12 @@ import java.nio.LongBuffer;
 
 public class RenderPass {
     private final VkDevice device;
+    private final SwapChain swapChain;
     private final long renderPassPointer;
 
-    public RenderPass(VkDevice device, VkSurfaceFormatKHR surfaceFormat) {
+    public RenderPass(VkDevice device, SwapChain swapChain) {
         this.device = device;
+        this.swapChain = swapChain;
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
 
             VkAttachmentReference.Buffer colorAttachmentRefBuffer = VkAttachmentReference.malloc(1, memoryStack);
@@ -59,7 +62,7 @@ public class RenderPass {
                       "when moving a window from a standard range to a high dynamic range monitor", but for now not
                       handling that use case.
                      */
-                    .format(surfaceFormat.format())
+                    .format(swapChain.getSurfaceFormat().format())
                     .samples(VK10.VK_SAMPLE_COUNT_1_BIT)
                     .loadOp(VK10.VK_ATTACHMENT_LOAD_OP_CLEAR)
                     .storeOp(VK10.VK_ATTACHMENT_STORE_OP_STORE)
@@ -95,6 +98,15 @@ public class RenderPass {
                 throw new IllegalStateException(String.format("Failed to create render pass. Error code: %d", result));
             }
             renderPassPointer = renderPassPointerBuffer.get(0);
+        }
+    }
+
+    public RenderPass validateSwapChain(SwapChain newSwapChain) {
+        if (swapChain.getSurfaceFormat().format() != newSwapChain.getSurfaceFormat().format()) {
+            free();
+            return new RenderPass(device, newSwapChain);
+        } else {
+            return this;
         }
     }
 

@@ -22,7 +22,6 @@ public class VulkanProject {
         }
     }
 
-    //TODO replace all passing around of memoryStack with calls to stackGet() instead
     public static void main(String[] args) {
         System.out.println("Hello LWJGL " + Version.getVersion() + "!");
         MainGameLoop loop = new MainGameLoop();

@@ -53,7 +53,7 @@ public class GraphicsRenderer {
     public static final int MAX_FRAMES_IN_FLIGHT = 2;
     private final LogicalDevice logicalDevice;
     private final List<CommandBuffer> graphicsCommandBuffers;
-    private final RenderPass renderPass;
+    private RenderPass renderPass;
     private final PhysicalDeviceInformation physicalDeviceInformation;
     private final WindowHandle windowHandle;
     private final WindowSurface windowSurface;
@@ -80,9 +80,14 @@ public class GraphicsRenderer {
         this.physicalDeviceInformation = physicalDeviceInformation;
         this.windowHandle = windowHandle;
         this.windowSurface = windowSurface;
-        this.swapChain = createSwapChain(logicalDevice, physicalDeviceInformation, windowHandle, windowSurface);
+        this.swapChain = new SwapChain(
+                logicalDevice.vkDevice(),
+                physicalDeviceInformation,
+                windowHandle,
+                windowSurface,
+                VK10.VK_NULL_HANDLE);
         this.swapChainImages = createImageViews(logicalDevice, swapChain);
-        this.renderPass = new RenderPass(logicalDevice.vkDevice(), swapChain.getSurfaceFormat());
+        this.renderPass = new RenderPass(logicalDevice.vkDevice(), swapChain);
         this.descriptorSetLayout = new DescriptorSetLayout(logicalDevice.vkDevice());
         this.graphicsPipeline = new GraphicsPipeline(logicalDevice.vkDevice(), renderPass, descriptorSetLayout);
 
@@ -146,15 +151,6 @@ public class GraphicsRenderer {
             renderFinishedSemaphores = renderFinishedSemaphoresBuilder.build();
             inFlightFences = inFlightFencesBuilder.build();
         }
-    }
-
-    private SwapChain createSwapChain(LogicalDevice logicalDevice, PhysicalDeviceInformation physicalDeviceInformation,
-                                      WindowHandle windowHandle, WindowSurface windowSurface) {
-        return new SwapChain(
-                logicalDevice.vkDevice(),
-                physicalDeviceInformation,
-                windowHandle,
-                windowSurface);
     }
 
     private SwapChainImages createImageViews(LogicalDevice logicalDevice, SwapChain swapChain) {
@@ -308,31 +304,27 @@ public class GraphicsRenderer {
             GLFW.glfwWaitEvents();
         }
         VK10.vkDeviceWaitIdle(logicalDevice.vkDevice());
-        cleanupSwapChain();
-        /*
-        Note that we don’t recreate the renderpass here for simplicity.
-        In theory it can be possible for the swap chain image format to change during an applications' lifetime,
-        e.g. when moving a window from an standard range to an high dynamic range monitor.
-        This may require the application to recreate the renderpass to make sure the change between dynamic
-        ranges is properly reflected.
-         */
-        //TODO the disadvantage of this approach is that we need to stop all rendering before creating the new swap chain.
-        // It is possible to create a new swap chain while drawing commands on an image from the old swap chain are still in-flight.
-        // You need to pass the previous swap chain to the oldSwapchain field in the VkSwapchainCreateInfoKHR struct and destroy
-        // the old swap chain as soon as you’ve finished using it.
-        swapChain = createSwapChain(logicalDevice, physicalDeviceInformation, windowHandle, windowSurface);
+        cleanup();
+        swapChain = new SwapChain(
+                logicalDevice.vkDevice(),
+                physicalDeviceInformation,
+                windowHandle,
+                windowSurface,
+                swapChain.getSwapChainPointer());
+        renderPass = renderPass.validateSwapChain(swapChain);
         swapChainImages = createImageViews(logicalDevice, swapChain);
         frameBuffers = createFrameBuffers(logicalDevice, renderPass, swapChainImages, swapChain);
     }
 
-    private void cleanupSwapChain() {
+    private void cleanup() {
         frameBuffers.free();
         swapChainImages.free();
-        swapChain.free();
+        swapChain.freeSwapChainExtent();
     }
 
     public void free() {
-        cleanupSwapChain();
+        cleanup();
+        swapChain.freeSwapChainPointer();
         descriptorPool.free();
         for (UniformBuffer u : uniformBuffers) {
             u.free();

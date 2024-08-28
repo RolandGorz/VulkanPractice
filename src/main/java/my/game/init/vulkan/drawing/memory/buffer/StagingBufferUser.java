@@ -66,7 +66,7 @@ public class StagingBufferUser {
             throw new IllegalStateException(String.format("Failed to submit draw command buffer. Error code: %d", result));
         }
         VK10.vkQueueWaitIdle(transferVulkanQueue.getVkQueue());
-        CommandBufferFactory.freeCommandBuffers(Collections.singletonList(commandBuffer), memoryStack);
+        CommandBufferFactory.freeCommandBuffers(Collections.singletonList(commandBuffer), memoryStack, commandBuffer.getVkCommandBuffer().getDevice(), commandBuffer.getCommandPoolHandle());
     }
 
     //The number of vertices in what we are trying to draw basically. When using an index buffer it's the number of indexes
