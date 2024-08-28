@@ -101,7 +101,7 @@ public class RenderPass {
     }
 
     public RenderPass validateSwapChain(SwapChain newSwapChain) {
-        if (swapChain.getSurfaceFormat().format() == newSwapChain.getSurfaceFormat().format()) {
+        if (swapChain.getSurfaceFormat().format() != newSwapChain.getSurfaceFormat().format()) {
             free();
             return new RenderPass(device, newSwapChain);
         } else {
