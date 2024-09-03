@@ -42,7 +42,6 @@ public class PhysicalDeviceRetriever {
                 physicalDeviceInformation = curr;
                 break;
             }
-            curr.free();
         }
         while (!priorityQueue.isEmpty()) {
             priorityQueue.poll().free();
@@ -84,10 +83,7 @@ public class PhysicalDeviceRetriever {
         }
         PriorityQueue<PhysicalDeviceInformation> priorityQueue = new PriorityQueue<>(Comparator.reverseOrder());
         for (VkPhysicalDevice vkPhysicalDevice : vkPhysicalDeviceList) {
-            PhysicalDeviceInformation curr = determineDeviceSuitability(vkPhysicalDevice, windowSurface);
-            if (curr.score() > 0 && curr.uniformBufferStandardLayoutFeatures().uniformBufferStandardLayout()) {
-                priorityQueue.add(curr);
-            }
+            priorityQueue.add(determineDeviceSuitability(vkPhysicalDevice, windowSurface));
         }
         return priorityQueue;
     }

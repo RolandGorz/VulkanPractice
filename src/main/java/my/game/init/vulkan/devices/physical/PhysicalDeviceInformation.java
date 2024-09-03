@@ -92,7 +92,8 @@ public abstract class PhysicalDeviceInformation implements Comparable<PhysicalDe
                 && graphicsQueueIndex() != -1
                 && presentationQueueIndex() != -1
                 && requiredDeviceExtensionsSupported()
-                && swapChainAdequate();
+                && swapChainAdequate()
+                && uniformBufferStandardLayoutFeatures().uniformBufferStandardLayout();
     }
 
     @Value.Derived
