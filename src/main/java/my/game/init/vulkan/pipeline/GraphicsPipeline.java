@@ -5,7 +5,6 @@ import my.game.init.vulkan.drawing.transformation.DescriptorSetLayout;
 import my.game.init.vulkan.pipeline.shaders.LoadedShader;
 import my.game.init.vulkan.pipeline.shaders.ShaderModule;
 import my.game.init.vulkan.struct.Vertex;
-import my.game.render.GraphicsRenderer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VK10;
 import org.lwjgl.vulkan.VkDevice;

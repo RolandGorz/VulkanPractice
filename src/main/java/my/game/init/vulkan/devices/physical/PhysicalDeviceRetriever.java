@@ -42,6 +42,7 @@ public class PhysicalDeviceRetriever {
                 physicalDeviceInformation = curr;
                 break;
             }
+            curr.free();
         }
         while (!priorityQueue.isEmpty()) {
             priorityQueue.poll().free();
