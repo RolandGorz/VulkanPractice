@@ -56,7 +56,8 @@ public abstract class LogicalDevice {
                     .sType(VK10.VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO)
                     .pQueueCreateInfos(vkDeviceQueueCreateInfos)
                     .pEnabledFeatures(vkPhysicalDeviceFeatures)
-                    .ppEnabledExtensionNames(requiredDeviceExtensions);
+                    .ppEnabledExtensionNames(requiredDeviceExtensions)
+                    .pNext(physicalDevice().physicalDeviceInformation().uniformBufferStandardLayoutFeatures());
             PointerBuffer logicalDevice = memoryStack.mallocPointer(1);
             int result = VK10.vkCreateDevice(physicalDevice().physicalDeviceInformation().physicalDevice(), vkDeviceCreateInfo, null, logicalDevice);
             if (result != VK10.VK_SUCCESS) {

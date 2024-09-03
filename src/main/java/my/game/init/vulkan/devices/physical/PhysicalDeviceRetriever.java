@@ -7,10 +7,14 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.KHRSurface;
 import org.lwjgl.vulkan.KHRSwapchain;
 import org.lwjgl.vulkan.VK10;
+import org.lwjgl.vulkan.VK11;
+import org.lwjgl.vulkan.VK12;
 import org.lwjgl.vulkan.VkInstance;
 import org.lwjgl.vulkan.VkPhysicalDevice;
 import org.lwjgl.vulkan.VkPhysicalDeviceFeatures;
+import org.lwjgl.vulkan.VkPhysicalDeviceFeatures2;
 import org.lwjgl.vulkan.VkPhysicalDeviceProperties;
+import org.lwjgl.vulkan.VkPhysicalDeviceUniformBufferStandardLayoutFeatures;
 import org.lwjgl.vulkan.VkQueueFamilyProperties;
 
 import java.nio.IntBuffer;
@@ -81,7 +85,7 @@ public class PhysicalDeviceRetriever {
         PriorityQueue<PhysicalDeviceInformation> priorityQueue = new PriorityQueue<>(Comparator.reverseOrder());
         for (VkPhysicalDevice vkPhysicalDevice : vkPhysicalDeviceList) {
             PhysicalDeviceInformation curr = determineDeviceSuitability(vkPhysicalDevice, windowSurface);
-            if (curr.score() > 0) {
+            if (curr.score() > 0 && curr.uniformBufferStandardLayoutFeatures().uniformBufferStandardLayout()) {
                 priorityQueue.add(curr);
             }
         }
@@ -90,13 +94,16 @@ public class PhysicalDeviceRetriever {
 
     private PhysicalDeviceInformation determineDeviceSuitability(VkPhysicalDevice vkPhysicalDevice, WindowSurface windowSurface) {
         int score = 0;
+        VkPhysicalDeviceUniformBufferStandardLayoutFeatures uniformBufferStandardLayoutFeatures = VkPhysicalDeviceUniformBufferStandardLayoutFeatures.calloc();
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
-            VkPhysicalDeviceProperties vkPhysicalDeviceProperties = VkPhysicalDeviceProperties.malloc(memoryStack);
-            VkPhysicalDeviceFeatures vkPhysicalDeviceFeatures = VkPhysicalDeviceFeatures.malloc(memoryStack);
+            VkPhysicalDeviceProperties vkPhysicalDeviceProperties = VkPhysicalDeviceProperties.calloc(memoryStack);
+            VkPhysicalDeviceFeatures2 vkPhysicalDeviceFeatures = VkPhysicalDeviceFeatures2.calloc(memoryStack);
+            vkPhysicalDeviceFeatures.sType(VK11.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2);
+            uniformBufferStandardLayoutFeatures
+                    .sType(VK12.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_UNIFORM_BUFFER_STANDARD_LAYOUT_FEATURES);
+            vkPhysicalDeviceFeatures.pNext(uniformBufferStandardLayoutFeatures);
             VK10.vkGetPhysicalDeviceProperties(vkPhysicalDevice, vkPhysicalDeviceProperties);
-            VK10.vkGetPhysicalDeviceFeatures(vkPhysicalDevice, vkPhysicalDeviceFeatures);
-            System.out.printf("physical device \"%s\" geometry shader availability: %b%n",
-                    vkPhysicalDeviceProperties.deviceNameString(), vkPhysicalDeviceFeatures.geometryShader());
+            VK11.vkGetPhysicalDeviceFeatures2(vkPhysicalDevice, vkPhysicalDeviceFeatures);
             // Discrete GPUs have a significant performance advantage
             if (vkPhysicalDeviceProperties.deviceType() == VK10.VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
                 score += 1000;
@@ -107,6 +114,7 @@ public class PhysicalDeviceRetriever {
         ImmutablePhysicalDeviceInformation.Builder builder = ImmutablePhysicalDeviceInformation.builder();
         builder.physicalDevice(vkPhysicalDevice)
                 .score(score)
+                .uniformBufferStandardLayoutFeatures(uniformBufferStandardLayoutFeatures)
                 .windowSurface(windowSurface);
         getFamilyIndexes(vkPhysicalDevice, windowSurface, builder);
         return builder.build();

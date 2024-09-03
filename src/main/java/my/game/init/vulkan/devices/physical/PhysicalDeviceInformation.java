@@ -7,6 +7,7 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VK10;
 import org.lwjgl.vulkan.VkExtensionProperties;
 import org.lwjgl.vulkan.VkPhysicalDevice;
+import org.lwjgl.vulkan.VkPhysicalDeviceUniformBufferStandardLayoutFeatures;
 
 import java.nio.IntBuffer;
 import java.util.Collections;
@@ -18,6 +19,8 @@ public abstract class PhysicalDeviceInformation implements Comparable<PhysicalDe
     public abstract VkPhysicalDevice physicalDevice();
 
     abstract int score();
+
+    public abstract VkPhysicalDeviceUniformBufferStandardLayoutFeatures uniformBufferStandardLayoutFeatures();
 
     @Value.Default
     public int graphicsQueueIndex() {
@@ -108,5 +111,6 @@ public abstract class PhysicalDeviceInformation implements Comparable<PhysicalDe
 
     public void free() {
         swapChainSupportDetails().free();
+        uniformBufferStandardLayoutFeatures().free();
     }
 }

@@ -1,7 +1,7 @@
 package my.game.init.vulkan.drawing.memory.buffer;
 
 import my.game.init.vulkan.struct.UniformBufferObject;
-import org.joml.Matrix4f;
+import org.joml.Matrix2f;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.vulkan.VK10;
@@ -16,7 +16,7 @@ public class UniformBuffer {
     private final VulkanBuffer vulkanBuffer;
     private static final int BUFFER_SIZE = UniformBufferObject.SIZE;
     public UniformBuffer(VkDevice device) {
-        this.uniformBufferObject = new UniformBufferObject(new Matrix4f());
+        this.uniformBufferObject = new UniformBufferObject(new Matrix2f());
         vulkanBuffer = new VulkanBuffer(BUFFER_SIZE, device, VK10.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                 VK10.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK10.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
         uniformBufferMapped = vulkanBuffer.persistentMemoryMap();
@@ -35,7 +35,7 @@ public class UniformBuffer {
     // A more efficient way to pass a small buffer of data to shaders are push constants.
     public void update(VkExtent2D swapChainExtent) {
         uniformBufferObject.model().identity();
-        uniformBufferObject.model().rotate((float) (GLFW.glfwGetTime() * Math.toRadians(90)), 0.0f, 0.0f, 1.0f);
+        uniformBufferObject.model().rotate((float) (GLFW.glfwGetTime() * Math.toRadians(90)));
 
         //Set flag to true if using perspective since vulkan is zero to one for ndc z range instead of -1 to 1 like opengl
         //uniformBufferObject.proj().perspective((float) Math.toRadians(45),

@@ -7,6 +7,7 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.KHRGetPhysicalDeviceProperties2;
 import org.lwjgl.vulkan.VK10;
+import org.lwjgl.vulkan.VK12;
 import org.lwjgl.vulkan.VkApplicationInfo;
 import org.lwjgl.vulkan.VkExtensionProperties;
 import org.lwjgl.vulkan.VkInstance;
@@ -37,7 +38,7 @@ public class VulkanInstance {
                 .applicationVersion(VK10.VK_MAKE_VERSION(1, 0, 0))
                 .pEngineName(MemoryStack.stackASCII("No Engine"))
                 .engineVersion(VK10.VK_MAKE_VERSION(1, 0, 0))
-                .apiVersion(VK10.VK_API_VERSION_1_0);
+                .apiVersion(VK12.VK_API_VERSION_1_2);
 
         VkInstanceCreateInfo vkInstanceCreateInfo = VkInstanceCreateInfo.calloc(memoryStack);
         vkInstanceCreateInfo.sType(VK10.VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO)
