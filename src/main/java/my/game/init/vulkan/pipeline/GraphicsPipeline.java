@@ -40,10 +40,10 @@ public class GraphicsPipeline {
     public GraphicsPipeline(final VkDevice device, final RenderPass renderPass, final DescriptorSetLayout descriptorSetLayout) {
         this.device = device;
         this.renderPass = renderPass;
-        LoadedShader loadedVertex = new LoadedShader("shaders/compiled/basic.vert.spv");
+        LoadedShader loadedVertex = new LoadedShader("basic.vert.spv");
         ShaderModule vertexShader = new ShaderModule(device, loadedVertex);
         loadedVertex.free();
-        LoadedShader loadedFragment = new LoadedShader("shaders/compiled/basic.frag.spv");
+        LoadedShader loadedFragment = new LoadedShader("basic.frag.spv");
         ShaderModule fragmentShader = new ShaderModule(device, loadedFragment);
         loadedFragment.free();
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {

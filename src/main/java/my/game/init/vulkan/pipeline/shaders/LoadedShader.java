@@ -15,11 +15,7 @@ public class LoadedShader {
 
     public LoadedShader(final String fileName) {
         this.fileName = fileName;
-        final URL shaderResource = this.getClass().getClassLoader().getResource(fileName);
-        if (shaderResource == null) {
-            throw new IllegalStateException(String.format("Could not find shader resource %s", fileName));
-        }
-        File f = new File(shaderResource.getFile());
+        File f = ShaderCompiler.COMPILED_PATH.resolve(fileName).toFile();
         try (FileInputStream fileInputStream = new FileInputStream(f)) {
             byte[] code = fileInputStream.readAllBytes();
             ByteBuffer byteBufferCode = MemoryUtil.memAlloc(code.length);
