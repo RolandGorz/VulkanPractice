@@ -158,6 +158,12 @@
 
   <dependencies>
     <dependency>
+      <groupId>com.roland.ant</groupId>
+      <artifactId>ShaderIndexer</artifactId>
+      <version>1.0</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
       <version>33.2.1-jre</version>
@@ -172,7 +178,6 @@
       <groupId>com.google.code.findbugs</groupId>
       <artifactId>jsr305</artifactId>
       <version>3.0.2</version>
-      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.joml</groupId>
@@ -256,6 +261,29 @@
   <build>
     <plugins>
       <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>3.1.0</version>
+        <executions>
+          <execution>
+            <phase>compile</phase>
+            <configuration>
+              <target>
+                <property name="compile_classpath" refid="maven.compile.classpath"/>
+                <echo level="info">started generating shader index</echo>
+                <!--suppress UnresolvedMavenProperty -->
+                <taskdef name="generateShaderIndex" classname="com.roland.ant.Indexer" classpath="${compile_classpath}"/>
+                <generateShaderIndex shaderDirectory="${project.basedir}/src/main/resources/shaders"
+                                     shaderIndexOutputDirectory="${project.build.outputDirectory}"/>
+                <echo level="info">finished generating shader index</echo>
+              </target>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>3.2.5</version>
@@ -289,6 +317,7 @@
             </goals>
             <configuration>
               <outputDirectory>${project.build.directory}/lib</outputDirectory>
+              <excludeScope>provided</excludeScope>
             </configuration>
           </execution>
         </executions>
