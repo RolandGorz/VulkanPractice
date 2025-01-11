@@ -3,6 +3,8 @@ package my.game;
 import org.lwjgl.Version;
 import org.lwjgl.system.Configuration;
 
+import java.time.Duration;
+
 /*IMPORTANT INFO
 The ownership of application-owned memory is immediately acquired by any Vulkan command it is passed into.
 Ownership of such memory must be released back to the application at the end of the duration of the command, so that the
@@ -30,7 +32,7 @@ public class VulkanProject {
             // that we did not free the memory even though we eventually do.
             loop.stop();
             try {
-                mainThread.join();
+                mainThread.join(Duration.ofSeconds(2));
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
