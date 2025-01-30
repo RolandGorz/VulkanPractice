@@ -317,7 +317,7 @@
             </goals>
             <configuration>
               <outputDirectory>${project.build.directory}/lib</outputDirectory>
-              <excludeScope>provided</excludeScope>
+              <includeScope>runtime</includeScope>
             </configuration>
           </execution>
         </executions>
