@@ -11,7 +11,9 @@ import my.game.init.vulkan.pipeline.shaders.ShaderCompiler;
 import my.game.init.window.WindowHandle;
 import my.game.init.window.WindowSurface;
 import my.game.render.GraphicsRenderer;
-import org.lwjgl.glfw.GLFW;
+import org.lwjgl.sdl.SDLEvents;
+import org.lwjgl.sdl.SDLVideo;
+import org.lwjgl.sdl.SDL_Event;
 import org.lwjgl.vulkan.VK10;
 
 public class MainGameLoop {
@@ -44,11 +46,19 @@ public class MainGameLoop {
 
     public void start() {
         if (RUNNING) {
-            GLFW.glfwShowWindow(windowHandle.getWindowHandlePointer());
-            while (!GLFW.glfwWindowShouldClose(windowHandle.getWindowHandlePointer()) && RUNNING) {
-                GLFW.glfwPollEvents();
+            SDL_Event event = SDL_Event.calloc();
+            SDLVideo.SDL_ShowWindow(windowHandle.getWindowHandlePointer());
+            mainLoop:
+            while (RUNNING) {
+                while(SDLEvents.SDL_PollEvent(event)) {
+                    if (event.type() == SDLEvents.SDL_EVENT_QUIT) {
+                        RUNNING = false;
+                        break mainLoop;
+                    }
+                }
                 graphicsRenderer.drawFrame();
             }
+            event.free();
             destroy();
         } else {
             throw new IllegalStateException("Game loop has already been stopped. Cannot start again");

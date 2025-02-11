@@ -28,7 +28,7 @@ public class VulkanProject {
         System.out.println("Hello LWJGL " + Version.getVersion() + "!");
         MainGameLoop loop = new MainGameLoop();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            //Since shutdown hooks can run in any order or in parallel glfw validation could still report
+            //Since shutdown hooks can run in any order or in parallel lwjgl validation could still report
             // that we did not free the memory even though we eventually do.
             loop.stop();
             try {

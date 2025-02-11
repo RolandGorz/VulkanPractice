@@ -5,7 +5,7 @@ import my.game.init.vulkan.devices.physical.PhysicalDeviceInformation;
 import my.game.init.vulkan.devices.physical.SwapChainSupportDetails;
 import my.game.init.window.WindowHandle;
 import my.game.init.window.WindowSurface;
-import org.lwjgl.glfw.GLFW;
+import org.lwjgl.sdl.SDLVideo;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.KHRSurface;
 import org.lwjgl.vulkan.KHRSwapchain;
@@ -118,6 +118,7 @@ public class SwapChain {
     }
 
     private VkExtent2D chooseSwapExtent(VkSurfaceCapabilitiesKHR capabilities, WindowHandle windowHandle) {
+        //TODO update this comment
         //Vulkan tells us to match the resolution of the window by setting the width and height in the currentExtent member.
         // However, some window managers do allow us to differ here and this is indicated by setting the width and height
         // in currentExtent to a special value: the maximum value of uint32_t. In that case we’ll pick the resolution that
@@ -142,7 +143,7 @@ public class SwapChain {
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             IntBuffer width = memoryStack.mallocInt(1);
             IntBuffer height = memoryStack.mallocInt(1);
-            GLFW.glfwGetFramebufferSize(windowHandle.getWindowHandlePointer(), width, height);
+            SDLVideo.SDL_GetWindowSizeInPixels(windowHandle.getWindowHandlePointer(), width, height);
 
             vkExtent2D
                     .width(Math.clamp(width.get(0), capabilities.minImageExtent().width(), capabilities.maxImageExtent().width()))

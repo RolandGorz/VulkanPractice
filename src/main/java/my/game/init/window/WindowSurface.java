@@ -1,9 +1,9 @@
 package my.game.init.window;
 
-import org.lwjgl.glfw.GLFWVulkan;
+import org.lwjgl.sdl.SDLError;
+import org.lwjgl.sdl.SDLVulkan;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.KHRSurface;
-import org.lwjgl.vulkan.VK10;
 import org.lwjgl.vulkan.VkInstance;
 
 import java.nio.LongBuffer;
@@ -16,10 +16,9 @@ public class WindowSurface {
         this.vkInstance = vkInstance;
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             LongBuffer longBuffer = memoryStack.mallocLong(1);
-            int result = GLFWVulkan.glfwCreateWindowSurface(vkInstance, windowHandle.getWindowHandlePointer(), null,
-                    longBuffer);
-            if (result != VK10.VK_SUCCESS) {
-                throw new IllegalStateException(String.format("Failed to create window surface with error code %d", result));
+            if (!SDLVulkan.SDL_Vulkan_CreateSurface(windowHandle.getWindowHandlePointer(), vkInstance, null,
+                    longBuffer)) {
+                throw new IllegalStateException(SDLError.SDL_GetError());
             }
             windowSurfaceHandle = longBuffer.get(0);
         }

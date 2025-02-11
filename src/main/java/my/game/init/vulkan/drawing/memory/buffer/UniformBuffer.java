@@ -3,7 +3,7 @@ package my.game.init.vulkan.drawing.memory.buffer;
 import my.game.init.vulkan.struct.UniformBufferObject;
 import org.joml.Matrix2f;
 import org.lwjgl.PointerBuffer;
-import org.lwjgl.glfw.GLFW;
+import org.lwjgl.sdl.SDLTimer;
 import org.lwjgl.vulkan.VK10;
 import org.lwjgl.vulkan.VkDevice;
 import org.lwjgl.vulkan.VkExtent2D;
@@ -35,7 +35,7 @@ public class UniformBuffer {
     // A more efficient way to pass a small buffer of data to shaders are push constants.
     public void update(VkExtent2D swapChainExtent) {
         uniformBufferObject.model().identity();
-        uniformBufferObject.model().rotate((float) (GLFW.glfwGetTime() * Math.toRadians(90)));
+        uniformBufferObject.model().rotate((float) (SDLTimer.SDL_GetTicks() / 1000f * Math.toRadians(90)));
 
         //Set flag to true if using perspective since vulkan is zero to one for ndc z range instead of -1 to 1 like opengl
         //uniformBufferObject.proj().perspective((float) Math.toRadians(45),

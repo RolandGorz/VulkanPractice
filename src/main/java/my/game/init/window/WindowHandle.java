@@ -1,10 +1,15 @@
 package my.game.init.window;
 
-import org.lwjgl.glfw.Callbacks;
-import org.lwjgl.glfw.GLFW;
-import org.lwjgl.glfw.GLFWErrorCallback;
-import org.lwjgl.glfw.GLFWFramebufferSizeCallback;
+import org.lwjgl.sdl.SDLError;
+import org.lwjgl.sdl.SDLEvents;
+import org.lwjgl.sdl.SDLInit;
+import org.lwjgl.sdl.SDLVideo;
+import org.lwjgl.sdl.SDLVulkan;
+import org.lwjgl.sdl.SDL_Event;
+import org.lwjgl.sdl.SDL_EventFilter;
 import org.lwjgl.system.MemoryUtil;
+
+import java.nio.ByteBuffer;
 
 public class WindowHandle {
 
@@ -12,31 +17,35 @@ public class WindowHandle {
 
     private Boolean frameBufferResized = false;
 
+    private final SDL_EventFilter sdlEventFilter = SDL_EventFilter.create(
+            (userdata, event) -> {
+                if (SDL_Event.create(event).type() == SDLEvents.SDL_EVENT_WINDOW_RESIZED) {
+                    frameBufferResized = true;
+                }
+                return true;
+            }
+    );
+
     public WindowHandle() {
-        // Set up an error callback. The default implementation
-        // will print the error message in System.err.
-        GLFWErrorCallback.createPrint(System.err).set();
 
-        // Initialize GLFW. Most GLFW functions will not work before doing this.
-        if (!GLFW.glfwInit())
-            throw new IllegalStateException("Unable to initialize GLFW");
-
-        // Configure GLFW
-        GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, GLFW.GLFW_FALSE); // the window will stay hidden after creation
-        GLFW.glfwWindowHint(GLFW.GLFW_RESIZABLE, GLFW.GLFW_TRUE);
-        GLFW.glfwWindowHint(GLFW.GLFW_CLIENT_API, GLFW.GLFW_NO_API);
+        //Initialize sdl for video since we will obviously have a window we want to present to and load vulkan explicitly
+        //even though creating the window will load the default its best to be explicit.
+        if (!SDLInit.SDL_InitSubSystem(SDLInit.SDL_INIT_VIDEO) | !SDLVulkan.SDL_Vulkan_LoadLibrary((ByteBuffer) null)) {
+            throw new IllegalStateException(SDLError.SDL_GetError());
+        }
 
         // Create the window
-        windowHandlePointer = GLFW.glfwCreateWindow(800, 600, "Hello World!", MemoryUtil.NULL, MemoryUtil.NULL);
+        windowHandlePointer = SDLVideo.SDL_CreateWindow("Hello World!", 800, 600,
+                SDLVideo.SDL_WINDOW_HIDDEN | SDLVideo.SDL_WINDOW_RESIZABLE | SDLVideo.SDL_WINDOW_VULKAN);
+        if (windowHandlePointer == MemoryUtil.NULL) {
+            throw new IllegalStateException(SDLError.SDL_GetError());
+        }
 
-        //Look at glfw source code for how each os involves FramebufferSizeCallback. We can maybe get smooth scaling after all
-        GLFWFramebufferSizeCallback framebufferSizeCallback = GLFWFramebufferSizeCallback.create(((window, width, height) ->
-                frameBufferResized = true));
-
-        GLFW.glfwSetFramebufferSizeCallback(windowHandlePointer, framebufferSizeCallback);
-
-        if (windowHandlePointer == MemoryUtil.NULL)
-            throw new RuntimeException("Failed to create the GLFW window");
+        //Add event watch for resizing of window. Should this be handled here or handled in the main game loop? Good question.
+        //Here for now since event watch will be invoked by the thread emitting the event itself (which may be a system/OS thread)
+        //which would prevent us from blocking on our main loop and possibly allow us to have a smooth resize as the game runs.
+        //For now just doing this way for posterity.
+        SDLEvents.SDL_AddEventWatch(sdlEventFilter, MemoryUtil.NULL);
     }
 
     //Reset the state after a query. If the resizing stopped then this should be false and if the resizing continues it will be set back to true;
@@ -53,12 +62,12 @@ public class WindowHandle {
     }
 
     public void free() {
-        // Free the window callbacks and destroy the window
-        Callbacks.glfwFreeCallbacks(windowHandlePointer);
-        GLFW.glfwDestroyWindow(windowHandlePointer);
-
-        // Terminate GLFW and free the error callback
-        GLFW.glfwTerminate();
-        GLFW.glfwSetErrorCallback(null).free();
+        // Free the event filter and destroy the window
+        SDLEvents.SDL_RemoveEventWatch(sdlEventFilter, MemoryUtil.NULL);
+        sdlEventFilter.free();
+        SDLVideo.SDL_DestroyWindow(windowHandlePointer);
+        SDLVulkan.SDL_Vulkan_UnloadLibrary();
+        SDLInit.SDL_QuitSubSystem(SDLInit.SDL_INIT_VIDEO);
+        SDLInit.SDL_Quit();
     }
 }

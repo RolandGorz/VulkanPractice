@@ -25,7 +25,9 @@ import my.game.init.vulkan.swapchain.SwapChainImages;
 import my.game.init.window.WindowHandle;
 import my.game.init.window.WindowSurface;
 import org.lwjgl.PointerBuffer;
-import org.lwjgl.glfw.GLFW;
+import org.lwjgl.sdl.SDLEvents;
+import org.lwjgl.sdl.SDLVideo;
+import org.lwjgl.sdl.SDL_Event;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.KHRSwapchain;
@@ -296,12 +298,12 @@ public class GraphicsRenderer {
     }
 
     public void recreateSwapChain(MemoryStack memoryStack) {
-        IntBuffer width = memoryStack.mallocInt(1);
-        IntBuffer height = memoryStack.mallocInt(1);
-        GLFW.glfwGetFramebufferSize(windowHandle.getWindowHandlePointer(), width, height);
-        while (width.get(0) == 0 || height.get(0) == 0) {
-            GLFW.glfwGetFramebufferSize(windowHandle.getWindowHandlePointer(), width, height);
-            GLFW.glfwWaitEvents();
+        while ((SDLVideo.SDL_GetWindowFlags(windowHandle.getWindowHandlePointer()) & SDLVideo.SDL_WINDOW_MINIMIZED) != 0) {
+            SDL_Event event = SDL_Event.calloc(memoryStack);
+            SDLEvents.SDL_WaitEvent(event);
+            if (event.type() == SDLEvents.SDL_EVENT_WINDOW_RESTORED) {
+                break;
+            }
         }
         VK10.vkDeviceWaitIdle(logicalDevice.vkDevice());
         cleanup();

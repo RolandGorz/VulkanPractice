@@ -2,7 +2,7 @@ package my.game.init.vulkan;
 
 import com.google.common.collect.ImmutableSet;
 import org.lwjgl.PointerBuffer;
-import org.lwjgl.glfw.GLFWVulkan;
+import org.lwjgl.sdl.SDLVulkan;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.KHRGetPhysicalDeviceProperties2;
@@ -90,21 +90,21 @@ public class VulkanInstance {
                 supportedExtensions.add(x.extensionNameString());
             }
         }
-        PointerBuffer glfwRequiredExtensions = GLFWVulkan.glfwGetRequiredInstanceExtensions();
-        if (glfwRequiredExtensions == null) {
-            throw new RuntimeException("glfwGetRequiredInstanceExtensions returned null");
+        PointerBuffer sdlRequiredExtensions = SDLVulkan.SDL_Vulkan_GetInstanceExtensions();
+        if (sdlRequiredExtensions == null) {
+            throw new RuntimeException("sdlRequiredExtensions returned null");
         }
-        PointerBuffer extensions = memoryStack.callocPointer(glfwRequiredExtensions.capacity() + OPTIONAL_EXTENSIONS.size());
-        for (int i = 0; i < glfwRequiredExtensions.capacity(); ++i) {
-            String curr = MemoryUtil.memASCII(glfwRequiredExtensions.get(i));
+        PointerBuffer extensions = memoryStack.callocPointer(sdlRequiredExtensions.capacity() + OPTIONAL_EXTENSIONS.size());
+        for (int i = 0; i < sdlRequiredExtensions.capacity(); ++i) {
+            String curr = MemoryUtil.memASCII(sdlRequiredExtensions.get(i));
             if (supportedExtensions.contains(curr)) {
-                System.out.printf("GLFW required extension %s is supported%n", curr);
+                System.out.printf("SDL required extension %s is supported%n", curr);
             } else {
-                System.out.printf("GLFW required extension %s is not supported%n", curr);
-                throw new RuntimeException(String.format("GLFW required extension: %s is not supported%n", curr));
+                System.out.printf("SDL required extension %s is not supported%n", curr);
+                throw new RuntimeException(String.format("SDL required extension: %s is not supported%n", curr));
             }
         }
-        extensions.put(glfwRequiredExtensions);
+        extensions.put(sdlRequiredExtensions);
         for (String x : OPTIONAL_EXTENSIONS) {
             if (supportedExtensions.contains(x)) {
                 extensions.put(MemoryStack.stackASCII(x));

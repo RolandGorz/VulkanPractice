@@ -11,9 +11,19 @@
   <url>http://maven.apache.org</url>
 
   <properties>
-    <lwjgl.version>3.3.6</lwjgl.version>
+    <lwjgl.version>3.4.0-SNAPSHOT</lwjgl.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
+
+  <!--Remove this when 3.4 releases-->
+  <repositories>
+    <repository>
+      <id>sonatype-snapshots</id>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+      <releases><enabled>false</enabled></releases>
+      <snapshots><enabled>true</enabled></snapshots>
+    </repository>
+  </repositories>
 
   <profiles>
     <profile>
@@ -175,6 +185,12 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
+      <groupId>org.jspecify</groupId>
+      <artifactId>jspecify</artifactId>
+      <version>1.0.0</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
       <groupId>com.google.code.findbugs</groupId>
       <artifactId>jsr305</artifactId>
       <version>3.0.2</version>
@@ -194,7 +210,7 @@
     </dependency>
     <dependency>
       <groupId>org.lwjgl</groupId>
-      <artifactId>lwjgl-glfw</artifactId>
+      <artifactId>lwjgl-sdl</artifactId>
     </dependency>
     <dependency>
       <groupId>org.lwjgl</groupId>
@@ -227,9 +243,8 @@
     </dependency>
     <dependency>
       <groupId>org.lwjgl</groupId>
-      <artifactId>lwjgl-glfw</artifactId>
+      <artifactId>lwjgl-sdl</artifactId>
       <classifier>${lwjgl.natives}</classifier>
-      <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>org.lwjgl</groupId>
@@ -331,6 +346,7 @@
             <addMavenDescriptor>false</addMavenDescriptor>
             <manifest>
               <addClasspath>true</addClasspath>
+              <useUniqueVersions>false</useUniqueVersions>
               <classpathPrefix>lib/</classpathPrefix>
               <mainClass>my.game.VulkanProject</mainClass>
             </manifest>
