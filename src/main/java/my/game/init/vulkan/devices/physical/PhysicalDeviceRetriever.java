@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import my.game.init.window.WindowSurface;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.vulkan.EXTScalarBlockLayout;
 import org.lwjgl.vulkan.KHRSurface;
 import org.lwjgl.vulkan.KHRSwapchain;
 import org.lwjgl.vulkan.VK10;
@@ -26,7 +27,8 @@ import java.util.PriorityQueue;
 public class PhysicalDeviceRetriever {
 
     public static List<String> REQUIRED_DEVICE_EXTENSIONS = ImmutableList.of(
-            KHRSwapchain.VK_KHR_SWAPCHAIN_EXTENSION_NAME
+            KHRSwapchain.VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+            EXTScalarBlockLayout.VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME
     );
     //We only include these extensions if they are available. In the case of VK_KHR_portability_subset if it is available then it is required.
     public static List<String> OPTIONAL_DEVICE_EXTENSIONS = ImmutableList.of(
