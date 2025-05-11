@@ -12,7 +12,6 @@ import org.lwjgl.vulkan.VK11;
 import org.lwjgl.vulkan.VK12;
 import org.lwjgl.vulkan.VkInstance;
 import org.lwjgl.vulkan.VkPhysicalDevice;
-import org.lwjgl.vulkan.VkPhysicalDeviceFeatures;
 import org.lwjgl.vulkan.VkPhysicalDeviceFeatures2;
 import org.lwjgl.vulkan.VkPhysicalDeviceProperties;
 import org.lwjgl.vulkan.VkPhysicalDeviceUniformBufferStandardLayoutFeatures;
