@@ -5,6 +5,7 @@ import my.game.init.window.WindowSurface;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.EXTScalarBlockLayout;
+import org.lwjgl.vulkan.KHRPortabilitySubset;
 import org.lwjgl.vulkan.KHRSurface;
 import org.lwjgl.vulkan.KHRSwapchain;
 import org.lwjgl.vulkan.VK10;
@@ -31,7 +32,7 @@ public class PhysicalDeviceRetriever {
     );
     //We only include these extensions if they are available. In the case of VK_KHR_portability_subset if it is available then it is required.
     public static List<String> OPTIONAL_DEVICE_EXTENSIONS = ImmutableList.of(
-            "VK_KHR_portability_subset"
+            KHRPortabilitySubset.VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME
     );
     private PhysicalDeviceInformation physicalDeviceInformation;
 
