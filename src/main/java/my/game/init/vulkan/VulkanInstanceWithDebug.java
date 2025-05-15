@@ -19,7 +19,6 @@ import java.util.List;
 
 public class VulkanInstanceWithDebug extends VulkanInstance {
 
-    private final VkDebugUtilsMessengerCreateInfoEXT debugUtilsMessengerCreateInfo;
     private final VkDebugUtilsMessengerCallbackEXT callback;
     List<String> REQUESTED_VALIDATION_LAYERS = ImmutableList.of(
             "VK_LAYER_KHRONOS_validation"
@@ -38,27 +37,27 @@ public class VulkanInstanceWithDebug extends VulkanInstance {
                     return VK10.VK_FALSE;
                 }
         );
-        debugUtilsMessengerCreateInfo = VkDebugUtilsMessengerCreateInfoEXT.calloc();
-        debugUtilsMessengerCreateInfo
-                .sType(EXTDebugUtils.VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT)
-                .messageSeverity(
-                        EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
-                                EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
-                                EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
-                .messageType(
-                        EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
-                                EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
-                                EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT)
-                .pfnUserCallback(callback)
-                .pUserData(MemoryUtil.NULL);
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
+            VkDebugUtilsMessengerCreateInfoEXT debugUtilsMessengerCreateInfo = VkDebugUtilsMessengerCreateInfoEXT.calloc(memoryStack);
+            debugUtilsMessengerCreateInfo
+                    .sType(EXTDebugUtils.VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT)
+                    .messageSeverity(
+                            EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
+                                    EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+                                    EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
+                    .messageType(
+                            EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+                                    EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+                                    EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT)
+                    .pfnUserCallback(callback)
+                    .pUserData(MemoryUtil.NULL);
             VkInstanceCreateInfo createInfo = super.createCreateInfo(memoryStack);
             addDebugForInitializationAndDestruction(createInfo, memoryStack);
             addValidationLayers(createInfo, memoryStack);
             createInfo.pNext(debugUtilsMessengerCreateInfo);
             super.createVulkanInstance(memoryStack, createInfo);
+            createDebugUtilsMessengerEXT(super.vkInstance, debugUtilsMessengerCreateInfo);
         }
-        createDebugUtilsMessengerEXT(super.vkInstance);
     }
 
     private String getSeverityString(int messageSeverity) {
@@ -96,7 +95,7 @@ public class VulkanInstanceWithDebug extends VulkanInstance {
         vkInstanceCreateInfo.ppEnabledLayerNames(validationLayers.flip());
     }
 
-    public void createDebugUtilsMessengerEXT(VkInstance vkInstance) {
+    public void createDebugUtilsMessengerEXT(VkInstance vkInstance, VkDebugUtilsMessengerCreateInfoEXT debugUtilsMessengerCreateInfo) {
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             LongBuffer longBuffer = memoryStack.callocLong(1);
             int result = EXTDebugUtils.vkCreateDebugUtilsMessengerEXT(vkInstance,
@@ -112,7 +111,6 @@ public class VulkanInstanceWithDebug extends VulkanInstance {
     public void free() {
         EXTDebugUtils.vkDestroyDebugUtilsMessengerEXT(vkInstance, pDebugUtilsMessengerEXT, null);
         super.free();
-        debugUtilsMessengerCreateInfo.free();
         callback.free();
     }
 

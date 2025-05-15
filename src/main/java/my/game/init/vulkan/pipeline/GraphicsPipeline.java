@@ -171,8 +171,7 @@ public class GraphicsPipeline {
                 throw new IllegalStateException(String.format("Failed to create pipeline layout. Error code: %d", result));
             }
             pipelineLayoutPointer = pPipelineLayout.get(0);
-            VkGraphicsPipelineCreateInfo.Buffer graphicsPipelineCreateInfoBuffer = VkGraphicsPipelineCreateInfo.malloc(1, memoryStack);
-            VkGraphicsPipelineCreateInfo graphicsPipelineCreateInfo = VkGraphicsPipelineCreateInfo.calloc(memoryStack);
+            VkGraphicsPipelineCreateInfo.Buffer graphicsPipelineCreateInfo = VkGraphicsPipelineCreateInfo.calloc(1, memoryStack);
             graphicsPipelineCreateInfo
                     .sType(VK10.VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO)
                     .pStages(shaderStageCreateInfoBuffer)
@@ -189,10 +188,8 @@ public class GraphicsPipeline {
                     .subpass(0)
                     .basePipelineHandle(VK10.VK_NULL_HANDLE)
                     .basePipelineIndex(-1);
-            graphicsPipelineCreateInfoBuffer.put(graphicsPipelineCreateInfo);
-            graphicsPipelineCreateInfoBuffer.flip();
             LongBuffer graphicsPipelinePointerBuffer = memoryStack.mallocLong(1);
-            int graphicsPipelineResult = VK10.vkCreateGraphicsPipelines(device, VK10.VK_NULL_HANDLE, graphicsPipelineCreateInfoBuffer, null, graphicsPipelinePointerBuffer);
+            int graphicsPipelineResult = VK10.vkCreateGraphicsPipelines(device, VK10.VK_NULL_HANDLE, graphicsPipelineCreateInfo, null, graphicsPipelinePointerBuffer);
             if (graphicsPipelineResult != VK10.VK_SUCCESS) {
                 throw new IllegalStateException(String.format("Failed to create graphics pipeline. Error code %d", graphicsPipelineResult));
             }

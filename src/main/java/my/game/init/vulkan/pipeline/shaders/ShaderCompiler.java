@@ -94,6 +94,7 @@ public class ShaderCompiler {
         }
     }
 
+    //TODO shaderc should be initialized once and only released when all shaders are compiled
     private byte[] compileShader(String shaderCode, int shaderType) {
         long compiler = 0;
         long options = 0;
