@@ -62,6 +62,7 @@ public class GraphicsRenderer {
     private GraphicsPipeline graphicsPipeline;
     private final VertexBuffer vertexBuffer;
     private final IndexBuffer indexBuffer;
+    //TODO semaphores should be in swapchain class and recreated when swapchain is destroyed. https://github.com/umutbalkan/godot/commit/f1eb9aa9f30695243ea1d175af338d031666aa9d
     private final List<LongBuffer> imageAvailableSemaphores;
     private final List<LongBuffer> renderFinishedSemaphores;
     private final List<LongBuffer> inFlightFences;
@@ -221,7 +222,7 @@ public class GraphicsRenderer {
                     .pImageIndices(imageIndex)
                     .pResults(null);
             int queuePresentResult = KHRSwapchain.vkQueuePresentKHR(logicalDevice.presentationQueue().getVkQueue(), presentInfo);
-            if (queuePresentResult == KHRSwapchain.VK_ERROR_OUT_OF_DATE_KHR || queuePresentResult == KHRSwapchain.VK_SUBOPTIMAL_KHR || windowHandle.frameBufferResized()) {
+            if (queuePresentResult == KHRSwapchain.VK_ERROR_OUT_OF_DATE_KHR || queuePresentResult == KHRSwapchain.VK_SUBOPTIMAL_KHR) {
                 recreateSwapChain(memoryStack);
             } else if (queuePresentResult != VK10.VK_SUCCESS) {
                 throw new IllegalStateException(String.format("Failed to present swap chain image! Error code: %d", queuePresentResult));

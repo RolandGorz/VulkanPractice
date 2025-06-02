@@ -14,6 +14,7 @@ import my.game.render.GraphicsRenderer;
 import org.lwjgl.sdl.SDLEvents;
 import org.lwjgl.sdl.SDLVideo;
 import org.lwjgl.sdl.SDL_Event;
+import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VK10;
 
 public class MainGameLoop {
@@ -51,9 +52,15 @@ public class MainGameLoop {
             mainLoop:
             while (RUNNING) {
                 while(SDLEvents.SDL_PollEvent(event)) {
-                    if (event.type() == SDLEvents.SDL_EVENT_QUIT) {
-                        RUNNING = false;
-                        break mainLoop;
+                    switch (event.type()) {
+                        case SDLEvents.SDL_EVENT_QUIT:
+                            RUNNING = false;
+                            break mainLoop;
+                        case SDLEvents.SDL_EVENT_WINDOW_RESIZED:
+                            try (MemoryStack memoryStack = MemoryStack.stackPush()) {
+                                graphicsRenderer.recreateSwapChain(memoryStack);
+                            }
+                            break;
                     }
                 }
                 graphicsRenderer.drawFrame();
