@@ -6,3 +6,8 @@ rather than the one in the build output directory of ShaderIndex.
 
 When running the jar file created by maven package make sure to set the working directory to target so that 
 both the jar run and maven run can share the same directory consistently
+
+For Mac to be able to run you must include -XstartOnFirstThread since
+mac requires your window to be running on the main thread. Also when debugging
+on mac with vulkan validation layers you must specify -Dorg.lwjgl.vulkan.libname=&lt;VulkanSDK location>/&lt;Version>/macOS/lib/libvulkan.dylib
+Both of these are required as parameters to the java command when running the compiled jar
