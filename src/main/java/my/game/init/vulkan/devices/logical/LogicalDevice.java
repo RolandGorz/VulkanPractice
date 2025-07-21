@@ -8,10 +8,11 @@ import org.immutables.value.Value;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VK10;
+import org.lwjgl.vulkan.VK11;
 import org.lwjgl.vulkan.VkDevice;
 import org.lwjgl.vulkan.VkDeviceCreateInfo;
 import org.lwjgl.vulkan.VkDeviceQueueCreateInfo;
-import org.lwjgl.vulkan.VkPhysicalDeviceFeatures;
+import org.lwjgl.vulkan.VkPhysicalDeviceFeatures2;
 
 import java.nio.FloatBuffer;
 import java.util.Set;
@@ -50,14 +51,21 @@ public abstract class LogicalDevice {
                 }
             }
             requiredDeviceExtensions.flip();
-            VkPhysicalDeviceFeatures vkPhysicalDeviceFeatures = VkPhysicalDeviceFeatures.calloc(memoryStack);
+            VkPhysicalDeviceFeatures2 vkPhysicalDeviceFeatures = VkPhysicalDeviceFeatures2.calloc(memoryStack);
+            vkPhysicalDeviceFeatures.sType(VK11.VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2);
+            vkPhysicalDeviceFeatures.pNext(physicalDevice().physicalDeviceInformation().uniformBufferStandardLayoutFeatures());
             VkDeviceCreateInfo vkDeviceCreateInfo = VkDeviceCreateInfo.calloc(memoryStack);
             vkDeviceCreateInfo
                     .sType(VK10.VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO)
                     .pQueueCreateInfos(vkDeviceQueueCreateInfos)
-                    .pEnabledFeatures(vkPhysicalDeviceFeatures)
                     .ppEnabledExtensionNames(requiredDeviceExtensions)
-                    .pNext(physicalDevice().physicalDeviceInformation().uniformBufferStandardLayoutFeatures());
+                    //If you already have your chain defined then use the pNext that takes a long as a parameter. The pNext that takes an object
+                    //will set the Pnext of what you pass in to be the current value of pNext. The intention is that you do
+                    //pNext(A).pNext(B).pNext(C) which results in a chain of C->B->A. This is because adding to the chain is an O(1)
+                    //operation but this also leads to a problem where if you add an entire chain of your own then it just takes the head of
+                    //your chain and adds it to the existing chain. If you use just the method with the long param then it will set the Pnext variable
+                    //to whatever you give it without trying to help.
+                    .pNext(vkPhysicalDeviceFeatures.address());
             PointerBuffer logicalDevice = memoryStack.mallocPointer(1);
             int result = VK10.vkCreateDevice(physicalDevice().physicalDeviceInformation().physicalDevice(), vkDeviceCreateInfo, null, logicalDevice);
             if (result != VK10.VK_SUCCESS) {
